@@ -2,9 +2,9 @@
  *  @file       AppleMIDI_Defs.h
  *  Project     Arduino AppleMIDI Library
  *  @brief      AppleMIDI Library for the Arduino - Definitions
- *  @version    4.0
- *  @author     
- *  @date       
+ *	Version		0.3
+ *  @author		lathoub 
+ *	@date		04/04/14
  *  license     GPL
  */
 
@@ -128,6 +128,7 @@ enum MidiType
     SongSelect            = 0xF3,    ///< System Common - Song Select
     TuneRequest           = 0xF6,    ///< System Common - Tune Request
     Clock                 = 0xF8,    ///< System Real Time - Timing Clock
+    Tick                  = 0xF9,    ///< System Real Time - Tick
     Start                 = 0xFA,    ///< System Real Time - Start
     Continue              = 0xFB,    ///< System Real Time - Continue
     Stop                  = 0xFC,    ///< System Real Time - Stop

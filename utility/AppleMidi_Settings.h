@@ -2,9 +2,9 @@
  *  @file       AppleMidi_Settings.h
  *  Project     Arduino AppleMIDI Library
  *  @brief      AppleMIDI Library for the Arduino
- *  @version    4.0
- *  @author     
- *  @date       
+ *	Version		0.3
+ *  @author		lathoub 
+ *	@date		04/04/14
  *  license     GPL 
  */
 
@@ -26,7 +26,10 @@
 // Note that thru can work only if input and output are enabled.
 
 #define RELEASE_BUILD              1
+#if (RELEASE_BUILD)
 #define DEBUG_BUILD                0
+#define APPLEMIDI_DEBUG_VERBOSE    0
+#endif
 
 #define APPLEMIDI_BUILD_INPUT                1
 #define APPLEMIDI_BUILD_OUTPUT               1
@@ -34,11 +37,9 @@
 #define APPLEMIDI_USE_CALLBACKS              1
 #define APPLEMIDI_USE_EVENTS                 1
 
-#define APPLEMIDI_USE_RUNNING_STATUS         0
-
-#if (DEBUG_BUILD)
+#if (DEBUG)
 #define APPLEMIDI_DEBUG						 1
-#define APPLEMIDI_DEBUG_VERBOSE              0
+#define APPLEMIDI_DEBUG_VERBOSE              1
 #endif
 
 // -----------------------------------------------------------------------------
@@ -47,10 +48,6 @@
 
 #define CONTROL_PORT     5004         
 #define RTP_PORT         5005   
-
-// Name that we will use when sending our invitations
-
-#define NAME             "Arduino"           
 
 // -----------------------------------------------------------------------------
 
@@ -84,6 +81,10 @@
 // of the same type and channel.
 // Set to 0 if you have troubles controlling your hardware.
 #define APPLEMIDI_USE_RUNNING_STATUS         0
+
+// Setting this to 1 will make MIDI.read parse only one byte of data for each
+// call when data is available. This can speed up your application if receiving
+// a lot of traffic, but might induce MIDI Thru and treatment latency.
 #define APPLEMIDI_USE_1BYTE_PARSING          1
 
 #define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.

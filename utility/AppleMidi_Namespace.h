@@ -2,9 +2,9 @@
  *  @file       AppleMIDI_Namespace.h
  *  Project     Arduino AppleMIDI Library
  *  @brief      AppleMIDI Library for the Arduino - Namespace declaration
- *  @version    4.0
- *  @author     lathoub  
- *  @date       24/02/13
+ *	Version		0.3
+ *  @author		lathoub 
+ *	@date		04/04/14
  *  license     GPL
  */
 
