@@ -2,9 +2,9 @@
  *  @file		AppleMIDI_Inline.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
- *	Version		0.3
- *  @author		lathoub 
- *	@date		04/04/14
+ *	Version		0.0
+ *  @author		lathoub  
+ *	@date		01/04/13
  *  License		GPL
  */
 
@@ -120,6 +120,7 @@ void AppleMidi_Class::internalSend(Session_t* session,
     }
     else if (inType >= TuneRequest && inType <= SystemReset)
         sendRealTime(inType); // System Real-time and 1 byte.
+
 }
 
 /*! \brief Send a Real Time (one byte) message. 
@@ -284,9 +285,9 @@ void AppleMidi_Class::sendPitchBend(double inPitchValue,
  */
 void AppleMidi_Class::sendSysEx(unsigned int inLength,
                                 const byte* inArray,
-                                bool inArrayContainsBoundaries = true)
+                                bool inArrayContainsBoundaries)
 {
-    if (inArrayContainsBoundaries == false)
+/*    if (inArrayContainsBoundaries == false)
     {
         mSerial.write(0xF0);
         
@@ -300,10 +301,10 @@ void AppleMidi_Class::sendSysEx(unsigned int inLength,
         for (unsigned int i = 0; i < inLength; ++i)
             mSerial.write(inArray[i]);
     }
-
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
+*/
+//#if APPLEMIDI_USE_RUNNING_STATUS
+//    mRunningStatus_TX = InvalidType;
+//#endif
 }
 
 /*! \brief Send a Tune Request message. 
@@ -313,7 +314,7 @@ void AppleMidi_Class::sendSysEx(unsigned int inLength,
  */
 void AppleMidi_Class::sendTuneRequest()
 {
-    sendRealTime(TuneRequest);
+//    sendRealTime(TuneRequest);
 }
 
 /*! \brief Send a MIDI Time Code Quarter Frame. 
@@ -337,12 +338,12 @@ void AppleMidi_Class::sendTimeCodeQuarterFrame(DataByte inTypeNibble,
  */
 void AppleMidi_Class::sendTimeCodeQuarterFrame(DataByte inData)
 {
-    mSerial.write((byte)TimeCodeQuarterFrame);
-    mSerial.write(inData);
+//    mSerial.write((byte)TimeCodeQuarterFrame);
+//    mSerial.write(inData);
     
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
+//#if APPLEMIDI_USE_RUNNING_STATUS
+//    mRunningStatus_TX = InvalidType;
+//#endif
 }
 
 /*! \brief Send a Song Position Pointer message.
@@ -350,74 +351,24 @@ void AppleMidi_Class::sendTimeCodeQuarterFrame(DataByte inData)
  */
 void AppleMidi_Class::sendSongPosition(unsigned int inBeats)
 {
-    mSerial.write((byte)SongPosition);
-    mSerial.write(inBeats & 0x7F);
-    mSerial.write((inBeats >> 7) & 0x7F);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
+//    mSerial.write((byte)SongPosition);
+//    mSerial.write(inBeats & 0x7F);
+//    mSerial.write((inBeats >> 7) & 0x7F);
+//    
+//#if APPLEMIDI_USE_RUNNING_STATUS
+//    mRunningStatus_TX = InvalidType;
+//#endif
 }
 
 /*! \brief Send a Song Select message */
 void AppleMidi_Class::sendSongSelect(DataByte inSongNumber)
 {
-    mSerial.write((byte)SongSelect);
-    mSerial.write(inSongNumber & 0x7F);
+//    mSerial.write((byte)SongSelect);
+//    mSerial.write(inSongNumber & 0x7F);
     
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
-}
-
-/*! \brief  */
-void AppleMidi_Class::sendStart()
-{
-    mSerial.write((byte)Start);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
-}
-
-/*! \brief  */
-void AppleMidi_Class::sendContinue()
-{
-    mSerial.write((byte)Continue);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
-}
-
-/*! \brief  */
-void AppleMidi_Class::sendStop()
-{
-    mSerial.write((byte)Stop);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
-}
-
-/*! \brief  */
-void AppleMidi_Class::sendActiveSensing()
-{
-    mSerial.write((byte)ActiveSensing);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
-}
-
-/*! \brief  */
-void AppleMidi_Class::sendSystemReset()
-{
-    mSerial.write((byte)SystemReset);
-    
-#if APPLEMIDI_USE_RUNNING_STATUS
-    mRunningStatus_TX = InvalidType;
-#endif
+//#if APPLEMIDI_USE_RUNNING_STATUS
+//    mRunningStatus_TX = InvalidType;
+//#endif
 }
 
 /*! \brief Send a Real Time (one byte) message. 
@@ -427,42 +378,42 @@ void AppleMidi_Class::sendSystemReset()
  You can also send a Tune Request with this method.
  @see MidiType
  */
-void AppleMidi_Class::sendRealTime(MidiType inType)
-{
-    switch (inType) 
-    {
-        case TuneRequest: // Not really real-time, but one byte anyway.
-        case Clock:
-        case Start:
-        case Stop:    
-        case Continue:
-        case ActiveSensing:
-        case SystemReset:
-//            mSerial.write((byte)inType);
-            break;
-        default:
-            // Invalid Real Time marker
-            break;
-    }
-    
-    // Do not cancel Running Status for real-time messages as they can be 
-    // interleaved within any message. Though, TuneRequest can be sent here, 
-    // and as it is a System Common message, it must reset Running Status.
-#if APPLEMIDI_USE_RUNNING_STATUS
-    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
-#endif
-}
+//void AppleMidi_Class::sendRealTime(MidiType inType)
+//{
+//    switch (inType) 
+//    {
+//        case TuneRequest: // Not really real-time, but one byte anyway.
+//        case Clock:
+//        case Start:
+//        case Stop:    
+//        case Continue:
+//        case ActiveSensing:
+//        case SystemReset:
+////            mSerial.write((byte)inType);
+//            break;
+//        default:
+//            // Invalid Real Time marker
+//            break;
+//    }
+//    
+//    // Do not cancel Running Status for real-time messages as they can be 
+//    // interleaved within any message. Though, TuneRequest can be sent here, 
+//    // and as it is a System Common message, it must reset Running Status.
+////#if APPLEMIDI_USE_RUNNING_STATUS
+////    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+////#endif
+//}
 
 /*! @} */ // End of doc group MIDI Output
 
 // -----------------------------------------------------------------------------
 
-StatusByte AppleMidi_Class::getStatus(MidiType inType,
-                                      Channel inChannel) const
-{
-    return ((byte)inType | ((inChannel - 1) & 0x0F));
-}
-
+//StatusByte AppleMidi_Class::getStatus(MidiType inType,
+//                                      Channel inChannel) const
+//{
+//    return ((byte)inType | ((inChannel - 1) & 0x0F));
+//}
+//
 
 
 #endif // APPLEMIDI_BUILD_OUTPUT
@@ -521,7 +472,7 @@ bool AppleMidi_Class::read(Channel inChannel)
 // Private method: MIDI parser
 bool AppleMidi_Class::parse(Channel inChannel)
 { 
-    const byte bytes_available = mSerial.available();
+    const byte bytes_available = 0;// = mSerial.available();
     
     if (bytes_available == 0)
         // No data available.
@@ -536,7 +487,7 @@ bool AppleMidi_Class::parse(Channel inChannel)
     // Else, add the extracted byte to the pending message, and check validity. 
     // When the message is done, store it.
     
-    const byte extracted = mSerial.read();
+    const byte extracted = 0;// = mSerial.read();
     
     if (mPendingMessageIndex == 0) 
     { 
