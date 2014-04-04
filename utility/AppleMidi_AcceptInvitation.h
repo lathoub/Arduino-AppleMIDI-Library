@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.0
- *  @author		lathoub  
+ *  @author		lathoub 
  *	@date		01/04/13
  *  License		GPL
  */

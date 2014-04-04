@@ -2,9 +2,9 @@
  *  @file		AppleMIDI.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		RtpMIDI Library for the Arduino
- *	Version		0.0
- *  @author		lathoub  
- *	@date		01/04/13
+ *	Version		0.3
+ *  @author		lathoub 
+ *	@date		02/04/14
  *  License		GPL
  */
 
@@ -31,6 +31,8 @@
 #include <EthernetUdp.h>
 //#include <SPI.h>
 //#include <SD.h>
+
+#define APPLEMIDI_DEBUG 0
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -68,12 +70,16 @@ public:
 public:
 	static Session_t	Sessions[MAX_SESSIONS];
 
+	char Name[50];
+
 public:
 	// Constructor and Destructor
 	AppleMidi_Class();
 	~AppleMidi_Class();
 
-	void begin(const char* name = NAME, const uint16_t controlPort = CONTROL_PORT);
+	static const int Port = CONTROL_PORT;
+
+	void begin(const char* name);
 	
 	uint32_t	getSynchronizationSource() { return _ssrc; }
 
@@ -94,8 +100,15 @@ public:
 
 	virtual void OnNoteOn (void* sender, DataByte, DataByte, DataByte);
 	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte);
-
-
+	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte);
+	virtual void OnChannelPressure(void* sender, DataByte, DataByte);
+	virtual void OnPitchBendChange(void* sender, DataByte, int);
+	virtual void OnProgramChange(void* sender, DataByte, DataByte);
+	virtual void OnControlChange(void* sender, DataByte, DataByte, DataByte);
+	virtual void OnTimeCodeQuarterFrame(void* sender, DataByte);
+	virtual void OnSongSelect(void* sender, DataByte);
+	virtual void OnSongPosition(void* sender, int);
+	virtual void OnTuneRequest(void* sender);
 
 #if APPLEMIDI_BUILD_OUTPUT
     
@@ -108,21 +121,33 @@ public:
     void pitchBend(double inPitchValue, Channel inChannel);   
     void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
     void afterTouch(DataByte inPressure, Channel inChannel); 
-    void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = false);    
+    void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);    
     void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
     void timeCodeQuarterFrame(DataByte inData);
     void songPosition(unsigned int inBeats);
     void songSelect(DataByte inSongNumber);
     void tuneRequest();
-    void sendRealTime(MidiType inType);
+    void activeSensing();
+    void start();
+    void _continue();
+    void stop();
+    void systemReset();
+    void clock();
+    void tick();
     
 public:
     void send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
+    void send(MidiType inType, DataByte inData1, DataByte inData2);
+    void send(MidiType inType, DataByte inData);
+    void send(MidiType inType);
       
 private:
     StatusByte getStatus(MidiType inType, Channel inChannel) const;
    
     void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
+    void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2);
+    void internalSend(Session_t*, MidiType inType, DataByte inData);
+    void internalSend(Session_t*, MidiType inType);
 
 #if APPLEMIDI_USE_CALLBACKS
 public:
@@ -154,13 +179,6 @@ public:
 private:
     StatusByte mRunningStatus_RX;
     Channel    _inputChannel;
-    
- //   byte         mPendingMessage[3];             // SysEx are dumped into mMessage directly.
- //   unsigned int mPendingMessageExpectedLenght;
- //   unsigned int mPendingMessageIndex;           // Extended to unsigned int for larger SysEx payloads.
-
-	//Message mMessage;
-    
     
     // -------------------------------------------------------------------------
     // Input Callbacks
@@ -206,11 +224,12 @@ private:
     void (*mProgramChangeCallback)(byte channel, byte);
     void (*mAfterTouchChannelCallback)(byte channel, byte);
     void (*mPitchBendCallback)(byte channel, int);
-    void (*mSystemExclusiveCallback)(byte * array, byte size);
-    void (*mTimeCodeQuarterFrameCallback)(byte data);
     void (*mSongPositionCallback)(unsigned int beats);
     void (*mSongSelectCallback)(byte songnumber);
     void (*mTuneRequestCallback)(void);
+    void (*mTimeCodeQuarterFrameCallback)(byte data);
+
+    void (*mSystemExclusiveCallback)(byte * array, byte size);
     void (*mClockCallback)(void);
     void (*mStartCallback)(void);
     void (*mContinueCallback)(void);

@@ -2,11 +2,13 @@
  *  @file		AppleMIDI.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
- *	Version		0.0
+ *	Version		0.3
  *  @author		lathoub 
- *	@date		01/04/13
+ *	@date		02/04/14
  *  License		GPL
  */
+
+// http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec.htm
 
 #include "AppleMidi.h"
 
@@ -76,9 +78,12 @@ AppleMidi_Class::~AppleMidi_Class()
  - Input channel set to 1 if no value is specified
  - Full thru mirroring
  */
-void AppleMidi_Class::begin(const char*, const uint16_t controlPort)
+void AppleMidi_Class::begin(const char* name)
 {
 	srand(analogRead(0));
+
+	//
+	strcpy(Name, name);
 
 	_inputChannel = MIDI_CHANNEL_OMNI;
 
@@ -93,14 +98,14 @@ void AppleMidi_Class::begin(const char*, const uint16_t controlPort)
 		Sessions[i].ssrc = 0;
 
 	// open UDP socket for control messages
-	_controlUDP.begin(controlPort);
+	_controlUDP.begin(Port);
 	// open UDP socket for rtp messages
-	_contentUDP.begin(controlPort + 1);
+	_contentUDP.begin(Port + 1);
 
-	_controlDissector.init(controlPort, this);
+	_controlDissector.init(Port, this);
 	_controlDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);
 
-	_contentDissector.init(controlPort + 1, this);
+	_contentDissector.init(Port + 1, this);
 	_contentDissector.addPacketDissector(&PacketRtpMidi::dissect_rtp_midi);
 	_contentDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);
 
@@ -110,17 +115,14 @@ void AppleMidi_Class::begin(const char*, const uint16_t controlPort)
 	// Note: this class does not start a session
 	// by sending an invite, it waits for
 	// the invitation to come in.
-	// Future work might initiate the communication.
-	// E.g. by pushing a switch on the board to
-	// check for _apple-midi via Bonjour, then
-	// connects to them....
-	// see the currently hidden sendInvite function
 
-	//AppleMIDI_Invitation invitation(this->_ssrc, NAME);
-	//invitation.write(&this->_controlUDP);
-
-	// Read session from memoryCard
-	// Any open sessions
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("Starting");
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" Verbose");
+#endif
+	Serial.println();
+#endif
 }
 
 /*! \brief Evaluates incoming Rtp messages.
@@ -156,9 +158,9 @@ void AppleMidi_Class::OnInvitation(void* sender, Invitation_t& invitation)
 {
 	Dissector* dissector = (Dissector*)sender;
 
-	if (dissector->_identifier == 5004)
+	if (dissector->_identifier == Port)
 		OnControlInvitation(sender, invitation);
-	if (dissector->_identifier == 5005)
+	if (dissector->_identifier == Port + 1)
 		OnContentInvitation(sender, invitation);
 }
 
@@ -217,7 +219,7 @@ void AppleMidi_Class::OnControlInvitation(void* sender, Invitation_t& invitation
 	Sessions[index].ssrc = invitation.ssrc;
 	Sessions[index].seqNum = 1;
 
-	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, NAME);
+	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, Name);
 	acceptInvitation.write(&this->_controlUDP);
 }
 
@@ -251,7 +253,7 @@ void AppleMidi_Class::OnContentInvitation(void* sender, Invitation_t& invitation
 		return; 
 	}
 
-	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, NAME);
+	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, Name);
 	acceptInvitation.write(&this->_contentUDP);
 
 #if (APPLEMIDI_DEBUG) && (APPLEMIDI_DEBUG_VERBOSE)
@@ -303,7 +305,9 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 			break;
 	if (index >= MAX_SESSIONS)
 	{
+#if (APPLEMIDI_DEBUG)
 		Serial.println("hmmm - Syncronization for a session that has never started.");
+#endif
 		// TODO: send EndSession?
 //		AppleMIDI_EndSession endSession(this->_ssrc);
 //		endSession.write(&this->_controlUDP);
@@ -362,7 +366,7 @@ void AppleMidi_Class::OnEndSession(void* sender, EndSession_t& sessionEnd)
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("> End Session");
-#if (APPLEMIDI_DEBUG)
+#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (": src = 0x");
 	Serial.print  (sessionEnd.ssrc, HEX);
 	Serial.print  (", initiatorToken = 0x");
@@ -378,7 +382,9 @@ void AppleMidi_Class::OnEndSession(void* sender, EndSession_t& sessionEnd)
 			break;
 	if (index >= MAX_SESSIONS)
 	{
+#if (APPLEMIDI_DEBUG)
 		Serial.println("hmmm - ending session that has never started.");
+#endif
 		// TODO: shall we send an invite?
 		return; 
 	}
@@ -391,8 +397,6 @@ void AppleMidi_Class::OnEndSession(void* sender, EndSession_t& sessionEnd)
 
 	// Free Session Slot
 	Sessions[index].ssrc = 0;
-
-	// Save current sessions to MemoryCard
 
 	if (this->mDisconnectedCallback != 0)
 		this->mDisconnectedCallback();
@@ -447,6 +451,7 @@ void AppleMidi_Class::OnNoteOn(void* sender, DataByte channel, DataByte note, Da
 	if (mNoteOnCallback)
 		mNoteOnCallback(channel, note, velocity);
 }
+
 /*! \brief .
 */
 void AppleMidi_Class::OnNoteOff(void* sender, DataByte channel, DataByte note, DataByte velocity)
@@ -463,6 +468,144 @@ void AppleMidi_Class::OnNoteOff(void* sender, DataByte channel, DataByte note, D
 
 	if (mNoteOffCallback)
 		mNoteOffCallback(channel, note, velocity);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnPolyPressure(void* sender, DataByte channel, DataByte note, DataByte pressure)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Poly Pressure (c=");
+	Serial.print  (channel);
+	Serial.print  (", n=");
+	Serial.print  (note);
+	Serial.print  (", p=");
+	Serial.print  (pressure);
+	Serial.println(")");
+#endif
+
+	if (mAfterTouchPolyCallback)
+		mAfterTouchPolyCallback(channel, note, pressure);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnChannelPressure(void* sender, DataByte channel, DataByte pressure)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Channel Pressure (c=");
+	Serial.print  (channel);
+	Serial.print  (", p=");
+	Serial.print  (pressure);
+	Serial.println(")");
+#endif
+
+	if (mAfterTouchChannelCallback)
+		mAfterTouchChannelCallback(channel, pressure);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnPitchBendChange(void* sender, DataByte channel, int pitch)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Pitch Bend (c=");
+	Serial.print  (channel);
+	Serial.print  (", p=");
+	Serial.print  (pitch);
+	Serial.println(")");
+#endif
+
+	if (mPitchBendCallback)
+		mPitchBendCallback(channel, pitch);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnProgramChange(void* sender, DataByte channel, DataByte program)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Program Change (c=");
+	Serial.print  (channel);
+	Serial.print  (", p=");
+	Serial.print  (program);
+	Serial.println(")");
+#endif
+
+	if (mProgramChangeCallback)
+		mProgramChangeCallback(channel, program);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnControlChange(void* sender, DataByte channel, DataByte controller, DataByte value)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Control Change (c=");
+	Serial.print  (channel);
+	Serial.print  (", e=");
+	Serial.print  (controller);
+	Serial.print  (", v=");
+	Serial.print  (value);
+	Serial.println(")");
+#endif
+
+	if (mControlChangeCallback)
+		mControlChangeCallback(channel, controller, value);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnSongSelect(void* sender, DataByte songNr)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> SongSelect (s=");
+	Serial.print  (songNr);
+	Serial.println(")");
+#endif
+
+	if (mSongSelectCallback)
+		mSongSelectCallback(songNr);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnSongPosition(void* sender, int value)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> SongPosition (c=");
+	Serial.print  (value);
+	Serial.println(")");
+#endif
+
+	if (mSongPositionCallback)
+		mSongPositionCallback(value);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnTimeCodeQuarterFrame(void* sender, DataByte value)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> TimeCodeQuarterFrame (c=");
+	Serial.print  (value);
+	Serial.println(")");
+#endif
+
+	if (mTimeCodeQuarterFrameCallback)
+		mTimeCodeQuarterFrameCallback(value);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnTuneRequest(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> TuneRequest ()");
+#endif
+
+	if (mTuneRequestCallback)
+		mTuneRequestCallback();
 }
 
 // -----------------------------------------------------------------------------
@@ -489,6 +632,45 @@ void AppleMidi_Class::send(MidiType inType, DataByte inData1, DataByte inData2, 
 		if (Sessions[i].ssrc != 0)
 		{
 			internalSend(&Sessions[i], inType, inData1, inData2, inChannel);
+		}
+	}
+
+	return;
+}
+
+void AppleMidi_Class::send(MidiType inType, DataByte inData1, DataByte inData2)
+{
+	for (int i = 0 ; i < MAX_SESSIONS; i++)
+	{
+		if (Sessions[i].ssrc != 0)
+		{
+			internalSend(&Sessions[i], inType, inData1, inData2);
+		}
+	}
+
+	return;
+}
+
+void AppleMidi_Class::send(MidiType inType, DataByte inData)
+{
+	for (int i = 0 ; i < MAX_SESSIONS; i++)
+	{
+		if (Sessions[i].ssrc != 0)
+		{
+			internalSend(&Sessions[i], inType, inData);
+		}
+	}
+
+	return;
+}
+
+void AppleMidi_Class::send(MidiType inType)
+{
+	for (int i = 0 ; i < MAX_SESSIONS; i++)
+	{
+		if (Sessions[i].ssrc != 0)
+		{
+			internalSend(&Sessions[i], inType);
 		}
 	}
 
@@ -561,18 +743,21 @@ void AppleMidi_Class::internalSend(Session_t* session, MidiType inType, DataByte
         return;
     }
     else if (inType >= TuneRequest && inType <= SystemReset)
-        sendRealTime(inType); // System Real-time and 1 byte.
+        internalSend(session, inType); // System Real-time and 1 byte.
 
 }
 
-/*! \brief Send a Real Time (one byte) message. 
- \param inType    The available Real Time types are: 
- Start, Stop, Continue, Clock, ActiveSensing and SystemReset.
- You can also send a Tune Request with this method.
- @see MidiType
- */
-void AppleMidi_Class::sendRealTime(MidiType inType)
+void AppleMidi_Class::internalSend(Session_t*, MidiType inType)
 {
+	_rtpMidi.sequenceNr++;
+//	_rtpMidi.timestamp = 
+	_rtpMidi.beginWrite(&_contentUDP);
+
+	uint8_t length = 1;
+	_contentUDP.write(&length, 1);
+
+	byte octet = (byte)inType;
+
     switch (inType) 
     {
         case TuneRequest: // Not really real-time, but one byte anyway.
@@ -582,13 +767,15 @@ void AppleMidi_Class::sendRealTime(MidiType inType)
         case Continue:
         case ActiveSensing:
         case SystemReset:
-//            mSerial.write((byte)inType);
+			_contentUDP.write(&octet, 1);
             break;
         default:
             // Invalid Real Time marker
             break;
     }
-    
+
+ 	_rtpMidi.endWrite(&_contentUDP);
+   
     // Do not cancel Running Status for real-time messages as they can be 
     // interleaved within any message. Though, TuneRequest can be sent here, 
     // and as it is a System Common message, it must reset Running Status.
@@ -596,6 +783,72 @@ void AppleMidi_Class::sendRealTime(MidiType inType)
     if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
 #endif
 }
+
+void AppleMidi_Class::internalSend(Session_t* session, MidiType inType, DataByte inData)
+{
+	_rtpMidi.sequenceNr++;
+//	_rtpMidi.timestamp = 
+	_rtpMidi.beginWrite(&_contentUDP);
+
+	uint8_t length = 2;
+	_contentUDP.write(&length, 1);
+
+	DataByte octet = (DataByte)inType;
+
+    switch (inType) 
+    {
+        case TimeCodeQuarterFrame: // Not really real-time, but one byte anyway.
+			_contentUDP.write(&octet, 1);
+			_contentUDP.write(&inData, 1);
+            break;
+        default:
+            // Invalid Real Time marker
+            break;
+    }
+
+ 	_rtpMidi.endWrite(&_contentUDP);
+   
+    // Do not cancel Running Status for real-time messages as they can be 
+    // interleaved within any message. Though, TuneRequest can be sent here, 
+    // and as it is a System Common message, it must reset Running Status.
+#if APPLEMIDI_USE_RUNNING_STATUS
+    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+#endif
+}
+
+void AppleMidi_Class::internalSend(Session_t* session, MidiType inType, DataByte inData1, DataByte inData2)
+{
+	_rtpMidi.sequenceNr++;
+//	_rtpMidi.timestamp = 
+	_rtpMidi.beginWrite(&_contentUDP);
+
+	uint8_t length = 3;
+	_contentUDP.write(&length, 1);
+
+	DataByte octet = (DataByte)inType;
+
+    switch (inType) 
+    {
+        case SongPosition: // Not really real-time, but one byte anyway.
+			_contentUDP.write(&octet, 1);
+			_contentUDP.write(&inData1, 1);
+			_contentUDP.write(&inData2, 1);
+            break;
+        default:
+            // Invalid Real Time marker
+            break;
+    }
+
+ 	_rtpMidi.endWrite(&_contentUDP);
+   
+    // Do not cancel Running Status for real-time messages as they can be 
+    // interleaved within any message. Though, TuneRequest can be sent here, 
+    // and as it is a System Common message, it must reset Running Status.
+#if APPLEMIDI_USE_RUNNING_STATUS
+    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+#endif
+}
+
 
 StatusByte AppleMidi_Class::getStatus(MidiType inType,
                                       Channel inChannel) const
@@ -620,8 +873,8 @@ StatusByte AppleMidi_Class::getStatus(MidiType inType,
  http://www.phys.unsw.edu.au/jw/notes.html
  */
 void AppleMidi_Class::noteOn(DataByte inNoteNumber,
-                                 DataByte inVelocity,
-                                 Channel inChannel)
+                             DataByte inVelocity,
+                             Channel  inChannel)
 { 
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("< Note On (c=");
@@ -654,8 +907,8 @@ void AppleMidi_Class::noteOn(DataByte inNoteNumber,
  http://www.phys.unsw.edu.au/jw/notes.html
  */
 void AppleMidi_Class::noteOff(DataByte inNoteNumber,
-                                  DataByte inVelocity,
-                                  Channel inChannel)
+                              DataByte inVelocity,
+                              Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("< Note Off (c=");
@@ -732,6 +985,7 @@ void AppleMidi_Class::polyPressure(DataByte inNoteNumber,
 	Serial.print  (" Channel:");
 	Serial.println(inChannel);
 #endif
+
 	send(AfterTouchPoly, inNoteNumber, inPressure, inChannel);
 }
 
@@ -742,6 +996,14 @@ void AppleMidi_Class::polyPressure(DataByte inNoteNumber,
 void AppleMidi_Class::afterTouch(DataByte inPressure,
                                      Channel inChannel)
 {
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("sendafterTouch ");
+	Serial.print  (" Pressure:");
+	Serial.print  (inPressure);
+	Serial.print  (" Channel:");
+	Serial.println(inChannel);
+#endif
+
 	send(AfterTouchChannel, inPressure, 0, inChannel);
 }
 
@@ -753,7 +1015,15 @@ void AppleMidi_Class::afterTouch(DataByte inPressure,
  */
 void AppleMidi_Class::pitchBend(int inPitchValue, Channel inChannel)
 {
-    const unsigned int bend = inPitchValue - MIDI_PITCHBEND_MIN;
+ #if (APPLEMIDI_DEBUG)
+	Serial.print  ("pitchBend ");
+	Serial.print  (" Pitch:");
+	Serial.print  (inPitchValue);
+	Serial.print  (" Channel:");
+	Serial.println(inChannel);
+#endif
+
+	const unsigned int bend = inPitchValue - MIDI_PITCHBEND_MIN;
 	send(PitchBend, (bend & 0x7F), (bend >> 7) & 0x7F, inChannel);
 }
 
@@ -783,24 +1053,38 @@ void AppleMidi_Class::sysEx(unsigned int inLength,
                                 const byte* inArray,
                                 bool inArrayContainsBoundaries)
 {
-/*    if (inArrayContainsBoundaries == false)
-    {
-        mSerial.write(0xF0);
-        
-        for (unsigned int i = 0; i < inLength; ++i)
-            mSerial.write(inArray[i]);
-        
-        mSerial.write(0xF7);
-    }
-    else
-    {
-        for (unsigned int i = 0; i < inLength; ++i)
-            mSerial.write(inArray[i]);
-    }
-*/
-//#if APPLEMIDI_USE_RUNNING_STATUS
-//    mRunningStatus_TX = InvalidType;
-//#endif
+	_rtpMidi.sequenceNr++;
+//	_rtpMidi.timestamp = 
+	_rtpMidi.beginWrite(&_contentUDP);
+
+	uint8_t length = inLength + 1 + ((inArrayContainsBoundaries) ? 0 : 2);
+	_contentUDP.write(&length, 1);
+
+	uint8_t type = SystemExclusive;
+	_contentUDP.write(&type, 1);
+
+	if (!inArrayContainsBoundaries)
+	{
+		uint8_t octet = 0xF0;
+		_contentUDP.write(&octet, 1);
+	}
+
+	_contentUDP.write(inArray, inLength);
+
+	if (!inArrayContainsBoundaries)
+	{
+		uint8_t octet = 0xF7;
+		_contentUDP.write(&octet, 1);
+	}
+
+ 	_rtpMidi.endWrite(&_contentUDP);
+   
+    // Do not cancel Running Status for real-time messages as they can be 
+    // interleaved within any message. Though, TuneRequest can be sent here, 
+    // and as it is a System Common message, it must reset Running Status.
+#if APPLEMIDI_USE_RUNNING_STATUS
+    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+#endif
 }
 
 /*! \brief Send a Tune Request message. 
@@ -810,7 +1094,57 @@ void AppleMidi_Class::sysEx(unsigned int inLength,
  */
 void AppleMidi_Class::tuneRequest()
 {
-//    sendRealTime(TuneRequest);
+    send(TuneRequest);
+}
+
+/*! \brief . 
+ A device sends out an Active Sense message (at least once) every 300 milliseconds 
+ if there has been no other activity on the MIDI buss, to let other devices know 
+ that there is still a good MIDI connection between the devices. 
+
+ When a device receives an Active Sense message (from some other device), it should
+ expect to receive additional Active Sense messages at a rate of one approximately 
+ every 300 milliseconds, whenever there is no activity on the MIDI buss during that 
+ time. (Of course, if there are other MIDI messages happening at least once every 300 
+ mSec, then Active Sense won't ever be sent. An Active Sense only gets sent if there
+ is a 300 mSec "moment of silence" on the MIDI buss. You could say that a device that 
+ sends out Active Sense "gets nervous" if it has nothing to do for over 300 mSec, and 
+ so sends an Active Sense just for the sake of reassuring other devices that this device 
+ still exists). If a message is missed (ie, 0xFE nor any other MIDI message is received 
+ for over 300 mSec), then a device assumes that the MIDI connection is broken, and 
+ turns off all of its playing notes (which were turned on by incoming Note On messages, 
+ versus ones played on the local keyboard by a musician). Of course, if a device never 
+ receives an Active Sense message to begin with, it should not expect them at all. So, 
+ it takes one "nervous" device to start the process by initially sending out an Active 
+ Sense message to the other connected devices during a 300 mSec moment of silence 
+ on the MIDI bus. 
+
+ (http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec/sense.htm)
+ */
+void AppleMidi_Class::activeSensing()
+{
+	send(ActiveSensing);
+}
+
+/*! \brief 
+ */
+void AppleMidi_Class::start()
+{
+	send(Start);
+}
+
+/*! \brief 
+ */
+void AppleMidi_Class::_continue()
+{
+	send(Continue);
+}
+
+/*! \brief 
+ */
+void AppleMidi_Class::stop()
+{
+	send(Stop);
 }
 
 /*! \brief Send a MIDI Time Code Quarter Frame. 
@@ -819,8 +1153,7 @@ void AppleMidi_Class::tuneRequest()
  \param inValuesNibble    MTC data
  See MIDI Specification for more information.
  */
-void AppleMidi_Class::timeCodeQuarterFrame(DataByte inTypeNibble, 
-                                               DataByte inValuesNibble)
+void AppleMidi_Class::timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble)
 {
     const byte data = ( ((inTypeNibble & 0x07) << 4) | (inValuesNibble & 0x0F) );
     timeCodeQuarterFrame(data);
@@ -834,12 +1167,7 @@ void AppleMidi_Class::timeCodeQuarterFrame(DataByte inTypeNibble,
  */
 void AppleMidi_Class::timeCodeQuarterFrame(DataByte inData)
 {
-//    mSerial.write((byte)TimeCodeQuarterFrame);
-//    mSerial.write(inData);
-    
-//#if APPLEMIDI_USE_RUNNING_STATUS
-//    mRunningStatus_TX = InvalidType;
-//#endif
+	send(TimeCodeQuarterFrame, inData);
 }
 
 /*! \brief Send a Song Position Pointer message.
@@ -847,58 +1175,38 @@ void AppleMidi_Class::timeCodeQuarterFrame(DataByte inData)
  */
 void AppleMidi_Class::songPosition(unsigned int inBeats)
 {
-//    mSerial.write((byte)SongPosition);
-//    mSerial.write(inBeats & 0x7F);
-//    mSerial.write((inBeats >> 7) & 0x7F);
-//    
-//#if APPLEMIDI_USE_RUNNING_STATUS
-//    mRunningStatus_TX = InvalidType;
-//#endif
+	byte octet1 = inBeats & 0x7F;
+	byte octet2 = (inBeats >> 7) & 0x7F;
+ 
+	send(SongPosition, octet1, octet2);
 }
 
 /*! \brief Send a Song Select message */
 void AppleMidi_Class::songSelect(DataByte inSongNumber)
-{
-//    mSerial.write((byte)SongSelect);
-//    mSerial.write(inSongNumber & 0x7F);
-    
-//#if APPLEMIDI_USE_RUNNING_STATUS
-//    mRunningStatus_TX = InvalidType;
-//#endif
+{    
+	byte octet = inSongNumber & 0x7F;
+
+	send(SongSelect, octet);
 }
 
-/*! \brief Send a Real Time (one byte) message. 
- 
- \param inType    The available Real Time types are: 
- Start, Stop, Continue, Clock, ActiveSensing and SystemReset.
- You can also send a Tune Request with this method.
- @see MidiType
- */
-//void AppleMidi_Class::realTime(MidiType inType)
-//{
-//    switch (inType) 
-//    {
-//        case TuneRequest: // Not really real-time, but one byte anyway.
-//        case Clock:
-//        case Start:
-//        case Stop:    
-//        case Continue:
-//        case ActiveSensing:
-//        case SystemReset:
-////            mSerial.write((byte)inType);
-//            break;
-//        default:
-//            // Invalid Real Time marker
-//            break;
-//    }
-//    
-//    // Do not cancel Running Status for real-time messages as they can be 
-//    // interleaved within any message. Though, TuneRequest can be sent here, 
-//    // and as it is a System Common message, it must reset Running Status.
-////#if APPLEMIDI_USE_RUNNING_STATUS
-////    if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
-////#endif
-//}
+
+/*! \brief Send a Song Select message */
+void AppleMidi_Class::systemReset()
+{    
+	send(SystemReset);
+}
+
+/*! \brief Send a Song Select message */
+void AppleMidi_Class::clock()
+{    
+	send(Clock);
+}
+
+/*! \brief Send a Song Select message */
+void AppleMidi_Class::tick()
+{    
+	send(Tick);
+}
 
 /*! @} */ // End of doc group MIDI Output
 
