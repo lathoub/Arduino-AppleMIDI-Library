@@ -2,9 +2,9 @@
  *  @file		AppleMIDI.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
- *	Version		0.3
+ *	Version		0.4
  *  @author		lathoub 
- *	@date		02/04/14
+ *	@date		13/04/14
  *  License		GPL
  */
 
@@ -12,7 +12,6 @@
 
 #include "AppleMidi.h"
 
-//#include "utility/packet-rtp.h"
 #include "utility/packet-rtp-midi.h"
 #include "utility/packet-apple-midi.h"
 

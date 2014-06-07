@@ -2,9 +2,9 @@
  *  @file		AppleMIDI.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		RtpMIDI Library for the Arduino
- *	Version		0.3
+ *	Version		0.4
  *  @author		lathoub 
- *	@date		02/04/14
+ *	@date		13/04/14
  *  License		GPL
  */
 
@@ -14,7 +14,6 @@
 #include "utility/AppleMidi_Defs.h"
 
 #include "utility/RtpMidi.h"
-//#include "utility/IAppleMidi.h"
 
 #include "utility/AppleMidi_Invitation.h"
 #include "utility/AppleMidi_AcceptInvitation.h"
@@ -23,16 +22,9 @@
 #include "utility/AppleMidi_BitrateReceiveLimit.h"
 #include "utility/AppleMidi_EndSession.h"
 
-//#include "utility/AppleMidi_Parser.h"
-//#include "utility/RtpMIDI_Parser.h"
-//#include "utility/packet-rtp.h"
 #include "utility/dissector.h"
 
 #include <EthernetUdp.h>
-//#include <SPI.h>
-//#include <SD.h>
-
-#define APPLEMIDI_DEBUG 0
 
 BEGIN_APPLEMIDI_NAMESPACE
 

@@ -26,21 +26,16 @@
 // Note that thru can work only if input and output are enabled.
 
 #define RELEASE_BUILD              1
-#if (RELEASE_BUILD)
 #define DEBUG_BUILD                0
-#define APPLEMIDI_DEBUG_VERBOSE    0
-#endif
 
-#define APPLEMIDI_BUILD_INPUT                1
-#define APPLEMIDI_BUILD_OUTPUT               1
+#define APPLEMIDI_DEBUG			   1
+#define APPLEMIDI_DEBUG_VERBOSE    1
 
-#define APPLEMIDI_USE_CALLBACKS              1
-#define APPLEMIDI_USE_EVENTS                 1
+#define APPLEMIDI_BUILD_INPUT      1
+#define APPLEMIDI_BUILD_OUTPUT     1
 
-#if (DEBUG)
-#define APPLEMIDI_DEBUG						 1
-#define APPLEMIDI_DEBUG_VERBOSE              1
-#endif
+#define APPLEMIDI_USE_CALLBACKS    1
+#define APPLEMIDI_USE_EVENTS       1
 
 // -----------------------------------------------------------------------------
 
