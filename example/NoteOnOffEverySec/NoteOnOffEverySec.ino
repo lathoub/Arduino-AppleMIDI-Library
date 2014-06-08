@@ -21,7 +21,7 @@ unsigned long t0 = millis();
 void setup()
 {  
   // Serial communications and wait for port to open:
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) { 
     ; // wait for serial port to connect. Needed for Leonardo only
   }
@@ -65,7 +65,7 @@ void setup()
   AppleMIDI.OnReceiveNoteOn(OnAppleMidiNoteOn);
   AppleMIDI.OnReceiveNoteOff(OnAppleMidiNoteOff);
 
-  Serial.println("Sending Note 45 every second"); 
+  Serial.println("Sending NoteOn/Off of note 45 every second"); 
 }
 
 // -----------------------------------------------------------------------------
@@ -88,6 +88,7 @@ void loop()
     int channel = 1;
 
     AppleMIDI.noteOn(note, velocity, channel);
+    AppleMIDI.noteOff(note, velocity, channel);
   }
 }
 
