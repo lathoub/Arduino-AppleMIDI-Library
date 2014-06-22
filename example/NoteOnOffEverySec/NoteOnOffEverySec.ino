@@ -115,7 +115,6 @@ void OnAppleMidiDisconnected() {
 // 
 // -----------------------------------------------------------------------------
 void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) { 
-  Serial.println(); 
   Serial.print("Incoming NoteOn from channel:"); 
   Serial.print(channel); 
   Serial.print(" note:"); 
@@ -129,7 +128,6 @@ void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
 // 
 // -----------------------------------------------------------------------------
 void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) { 
-  Serial.println(); 
   Serial.print("Incoming NoteOff from channel:"); 
   Serial.print(channel); 
   Serial.print(" note:"); 

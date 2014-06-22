@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "dissector.h"
-
+#include "AppleMidi_Settings.h"
 #include "packet-rtp.h"
 
 #define RTPMIDI_PACKET_MAX_SIZE 96
@@ -1114,13 +1113,28 @@ private:
 public:
 	PacketRtpMidi()
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("PacketRtpMidi verbose");
+#endif
 	}
 
 	static int dissect_rtp_midi(Dissector* dissector, AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, size_t packetSize)
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print ("dissect_rtp_midi ");
+Serial.print (dissector->_identifier);
+Serial.print (", packetSize is ");
+Serial.println (packetSize);
+#endif
+
 		int consumed = PacketRtp::dissect_rtp(dissector, rtpMidi, packetBuffer, packetSize);
 		if (consumed <= 0)
+		{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("Unprocessed packet (No valid rtp midi content).");
+#endif
 			return 0;
+		}
 
 		int offset = consumed;
 
@@ -1137,6 +1151,11 @@ public:
 		/* ...followed by a length-field of at least 4 bits */
 		unsigned int cmd_len = flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print ("cmd_len is ");
+Serial.println (cmd_len);
+#endif
+
 		/* see if we have small or large len-field */
 		if (flags & RTP_MIDI_CS_FLAG_B) {
 			uint8_t	octet = packetBuffer[offset + 1];
@@ -1148,6 +1167,11 @@ public:
 
 		/* if we have a command-section -> dissect it */
 		if (cmd_len) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print ("dissect command section with packet size ");
+Serial.println (packetSize);
+#endif
 
 			/* if the reported command-length larger than data found in packet -> error */
 /*			if ( !tvb_bytes_exist( tvb, offset, cmd_len ) ) {
@@ -1164,12 +1188,20 @@ public:
 			/* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
 			while (cmd_len) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print ("cmd count is ");
+Serial.println (cmd_count);
+#endif
+
 				/* for the first command we only have a delta-time if Z-Flag is set */
 				if ( (cmd_count) || (flags & RTP_MIDI_CS_FLAG_Z) ) {
 
 					/* Decode a delta-time - if 0 is returned something went wrong */
 					int consumed = decodetime(rtpMidi, packetBuffer, offset, cmd_len);
 					if ( -1 == consumed ) {
+#ifdef APPLEMIDI_DEBUG
+Serial.print ("ReportedBoundsError 1");
+#endif
 						//THROW( ReportedBoundsError );
 						return -1;
 					}
@@ -1185,7 +1217,9 @@ public:
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
 					int consumed = decodemidi(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, &runningstatus, &rsoffset );
 					if ( -1 == consumed ) {
-						//THROW( ReportedBoundsError );
+#ifdef APPLEMIDI_DEBUG
+Serial.print ("ReportedBoundsError 2");
+#endif
 						return -1;
 					}
 
@@ -1196,10 +1230,7 @@ public:
 					/* as we have successfully decoded another command, increment count */
 					cmd_count++;
 				}
-
-
 			}
-
 		}
 
 		/*
@@ -1208,7 +1239,9 @@ public:
 
 		/* if we have a journal-section -> dissect it */
 		if ( flags & RTP_MIDI_CS_FLAG_J ) {
-Serial.println("Journal section");
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("journal section");
+#endif
 			/* lets get the main flags from the recovery journal header */
 			flags = packetBuffer[offset];
 
@@ -1226,7 +1259,10 @@ Serial.println("Journal section");
 				int consumed = decode_system_journal( rtpMidi, packetBuffer, offset );
 
 				if ( -1 == consumed ) {
-			//	THROW( ReportedBoundsError );
+#ifdef APPLEMIDI_DEBUG
+Serial.print ("ReportedBoundsError 3");
+#endif
+				//		THROW( ReportedBoundsError );
 				return -1;
 				}
 
@@ -1243,6 +1279,9 @@ Serial.println("Journal section");
 					int consumed = 0;//decode_channel_journal( tvb, pinfo, rtp_midi_chanjournals_tree, offset );
 
 					if ( -1 == consumed ) {
+#ifdef APPLEMIDI_DEBUG
+Serial.print ("ReportedBoundsError 4");
+#endif
 				//		THROW( ReportedBoundsError );
 						return -1;
 					}
@@ -1262,7 +1301,9 @@ Serial.println("Journal section");
 	static int
 	decode_system_journal(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
 	{
-		Serial.print("decode_system_journal");
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_system_journal");
+#endif
 
 		int				consumed     = 0;
 		int				ext_consumed = 0;
@@ -1335,8 +1376,9 @@ Serial.println("Journal section");
 		int				consumed = 0;
 		int				ext_consumed = 0;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.print("decode_channel_journal");
-
+#endif
 		/* first we need to get the flags & length of this channel-journal */
 		uint16_t chanflags = packetBuffer[offset];//tvb_get_ntoh24( tvb, offset );
 		uint32_t chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
@@ -1436,12 +1478,19 @@ Serial.println("Journal section");
 	static int
 	decodemidi(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decodemidi");
+#endif
+
 		int	consumed = 0;
 		int	ext_consumed = 0;
 		bool using_rs;
 
 		/* extra sanity check */
 		if ( !cmd_len ) {
+#ifdef APPLEMIDI_DEBUG
+Serial.print ("sanity check failed");
+#endif
 			return -1;
 		}
 
@@ -1454,7 +1503,9 @@ Serial.println("Journal section");
 			//proto_tree *command_tree;
 			//const gchar *valstr;
 
-			Serial.println("RT");
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("RealTime");
+#endif
 
 			//valstr = val_to_str( octet, rtp_midi_common_status, rtp_midi_unknown_value_hex );
 			//command_item = proto_tree_add_text(tree, tvb, offset, 1, "%s", valstr );
@@ -1532,12 +1583,16 @@ Serial.println("Journal section");
 				break;
 			default:
 				ext_consumed = -1;
+#ifdef APPLEMIDI_DEBUG
 				Serial.println("UnknownA");
+#endif
 			}
 
 			/* external decoder informed us of error -> pass this through */
 			if ( ext_consumed < 0 ) {
-			Serial.println("errora");
+#ifdef APPLEMIDI_DEBUG
+Serial.println("errora");
+#endif
 				return ext_consumed;
 			}
 
@@ -1572,13 +1627,17 @@ Serial.println("Journal section");
 			break;
 		default:
 			ext_consumed = -1;
+#ifdef APPLEMIDI_DEBUG
 			Serial.println("UnknownB");
+#endif
 			break;
 		}
 
 		/* external decoder informed us of error -> pass this through */
 		if ( ext_consumed < 0 ) {
+#ifdef APPLEMIDI_DEBUG
 			Serial.println("errorb");
+#endif
 
 			return ext_consumed;
 		}
@@ -1592,6 +1651,10 @@ Serial.println("Journal section");
 	static int
 	decodetime(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int cmd_len)
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decodetime");
+#endif
+
 		unsigned int consumed = 0;
 
 		/* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
@@ -1618,6 +1681,10 @@ Serial.println("Journal section");
 	static int
 	decode_note_off(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_note_off");
+#endif
+
 		//status_str = val_to_str( status >> 4, rtp_midi_channel_status, rtp_midi_unknown_value_hex );
 
 		uint8_t type    = (status >> 4);
@@ -1629,7 +1696,9 @@ Serial.println("Journal section");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -1641,7 +1710,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1652,7 +1723,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("not enough");
+#endif
 			return -1;
 		}
 
@@ -1663,7 +1736,9 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command 2");
+#endif
 			return -1;
 		}
 
@@ -1684,6 +1759,10 @@ Serial.println("aborted MIDI-command 2");
 	static int
 	decode_note_on(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, uint8_t status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_note_on");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1693,7 +1772,9 @@ Serial.println("aborted MIDI-command 2");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("!cmd_len");
+#endif
 			return -1;
 		}
 
@@ -1706,7 +1787,9 @@ Serial.println("!cmd_len");
 			} else {
 			}
 			return -1;
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command");
+#endif
 		}
 
 		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
@@ -1716,7 +1799,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("not enough data");
+#endif
 			return -1;
 		}
 
@@ -1727,7 +1812,9 @@ Serial.println("not enough data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command 2");
+#endif
 			return -1;
 		}
 
@@ -1752,6 +1839,10 @@ Serial.println("aborted MIDI-command 2");
 	static int
 	decode_poly_pressure(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_poly_pressure");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1761,7 +1852,9 @@ Serial.println("aborted MIDI-command 2");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -1773,7 +1866,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1784,7 +1879,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("not enough");
+#endif
 			return -1;
 		}
 
@@ -1795,7 +1892,9 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1816,6 +1915,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_channel_pressure(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_channel_pressure");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1825,7 +1928,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -1837,7 +1942,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1863,6 +1970,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_pitch_bend_change(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_pitch_bend_change");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1872,7 +1983,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -1884,7 +1997,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1893,7 +2008,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("not enough");
+#endif
 			return -1;
 		}
 
@@ -1905,7 +2022,9 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1934,6 +2053,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_program_change(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_program_change");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1943,7 +2066,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -1955,7 +2080,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -1982,6 +2109,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_control_change(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_control_change");
+#endif
+
 		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
 
@@ -1991,7 +2122,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -2003,7 +2136,9 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -2014,7 +2149,9 @@ Serial.println("aborted MIDI-command");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("not enough");
+#endif
 			return -1;
 		}
 
@@ -2025,7 +2162,9 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -2047,6 +2186,10 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_sd_hdr( unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_sysex_common_nrt_sd_hdr");
+#endif
+
 		Serial.println("decode_sysex_common_nrt_sd_hdr");
 
 		return 1;
@@ -2058,7 +2201,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_sd_packet(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
-		Serial.println("decode_sysex_common_nrt_sd_packet");
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_sysex_common_nrt_sd_packet");
+#endif
 
 		return 1;
 	}
@@ -2070,7 +2215,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_sd_req(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_sd_req");
+#endif
 
 		return 1;
 	}
@@ -2081,7 +2228,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_sd_ext(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_sd_ext");
+#endif
 
 		return 1;
 	}
@@ -2093,7 +2242,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_gi(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_gi");
+#endif
 
 		return 1;
 	}
@@ -2104,7 +2255,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_fd(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_fd");
+#endif
 
 		return 1;
 	}
@@ -2116,7 +2269,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_tuning(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_tuning");
+#endif
 
 		return 1;
 	}
@@ -2127,7 +2282,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_gm(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_gm");
+#endif
 
 		return 1;
 	}
@@ -2138,7 +2295,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_dls(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_dls");
+#endif
 
 		return 1;
 	}
@@ -2149,7 +2308,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_eof(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_eof");
+#endif
 
 		return 1;
 	}
@@ -2160,7 +2321,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_wait(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_wait");
+#endif
 
 		return 1;
 	}
@@ -2171,7 +2334,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_cancel(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_cancel");
+#endif
 
 		return 1;
 	}
@@ -2182,7 +2347,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_nak(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_nak");
+#endif
 
 		return 1;
 	}
@@ -2193,7 +2360,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_ack(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_ack");
+#endif
 
 		return 1;
 	}
@@ -2205,7 +2374,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt_mtc(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_mtc");
+#endif
 
 		return 1;
 	}
@@ -2217,7 +2388,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_mtc_cue(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mtc_cue");
+#endif
 
 		return 1;
 	}
@@ -2228,7 +2401,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_nrt(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt");
+#endif
 
 		return 1;
 	}
@@ -2239,7 +2414,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_mtc(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mtc");
+#endif
 
 		return 1;
 	}
@@ -2250,7 +2427,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_sc(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_sc");
+#endif
 
 		return 1;
 	}
@@ -2261,7 +2440,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_ni(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_ni");
+#endif
 
 		return 1;
 	}
@@ -2272,7 +2453,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_dc(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_dc");
+#endif
 
 		return 1;
 	}
@@ -2283,7 +2466,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_mmc_command(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mmc_command");
+#endif
 
 		return 1;
 	}
@@ -2294,7 +2479,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt_mmc_response(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mmc_response");
+#endif
 
 		return 1;
 	}
@@ -2305,7 +2492,9 @@ Serial.println("aborted MIDI-command");
 	static unsigned int
 	decode_sysex_common_rt(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt");
+#endif
 
 		return 1;
 	}
@@ -2317,6 +2506,10 @@ Serial.println("aborted MIDI-command");
 	*/
 	static unsigned int
 	decode_sysex_common_educational(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_sysex_common_educational");
+#endif
 
 		int		 consumed	= 0;
 
@@ -2353,6 +2546,10 @@ Serial.println("aborted MIDI-command");
 	*/
 	static unsigned int
 	decode_sysex_start(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_sysex_start");
+#endif
 
 		int		 consumed	= 0;
 		int		 data_len;
@@ -2450,6 +2647,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_mtc_quarter_frame(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_mtc_quarter_frame");
+#endif
+
 		//const gchar	*status_str;
 		//proto_item	*command_item;
 		//proto_tree	*command_tree;
@@ -2461,7 +2662,9 @@ Serial.println("aborted MIDI-command");
 			//command_item = proto_tree_add_text( tree, tvb, offset - 1, 1, "TRUNCATED: %s ", status_str );
 			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command );
 			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset - 1, 1, ENC_BIG_ENDIAN );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 		return -1;
 		}
 
@@ -2472,7 +2675,9 @@ Serial.println("no further data");
 			//command_item = proto_tree_add_text( tree, tvb, offset - 1, 1, "ABORTED: %s", status_str );
 			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command );
 			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset - 1, 1, ENC_BIG_ENDIAN );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -2495,9 +2700,15 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_song_position_pointer(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_song_position_pointer");
+#endif
+
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -2505,13 +2716,17 @@ Serial.println("no further data");
 
 		/* seems to be an aborted MIDI-command */
 		if ( octet1 & RTP_MIDI_COMMAND_STATUS_FLAG ) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("not enough");
+#endif
 			return -1;
 		}
 
@@ -2520,7 +2735,9 @@ Serial.println("not enough");
 		/* seems to be an aborted MIDI-command */
 		if ( octet2 & RTP_MIDI_COMMAND_STATUS_FLAG ) {
 			/* this case should never happen */
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -2543,9 +2760,15 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_song_select(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("decode_song_select");
+#endif
+
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
+#endif
 			return -1;
 		}
 
@@ -2553,7 +2776,9 @@ Serial.println("no further data");
 
 		/* seems to be an aborted MIDI-command */
 		if ( song_nr & RTP_MIDI_COMMAND_STATUS_FLAG ) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command");
+#endif
 			return -1;
 		}
 
@@ -2574,7 +2799,9 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_undefined_f4(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_undefined_f4");
+#endif
 
 		return 1;
 	}
@@ -2585,7 +2812,9 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_undefined_f5(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_undefined_f5");
+#endif
 
 		return 1;
 	}
@@ -2595,6 +2824,10 @@ Serial.println("aborted MIDI-command");
 	*/
 	static int
 	decode_tune_request(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_tune_request");
+#endif
 
 		rtpMidi->OnTuneRequest(NULL);
 
@@ -2607,7 +2840,11 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_sysex_end(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
-		int		 consumed = 0;
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_sysex_end");
+#endif
+
+		int consumed = 0;
 
 		/* we need to parse "away" data until the next command */
 		while ( cmd_len ) {
@@ -2636,7 +2873,9 @@ Serial.println("aborted MIDI-command");
 
 		// TODO: what to do here???
 		// rtpMidi->OnSys???(NULL);
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_end");
+#endif
 
 		return consumed;
 	}

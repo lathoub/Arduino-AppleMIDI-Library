@@ -528,7 +528,15 @@ void AppleMidi_Class::OnProgramChange(void* sender, DataByte channel, DataByte p
 	Serial.print  (channel);
 	Serial.print  (", p=");
 	Serial.print  (program);
-	Serial.println(")");
+	Serial.print  (") ");
+
+	switch (program)
+	{
+	default:
+		Serial.println("Other");
+		break;
+	}
+
 #endif
 
 	if (mProgramChangeCallback)
@@ -546,7 +554,164 @@ void AppleMidi_Class::OnControlChange(void* sender, DataByte channel, DataByte c
 	Serial.print  (controller);
 	Serial.print  (", v=");
 	Serial.print  (value);
-	Serial.println(")");
+	Serial.print  (") ");
+
+	switch (controller)
+	{
+	case BankSelect:
+		Serial.println("BankSelect");
+		break;
+	case ModulationWheel:
+		Serial.println("ModulationWheel");
+		break;
+	case BreathController:
+		Serial.println("BreathController");
+		break;
+	case FootController:
+		Serial.println("FootController");
+		break;
+	case PortamentoTime:
+		Serial.println("PortamentoTime");
+		break;
+	case DataEntry:
+		Serial.println("DataEntry");
+		break;
+	case ChannelVolume:
+		Serial.println("ChannelVolume");
+		break;
+	case Balance:
+		Serial.println("Balance");
+		break;
+	case Pan:
+		Serial.println("Pan");
+		break;
+	case ExpressionController:
+		Serial.println("ExpressionController");
+		break;
+	case EffectControl1:
+		Serial.println("EffectControl1");
+		break;
+	case EffectControl2:
+		Serial.println("EffectControl2");
+		break;
+	case GeneralPurposeController1:
+		Serial.println("GeneralPurposeController1");
+		break;
+	case GeneralPurposeController2:
+		Serial.println("GeneralPurposeController2");
+		break;
+	case GeneralPurposeController3:
+		Serial.println("GeneralPurposeController3");
+		break;
+	case GeneralPurposeController4:
+		Serial.println("GeneralPurposeController4");
+		break;
+	case Sustain:
+		Serial.println("Sustain");
+		break;
+	case Portamento:
+		Serial.println("Portamento");
+		break;
+	case Sostenuto:
+		Serial.println("Sostenuto");
+		break;
+	case SoftPedal:
+		Serial.println("SoftPedal");
+		break;
+	case Legato:
+		Serial.println("Legato");
+		break;
+	case Hold:
+		Serial.println("Hold");
+		break;
+	case SoundController1:
+		Serial.println("SoundController1");
+		break;
+	case SoundController2:
+		Serial.println("SoundController2");
+		break;
+	case SoundController3:
+		Serial.println("SoundController3");
+		break;
+	case SoundController4:
+		Serial.println("SoundController4");
+		break;
+	case SoundController5:
+		Serial.println("SoundController5");
+		break;
+	case SoundController6:
+		Serial.println("SoundController6");
+		break;
+	case SoundController7:
+		Serial.println("SoundController7");
+		break;
+	case SoundController8:
+		Serial.println("SoundController8");
+		break;
+	case SoundController9:
+		Serial.println("SoundController9");
+		break;
+	case SoundController10:
+		Serial.println("SoundController10");
+		break;
+	case GeneralPurposeController5:
+		Serial.println("GeneralPurposeController5");
+		break;
+	case GeneralPurposeController6:
+		Serial.println("GeneralPurposeController6");
+		break;
+	case GeneralPurposeController7:
+		Serial.println("GeneralPurposeController7");
+		break;
+	case GeneralPurposeController8:
+		Serial.println("GeneralPurposeController8");
+		break;
+	case PortamentoControl:
+		Serial.println("PortamentoControl");
+		break;
+	case Effects1:
+		Serial.println("Effects1");
+		break;
+	case Effects2:
+		Serial.println("Effects2");
+		break;
+	case Effects3:
+		Serial.println("Effects3");
+		break;
+	case Effects4:
+		Serial.println("Effects4");
+		break;
+	case Effects5:
+		Serial.println("Effects5");
+		break;
+	case AllSoundOff:
+		Serial.println("AllSoundOff");
+		break;
+	case ResetAllControllers:
+		Serial.println("ResetAllControllers");
+		break;
+	case LocalControl:
+		Serial.println("LocalControl");
+		break;
+	case AllNotesOff:
+		Serial.println("AllNotesOff");
+		break;
+	case OmniModeOff:
+		Serial.println("OmniModeOff");
+		break;
+	case OmniModeOn:
+		Serial.println("OmniModeOn");
+		break;
+	case MonoModeOn:
+		Serial.println("MonoModeOn");
+		break;
+	case PolyModeOn:
+		Serial.println("PolyModeOn");
+		break;
+	default:
+		Serial.println("Other");
+		break;
+	}
 #endif
 
 	if (mControlChangeCallback)

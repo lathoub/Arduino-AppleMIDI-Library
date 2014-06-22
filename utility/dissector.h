@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "AppleMidi_Settings.h"
+
 #define PACKET_MAX_SIZE 96
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -35,6 +37,12 @@ public:
 private:
 	void resetBuffer(size_t index)
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("resetBuffer for ");
+Serial.print  (index);
+Serial.println(" bytes");
+#endif
+
 		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
 		_protocolBufferIndex -= index;
 	}
@@ -42,6 +50,10 @@ private:
 	void reset()
 	{
 		_protocolBufferIndex = 0;
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("reset");
+#endif
 	}
 
 	void call_dissector()

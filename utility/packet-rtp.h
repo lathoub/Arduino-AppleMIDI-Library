@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "AppleMidi_Settings.h"
 #include "dissector.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -79,11 +80,21 @@ public:
 
 	static int dissect_rtp(Dissector* dissector, AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, size_t packetSize)
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("dissect_rtp");
+#endif
+
 		size_t offset = 0;
 
 		// We need a minimum of 12 bytes
 		if (packetSize < 12)
+		{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("not enough bytes. Need at least 12, got");
+Serial.println(packetSize);
+#endif
 			return 0;
+		}
 
 		/* Can tap up to 4 RTP packets within same packet */
 		static struct _rtp_info rtp_info_arr[4];
@@ -102,6 +113,9 @@ public:
 
 		if (version == 0) {
 			 /* Unknown or unsupported version (let it fall through) */
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("unknown version, let if fall through");
+#endif
 		}
 
 		/* fill in the rtp_info structure */
@@ -110,6 +124,10 @@ public:
 			/*
 			* Unknown or unsupported version.
 			*/
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("unsupported version ");
+Serial.println(version);
+#endif
 			return 0;
 		}
 
@@ -126,6 +144,16 @@ public:
 		uint16_t seq_num   = AppleMIDI_Util::readUInt16(packetBuffer + offset + 2);
 		uint32_t timestamp = AppleMIDI_Util::readUInt32(packetBuffer + offset + 4);
 		uint32_t sync_src  = AppleMIDI_Util::readUInt32(packetBuffer + offset + 8);
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("Seq Number: ");
+Serial.println(seq_num, HEX);
+Serial.print  ("Timestamp : ");
+Serial.println(timestamp, HEX);
+Serial.print  ("Sync Src  : ");
+Serial.println(sync_src, HEX);
+#endif
+
 
 		/* fill in the rtp_info structure */
 		rtp_info->info_padding_set = padding_set;
@@ -153,6 +181,10 @@ public:
 			rtp_info->info_all_data_present = true;
 			rtp_info->info_data_len = reported_length;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("Have all the data");
+#endif
+
 			/*
 			* Save the pointer to raw rtp data (header + payload incl.
 			* padding).
@@ -172,6 +204,11 @@ public:
 			rtp_info->info_all_data_present = false;
 			rtp_info->info_data_len = 0;
 			rtp_info->info_data = NULL;
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("do not all data");
+#endif
+
 		}
 
 		/* if it is dynamic payload, let use the conv data to see if it is defined */
@@ -179,6 +216,10 @@ public:
 			// only 97 is supported
 			//rtp_info->info_payload_type_str = "something";
 			//rtp_info->info_payload_rate = encoding_name_and_rate_pt->sample_rate;
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("payload_type is ");
+Serial.println(payload_type);
+#endif
 		}
 
 		if (true) {
@@ -213,9 +254,10 @@ public:
 		/* CSRC list*/
 		if ( csrc_count > 0 ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.print  ("csrc_count = ");
 			Serial.println(csrc_count);
-
+#endif
 			// Not supported
 			if (true) {
 			}
@@ -227,22 +269,25 @@ public:
 
 		if ( extension_set ) {
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.print  ("extension ");
-
+#endif
 			// not supported
 			/* Defined by profile field is 16 bits (2 octets) */
 			int hdr_extension_id = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 			offset += 2;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.print  ("hdr_extension_id = ");
-			Serial.print  (hdr_extension_id);
-
+			Serial.println(hdr_extension_id);
+#endif
 			int hdr_extension = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 			offset += 2;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.print  ("hdr_extension = ");
 			Serial.println(hdr_extension);
-
+#endif
 			if ( hdr_extension > 0 ) {
 				/* pass interpretation of header extension to a registered subdissector */
 
@@ -273,9 +318,10 @@ public:
 			* the packet; it contains the number of octets
 			* that can be ignored at the end of the packet.
 			*/			
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.println("padding = ");
 	//		Serial.print  (hdr_extension_id);
-			
+#endif		
 			// not supported
 
 			int padding_count = 0;
@@ -294,13 +340,24 @@ public:
 			* No padding.
 			*/
 //			int consumed = dissect_rtp_data(dissector, appleMidi, packetBuffer, offset, 0, packetSize, payload_type );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+	Serial.println("No padding set");
+#endif		
 
 			rtp_info->info_payload_offset = offset;
 //			rtp_info->info_payload_len = tvb_length_remaining(tvb, offset);
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+	Serial.print  ("Offset is ");
+	Serial.println(offset);
+#endif		
+
 			return offset;
 		}
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+	Serial.println("Nothing processed");
+#endif		
 		return 0;
 	}
 
