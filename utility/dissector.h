@@ -49,7 +49,7 @@ Serial.println(" bytes ");
 
 		if (_protocolBufferIndex < 0)
 		{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.print  ("ProtocolBuffer Underrun. _protocolBufferIndex");
 Serial.print  (_protocolBufferIndex);
 Serial.print  (" index ");
@@ -134,7 +134,7 @@ public:
 		// enough room in buffer? If so, reset protocolBuffer back to zero
 		if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE)
 		{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
 #endif
 			reset();

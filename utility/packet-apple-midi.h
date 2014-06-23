@@ -29,6 +29,8 @@ const uint8_t amBitrateReceiveLimit [] = {'R', 'L'};
 
 const unsigned char stringTerminator [] = { 0x00 };
 
+#define NOT_ENOUGH_DATA 0
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 class PacketAppleMidi {
@@ -53,26 +55,27 @@ Serial.println (packetSize);
 
 		if (packetSize < sizeof(amSignature))
 		{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.print ("Not enough data ");
 Serial.println (packetSize);
 #endif
-			return offset; // Will be zero
+			return NOT_ENOUGH_DATA;
 		}
 
-		if (0 != memcmp((void*)(packetBuffer + offset), amSignature, sizeof(amSignature)))
+		if (0 == memcmp((void*)(packetBuffer + offset), amSignature, sizeof(amSignature)))
+		{
+			offset += sizeof(amSignature);
+		}
+		else
 		{
 			/*
 			* Unknown or unsupported signature.
 			*/
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Signature not supported.");
 #endif
-			return offset; // use these 2 bytes
+			return sizeof(amSignature);
 		}
-
-		// first 2 bytes OK
-		offset += sizeof(amSignature);
 
 		//
 		if (0 == memcmp((void*)(packetBuffer + offset), amInvitation, sizeof(amInvitation)))
@@ -101,11 +104,11 @@ Serial.println("Signature not supported.");
 				}
 			}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough data for Invitation");
 #endif
 
-			return 0;
+			return NOT_ENOUGH_DATA;
 		}
 		else if (0 == memcmp((void*)(packetBuffer + offset), amSyncronization, sizeof(amSyncronization)))
 		{
@@ -128,10 +131,10 @@ Serial.println("Not enough data for Invitation");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough data for Syncronization");
 #endif
-			return 0;
+			return NOT_ENOUGH_DATA;
 		}
 		else if (0 == memcmp((void*)(packetBuffer + offset), amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
@@ -151,10 +154,10 @@ Serial.println("Not enough data for Syncronization");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough data for ReceiverFeedback");
 #endif
-			return 0;
+			return NOT_ENOUGH_DATA;
 		}
 		else if (0 == memcmp((void*)(packetBuffer + offset), amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
 		{
@@ -173,10 +176,10 @@ Serial.println("Not enough data for ReceiverFeedback");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough data for BitrateReceiveLimit");
 #endif
-			return 0;
+			return NOT_ENOUGH_DATA;
 		}
 		else if (0 == memcmp((void*)(packetBuffer + offset), amEndSession, sizeof(amEndSession)))
 		{
@@ -197,13 +200,13 @@ Serial.println("Not enough data for BitrateReceiveLimit");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("Not enough data for EndSession");
 #endif
-			return 0;
+			return NOT_ENOUGH_DATA;
 		}
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 		Serial.println("dissect_apple_midi. Signature OK, command unknown Not valid, skipping");
 #endif
 

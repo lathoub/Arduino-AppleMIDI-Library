@@ -102,11 +102,11 @@ void AppleMidi_Class::begin(const char* name)
 	_contentUDP.begin(Port + 1);
 
 	_controlDissector.init(Port, this);
-	_controlDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);
+	_controlDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);	// Add parser
 
 	_contentDissector.init(Port + 1, this);
-	_contentDissector.addPacketDissector(&PacketRtpMidi::dissect_rtp_midi);
-	_contentDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);
+	_contentDissector.addPacketDissector(&PacketRtpMidi::dissect_rtp_midi);		// Add parser
+	_contentDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);	// Add parser
 
 	_rtpMidi.ssrc = _ssrc;
 	_rtpMidi.sequenceNr = 1;
@@ -120,7 +120,7 @@ void AppleMidi_Class::begin(const char* name)
 #if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" Verbose");
 #endif
-	Serial.println();
+	Serial.println(" logging");
 #endif
 }
 
@@ -388,7 +388,7 @@ void AppleMidi_Class::OnEndSession(void* sender, EndSession_t& sessionEnd)
 		return; 
 	}
 
-#if (APPLEMIDI_DEBUG) && (APPLEMIDI_DEBUG_VERBOSE)
+#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print("Ending session. Freeing slot ");
 	Serial.print(index);
 	Serial.println(". Bye");
