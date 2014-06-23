@@ -36,7 +36,7 @@ public:
 	int _identifier;
 
 private:
-	void resetBuffer(size_t index)
+	void purgeBuffer(size_t index)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.print  ("Purging left ");
@@ -46,6 +46,19 @@ Serial.println(" bytes ");
 
 		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
 		_protocolBufferIndex -= index;
+
+		if (_protocolBufferIndex < 0)
+		{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print  ("ProtocolBuffer Underrun. _protocolBufferIndex");
+Serial.print  (_protocolBufferIndex);
+Serial.print  (" index ");
+Serial.print  (index);
+Serial.println(" _protocolBufferIndex set to 0");
+#endif
+
+			_protocolBufferIndex = 0;
+		}
 	}
 
 	void reset()
@@ -66,7 +79,7 @@ Serial.println("reset");
 
 				int consumed = _externalDissector[i](this, _appleMidi, _protocolBuffer, _protocolBufferIndex);
 				if (consumed > 0) {
-					resetBuffer(consumed);
+					purgeBuffer(consumed);
 					return;
 				}
 			}

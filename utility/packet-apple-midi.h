@@ -49,7 +49,6 @@ Serial.print (", packetSize is ");
 Serial.println (packetSize);
 #endif
 
-
 		size_t offset = 0;
 
 		if (packetSize < sizeof(amSignature))
@@ -58,8 +57,7 @@ Serial.println (packetSize);
 Serial.print ("Not enough data ");
 Serial.println (packetSize);
 #endif
-
-			return -1;
+			return offset; // Will be zero
 		}
 
 		if (0 != memcmp((void*)(packetBuffer + offset), amSignature, sizeof(amSignature)))
@@ -68,9 +66,9 @@ Serial.println (packetSize);
 			* Unknown or unsupported signature.
 			*/
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Signature not supported ");
+Serial.println("Signature not supported.");
 #endif
-			return 0;
+			return offset; // use these 2 bytes
 		}
 
 		// first 2 bytes OK
@@ -84,7 +82,8 @@ Serial.println("Signature not supported ");
 			int start = 4 + 4 + 4 + 1;
 
 			// do we have a terminating string?
-			for (int i = start; i < packetSize; i++) {
+			for (int i = start; i < packetSize, offset + i < packetSize; i++) {
+
 				if (0 == memcmp((packetBuffer + offset) + i, stringTerminator, sizeof(stringTerminator))) {
 
 					AppleMIDI_Invitation invitation;
@@ -208,7 +207,7 @@ Serial.println("Not enough data for EndSession");
 		Serial.println("dissect_apple_midi. Signature OK, command unknown Not valid, skipping");
 #endif
 
-		return 0;
+		return offset;
 	}
 
 };
