@@ -12,6 +12,8 @@
 
 #include "AppleMidi_Settings.h"
 
+#include <EthernetUdp.h>
+
 #define PACKET_MAX_SIZE 96
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -33,14 +35,13 @@ private:
 public:
 	int _identifier;
 
-
 private:
 	void resetBuffer(size_t index)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print  ("resetBuffer for ");
+Serial.print  ("Purging left ");
 Serial.print  (index);
-Serial.println(" bytes");
+Serial.println(" bytes ");
 #endif
 
 		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
@@ -89,7 +90,7 @@ public:
 		_identifier = identifier;
 		_appleMidi = appleMidi;
 
-		reset();
+		_protocolBufferIndex = 0;
 	}
 
 	void addPacketDissector(FPDISSECTOR externalDissector)
@@ -105,13 +106,42 @@ public:
 
 	void addPacket(unsigned char* packetBuffer, size_t packetSize)
 	{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.print  ("Incoming buffer of ");
+		Serial.print  (packetSize);
+		Serial.println(" bytes. These will be appended to the protocolBuffer");
+		for (int i = 0; i < packetSize; i++)
+		{
+			Serial.print  (packetBuffer[i], HEX);
+			Serial.print  (" ");
+		}
+		Serial.println();
+#endif
+
 		// enough room in buffer? If so, reset protocolBuffer back to zero
 		if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE)
-			resetBuffer(0);
+		{
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
+#endif
+			reset();
+		}
 
 		// Add to the end of the protocolBuffer
 		memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
 		_protocolBufferIndex += packetSize;
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.print  ("Protocol buffer contains ");
+		Serial.print  (_protocolBufferIndex);
+		Serial.println(" bytes. Content:");
+		for (int i = 0; i < _protocolBufferIndex; i++)
+		{
+			Serial.print  (_protocolBuffer[i], HEX);
+			Serial.print  (" ");
+		}
+		Serial.println();
+#endif	
 	}
 
 	void dissect()

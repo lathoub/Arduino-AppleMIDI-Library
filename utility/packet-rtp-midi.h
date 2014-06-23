@@ -1,5 +1,5 @@
 /*!
- *  @file		AppleMIDI_Parser.h
+ *  @file		packet-rtp-midi.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.0
@@ -11,9 +11,8 @@
 #pragma once
 
 #include "AppleMidi_Settings.h"
-#include "packet-rtp.h"
 
-#define RTPMIDI_PACKET_MAX_SIZE 96
+#include "packet-rtp.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
