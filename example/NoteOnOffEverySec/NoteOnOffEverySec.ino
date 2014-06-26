@@ -57,7 +57,12 @@ void setup()
   Serial.println("Then press the Connect button"); 
   Serial.println("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"); 
 
-  AppleMIDI.begin("Arduino");
+  // Create a session and wait for a remote host to connect to us
+  AppleMIDI.begin("test");
+
+  // Actively connect to a remote host
+  IPAddress host(192, 168, 1, 142);
+  AppleMIDI.Invite(host, 5004);
 
   AppleMIDI.OnConnected(OnAppleMidiConnected);
   AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
@@ -81,14 +86,14 @@ void loop()
   if ((millis() - t0) > 1000)
   {
     t0 = millis();
-    Serial.print("."); 
+ //   Serial.print("."); 
 
     int note = 45;
     int velocity = 55;
     int channel = 1;
 
-    AppleMIDI.noteOn(note, velocity, channel);
-    AppleMIDI.noteOff(note, velocity, channel);
+//    AppleMIDI.noteOn(note, velocity, channel);
+//    AppleMIDI.noteOff(note, velocity, channel);
   }
 }
 
@@ -100,15 +105,15 @@ void loop()
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(char* name) { 
-  Serial.print("Connected to session "); 
-  Serial.println(name); 
+//  Serial.print("Connected to session "); 
+//  Serial.println(name); 
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected() { 
-  Serial.println("Disconnected"); 
+//  Serial.println("Disconnected"); 
 }
 
 // -----------------------------------------------------------------------------
@@ -136,3 +141,4 @@ void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
   Serial.print(velocity); 
   Serial.println(); 
 }
+

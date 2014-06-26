@@ -38,7 +38,7 @@
 
 #if defined(DEBUG_BUILD)
 #define APPLEMIDI_DEBUG			   1
-#define APPLEMIDI_DEBUG_VERBOSE    1
+#undef APPLEMIDI_DEBUG_VERBOSE
 #endif
 
 #define APPLEMIDI_BUILD_INPUT      1
@@ -95,6 +95,7 @@
 #define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.
 
 #define MAX_SESSIONS 10
+#define MAX_PARTICIPANTS_PER_SESSION 10
 
 // -----------------------------------------------------------------------------
 

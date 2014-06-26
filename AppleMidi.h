@@ -16,7 +16,8 @@
 #include "utility/RtpMidi.h"
 
 #include "utility/AppleMidi_Invitation.h"
-#include "utility/AppleMidi_AcceptInvitation.h"
+#include "utility/AppleMidi_InvitationAccepted.h"
+#include "utility/AppleMidi_InvitationRejected.h"
 #include "utility/AppleMidi_ReceiverFeedback.h"
 #include "utility/AppleMidi_Syncronization.h"
 #include "utility/AppleMidi_BitrateReceiveLimit.h"
@@ -34,7 +35,7 @@ BEGIN_APPLEMIDI_NAMESPACE
  */
 class AppleMidi_Class //: public IAppleMidi, public IRtpMidi
 {
-public:
+protected:
 	//
 	EthernetUDP _controlUDP;
 	EthernetUDP _contentUDP;
@@ -43,6 +44,8 @@ public:
 	Dissector _contentDissector;
 
 	RtpMidi		_rtpMidi;
+
+	SessionInvite_t _sessionInvite;
 
 	// SSRC, Synchronization source.
 	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
@@ -58,29 +61,35 @@ public:
 	// be identified as a different SSRC.
 	uint32_t _ssrc;
 
-	//
-public:
-	static Session_t	Sessions[MAX_SESSIONS];
+	// Allow for multiple sessions????
+	Session_t	Sessions[MAX_SESSIONS];
 
-	char Name[50];
+	char SessionName[50];
 
 public:
 	// Constructor and Destructor
 	AppleMidi_Class();
 	~AppleMidi_Class();
 
-	static const int Port = CONTROL_PORT;
+	int Port;
 
-	void begin(const char* name);
+	void begin(const char*, uint16_t port = CONTROL_PORT);
 	
 	uint32_t	getSynchronizationSource() { return _ssrc; }
 
 	void run();
 
 	// IAppleMidi
+
+	virtual void Invite(IPAddress ip, uint16_t port = CONTROL_PORT);
+
 	virtual void OnInvitation(void* sender, Invitation_t&);
 	virtual void OnEndSession(void* sender, EndSession_t&);
 	virtual void OnReceiverFeedback(void* sender, ReceiverFeedback_t&);
+
+	virtual void OnInvitationAccepted(void* sender, InvitationAccepted_t&);
+	virtual void OnControlInvitationAccepted(void* sender, InvitationAccepted_t&);
+	virtual void OnContentInvitationAccepted(void* sender, InvitationAccepted_t&);
 
 	virtual void OnSyncronization(void* sender, Syncronization_t&);
 	virtual void OnBitrateReceiveLimit(void* sender, BitrateReceiveLimit_t&);
@@ -140,6 +149,12 @@ private:
     void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2);
     void internalSend(Session_t*, MidiType inType, DataByte inData);
     void internalSend(Session_t*, MidiType inType);
+
+	void ManageInvites();
+	void ManageTiming();
+
+	int GetFreeSessionSlot();
+	int GetSessionSlot(const uint32_t ssrc);
 
 #if APPLEMIDI_USE_CALLBACKS
 public:

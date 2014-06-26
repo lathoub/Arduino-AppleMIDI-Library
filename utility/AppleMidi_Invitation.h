@@ -24,7 +24,7 @@ typedef struct AppleMIDI_Invitation {
 	uint32_t	version;
 	uint32_t	initiatorToken;
 	uint32_t	ssrc;
-	char		name[16];
+	char		sessionName[16];
 
 	AppleMIDI_Invitation()
 	{
@@ -35,27 +35,22 @@ typedef struct AppleMIDI_Invitation {
 	{
 		memcpy(signature, amSignature,  sizeof(amSignature));
 		memcpy(command,   amInvitation, sizeof(amInvitation));
+		version = 2;
 	}
 
-	void write(EthernetUDP* udp)
+	void write(IPAddress ip, uint16_t port, EthernetUDP* udp)
 	{
-		udp->beginPacket(udp->remoteIP(), udp->remotePort());
+		udp->beginPacket(ip, port);
 
 		udp->write(signature, sizeof(signature));
 		udp->write(command,   sizeof(command));
 		udp->write(AppleMIDI_Util::toBuffer(version), sizeof(version));
 		udp->write(AppleMIDI_Util::toBuffer(initiatorToken), sizeof(initiatorToken));
 		udp->write(AppleMIDI_Util::toBuffer(ssrc), sizeof(ssrc));
-		udp->write((uint8_t*)name, strlen(name) + 1);
+		udp->write((uint8_t*)sessionName, strlen(sessionName) + 1);
 
 		udp->endPacket(); 
 		udp->flush(); // Waits for the transmission of outgoing serial data to complete
-
-#if (APPLEMIDI_DEBUG)
-		Serial.print  ("< Invitation: peer = \"");
-		Serial.print  (name);
-		Serial.println("\"");
-#endif
 	}
 
 } Invitation_t;

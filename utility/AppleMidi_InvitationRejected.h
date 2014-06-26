@@ -1,10 +1,10 @@
 /*!
- *  @file		AppleMIDI_EndSession.h
+ *  @file		AppleMIDI_AcceptInvitation.h
  *  Project		Arduino AppleMIDI Library
- *	@brief		AppleMIDI Library for the Arduino 
- *	Version		0.3
+ *	@brief		AppleMIDI Library for the Arduino
+ *	Version		0.0
  *  @author		lathoub 
- *	@date		04/04/14
+ *	@date		01/04/13
  *  License		GPL
  */
 
@@ -12,28 +12,41 @@
 
 #include "utility/AppleMidi_Settings.h"
 #include "utility/AppleMidi_Defs.h"
+
 #include "utility/AppleMidi_Util.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
-typedef struct AppleMIDI_EndSession {
+typedef struct AppleMIDI_InvitationRejected {
 
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	version;
 	uint32_t	initiatorToken;
 	uint32_t	ssrc;
+	char		sessionName[16];
 
-
-	inline AppleMIDI_EndSession()
+	AppleMIDI_InvitationRejected()
 	{
 		init();
+	}
+
+	inline AppleMIDI_InvitationRejected(uint32_t ssrc, uint32_t initiatorToken, char* sessionName)
+	{
+		memcpy(signature, amSignature, sizeof(amSignature));
+		memcpy(command, amInvitationRejected, sizeof(amInvitationRejected));
+		version = 2;
+
+		this->initiatorToken = initiatorToken;
+		this->ssrc           = ssrc;
+		strcpy(this->sessionName, (const char*)sessionName);
 	}
 
 	void init()
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
-		memcpy(command, amEndSession, sizeof(amEndSession));
+		memcpy(command, amInvitationRejected, sizeof(amInvitationRejected));
+		version = 2;
 	}
 
 	void write(EthernetUDP* udp)
@@ -45,11 +58,12 @@ typedef struct AppleMIDI_EndSession {
 		udp->write(AppleMIDI_Util::toBuffer(version), sizeof(version));
 		udp->write(AppleMIDI_Util::toBuffer(initiatorToken), sizeof(initiatorToken));
 		udp->write(AppleMIDI_Util::toBuffer(ssrc), sizeof(ssrc));
+		udp->write((uint8_t*)sessionName, strlen(sessionName) + 1);
 
 		udp->endPacket(); 
 		udp->flush(); // Waits for the transmission of outgoing serial data to complete
 	}
 
-} EndSession_t;
+} InvitationRejected_t;
 
 END_APPLEMIDI_NAMESPACE

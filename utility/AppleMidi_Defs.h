@@ -99,7 +99,8 @@ enum AppleMIDICommand {
 const uint8_t amSignature [] = {0xff, 0xff};
 
 const uint8_t amInvitation          [] = {'I', 'N'};
-const uint8_t amAcceptInvitation    [] = {'O', 'K'};
+const uint8_t amInvitationAccepted  [] = {'O', 'K'};
+const uint8_t amInvitationRejected  [] = {'N', 'O'};
 const uint8_t amEndSession          [] = {'B', 'Y'};
 const uint8_t amSyncronization      [] = {'C', 'K'};
 const uint8_t amReceiverFeedback    [] = {'R', 'S'};
@@ -274,10 +275,36 @@ struct Message
 // generates multiple streams in one RTP session, for example from separate video cameras, each must
 // be identified as a different SSRC.
 
+//enum SessionInitiator
+//{
+//	Undefined,
+//	Remote,
+//	Local,
+//};
+
+enum SessioInviteStatus
+{
+	None,
+	WaitingForControlInvitationAccepted,
+	WaitingForContentInvitationAccepted,
+};
+
+typedef struct _SessionInvite_t {
+	SessioInviteStatus status;
+	unsigned long lastSend;
+    IPAddress remoteHost;
+	uint16_t  remotePort;
+} SessionInvite_t;
+
+//typedef struct _Participant_t {
+//    uint32_t initiatorToken;
+//	uint16_t sequenceNumber;
+//} Participant_t;
+
 typedef struct _Session_t {
-    uint32_t initiatorToken;
-    uint32_t ssrc;
+    uint32_t ssrc; // the unique identifier
 	unsigned short seqNum;
+//	Participant_t participants[MAX_PARTICIPANTS_PER_SESSION];
 } Session_t;
 
 typedef long darwin_time_t;

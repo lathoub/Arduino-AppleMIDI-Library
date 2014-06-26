@@ -64,25 +64,6 @@ typedef struct AppleMIDI_Syncronization {
 
 		udp->endPacket(); 
 		udp->flush(); // Waits for the transmission of outgoing serial data to complete
-/*
-#if (APPLEMIDI_DEBUG)
-		Serial.print  ("< Syncronization: count = ");
-		Serial.print  (count);
-		Serial.print  (" Timestamps = ");
-		Serial.print  (timestamps[0].tv_sec, HEX);
-		Serial.print  (" ");
-		Serial.print  (timestamps[0].tv_usec, HEX);
-		Serial.print  (" ");
-		Serial.print  (timestamps[1].tv_sec, HEX);
-		Serial.print  (" ");
-		Serial.print  (timestamps[1].tv_usec, HEX);
-		Serial.print  (" ");
-		Serial.print  (timestamps[2].tv_sec, HEX);
-		Serial.print  (" ");
-		Serial.print  (timestamps[2].tv_usec, HEX);
-		Serial.println("");
-#endif
-*/
 	}
 
 } Syncronization_t;

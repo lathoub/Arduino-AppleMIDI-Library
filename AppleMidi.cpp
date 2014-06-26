@@ -25,8 +25,6 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-Session_t	AppleMidi_Class::Sessions[MAX_SESSIONS];
-
 /*! \brief Default constructor for MIDI_Class. */
 AppleMidi_Class::AppleMidi_Class()
 { 
@@ -61,6 +59,8 @@ AppleMidi_Class::AppleMidi_Class()
 	mNoteOffSendingEvent			= NULL;
 	mNoteOffSendEvent				= NULL;
 #endif
+
+	srand(analogRead(0)); // to generate our random ssrc (see in begin)
 }
 
 /*! \brief Default destructor for MIDI_Class.
@@ -77,12 +77,12 @@ AppleMidi_Class::~AppleMidi_Class()
  - Input channel set to 1 if no value is specified
  - Full thru mirroring
  */
-void AppleMidi_Class::begin(const char* name)
+void AppleMidi_Class::begin(const char* sessionName, uint16_t port)
 {
-	srand(analogRead(0));
-
 	//
-	strcpy(Name, name);
+	strcpy(SessionName, sessionName);
+
+	Port = port;
 
 	_inputChannel = MIDI_CHANNEL_OMNI;
 
@@ -93,8 +93,19 @@ void AppleMidi_Class::begin(const char* name)
 		buffer[i] = 17 + (rand() % 255);
 	_ssrc = *((uint32_t*)&buffer[0]);
 
+	// Initialize Sessions
 	for (int i = 0; i < MAX_SESSIONS; i++)
+	{
 		Sessions[i].ssrc = 0;
+		//for (int j = 0; j < MAX_PARTICIPANTS_PER_SESSION; j++)
+		//{
+		//	Sessions[i].participants[j].initiatorToken = 0;
+		//}
+	}
+
+	_sessionInvite.remotePort = 0;
+	_sessionInvite.lastSend = 0;
+	_sessionInvite.status == None;
 
 	// open UDP socket for control messages
 	_controlUDP.begin(Port);
@@ -111,10 +122,6 @@ void AppleMidi_Class::begin(const char* name)
 	_rtpMidi.ssrc = _ssrc;
 	_rtpMidi.sequenceNr = 1;
 
-	// Note: this class does not start a session
-	// by sending an invite, it waits for
-	// the invitation to come in.
-
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("Starting");
 #if (APPLEMIDI_DEBUG_VERBOSE)
@@ -124,12 +131,31 @@ void AppleMidi_Class::begin(const char* name)
 #endif
 }
 
+/*! \brief 
+  */
+void AppleMidi_Class::Invite(IPAddress ip, uint16_t port)
+{
+	// Ignore if an invite is already pending.
+
+	_sessionInvite.remoteHost = ip;
+	_sessionInvite.remotePort = port;
+	_sessionInvite.lastSend = 0;
+	_sessionInvite.status = WaitingForControlInvitationAccepted;
+
+	Serial.println("Posted invitation");
+}
+
 /*! \brief Evaluates incoming Rtp messages.
   */
 void AppleMidi_Class::run()
 {
-	byte _packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+	// resend invitations
+	ManageInvites();
 
+	// do syncronization here
+	ManageTiming();
+
+	byte _packetBuffer[UDP_TX_PACKET_MAX_SIZE];
 	// 
 	int packetSize = _controlUDP.parsePacket();
 	while (_controlUDP.available() > 0)
@@ -153,6 +179,91 @@ void AppleMidi_Class::run()
 
 /*! \brief .
 */
+void AppleMidi_Class::ManageInvites()
+{
+	if (_sessionInvite.status == None)
+	{
+		// Do nothing
+	}
+	else if (_sessionInvite.status == WaitingForControlInvitationAccepted)
+	{
+		if (_sessionInvite.lastSend + 1000 < millis())
+		{
+			AppleMIDI_Invitation invitation;
+			invitation.initiatorToken = 0x12345678;
+			invitation.ssrc = _ssrc;
+			strcpy(invitation.sessionName, SessionName);
+			invitation.write(_sessionInvite.remoteHost, _sessionInvite.remotePort, &_controlUDP);
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Control Invitation: peer = \"");
+	Serial.print  (invitation.sessionName);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (invitation.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitation.initiatorToken, HEX);
+#endif
+	Serial.println();
+#endif
+
+			_sessionInvite.lastSend = millis();
+		}
+	}
+	else if (_sessionInvite.status == WaitingForContentInvitationAccepted)
+	{
+		if (_sessionInvite.lastSend + 1000 < millis())
+		{
+			AppleMIDI_Invitation invitation;
+			invitation.initiatorToken = 0x12345678;
+			invitation.ssrc = _ssrc;
+			strcpy(invitation.sessionName, SessionName);
+			invitation.write(_sessionInvite.remoteHost, _sessionInvite.remotePort, &_contentUDP);
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Content Invitation: peer = \"");
+	Serial.print  (invitation.sessionName);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (invitation.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitation.initiatorToken, HEX);
+#endif
+	Serial.println();
+#endif
+
+			_sessionInvite.lastSend = millis();
+		}
+	}
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::ManageTiming()
+{
+	// TO DO
+
+	if (false)
+	{
+		// Send synchronization
+		Syncronization_t synchronization;
+		synchronization.timestamps[0].tv_sec = 0;
+		synchronization.timestamps[0].tv_usec = 0;
+		synchronization.timestamps[1].tv_sec = 0;
+		synchronization.timestamps[1].tv_usec = 0;
+		synchronization.timestamps[2].tv_sec = 0;
+		synchronization.timestamps[2].tv_usec = 0;
+		synchronization.count = 3;
+
+		Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
+		synchronizationResponse.write(&this->_contentUDP);
+	}
+}
+
+/*! \brief .
+*/
 void AppleMidi_Class::OnInvitation(void* sender, Invitation_t& invitation)
 {
 	Dissector* dissector = (Dissector*)sender;
@@ -165,61 +276,169 @@ void AppleMidi_Class::OnInvitation(void* sender, Invitation_t& invitation)
 
 /*! \brief .
 */
+void AppleMidi_Class::OnInvitationAccepted(void* sender, InvitationAccepted_t& invitationAccepted)
+{
+	Dissector* dissector = (Dissector*)sender;
+
+	if (dissector->_identifier == Port)
+		OnControlInvitationAccepted(sender, invitationAccepted);
+	if (dissector->_identifier == Port + 1)
+		OnContentInvitationAccepted(sender, invitationAccepted);
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnControlInvitationAccepted(void* sender, InvitationAccepted_t& invitationAccepted)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Control InvitationAccepted: peer = \"");
+	Serial.print  (invitationAccepted.name);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (invitationAccepted.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitationAccepted.initiatorToken, HEX);
+#endif
+	Serial.println();
+#endif
+
+	if (_sessionInvite.status != WaitingForControlInvitationAccepted)
+	{
+		Serial.println("unexpected _sessionInvite.status");
+		return;
+	}
+
+	// Initiate next step in the invitation process
+	_sessionInvite.lastSend = 0;
+	_sessionInvite.status = WaitingForContentInvitationAccepted;
+}
+
+/*! \brief .
+*/
+void AppleMidi_Class::OnContentInvitationAccepted(void* sender, InvitationAccepted_t& invitationAccepted)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("> Content InvitationAccepted: peer = \"");
+	Serial.print  (invitationAccepted.name);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (invitationAccepted.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitationAccepted.initiatorToken, HEX);
+#endif
+	Serial.println();
+#endif
+
+	// OK - invitations worked out well
+	_sessionInvite.lastSend = 0;
+	_sessionInvite.status = None;
+
+	// Find a free slot for the session
+	int index = GetFreeSessionSlot();
+	if (index < 0)
+	{
+		Serial.println("No free slot found");
+		return;
+	}
+
+	Sessions[index].ssrc = invitationAccepted.ssrc;
+	Sessions[index].seqNum = 1;
+
+	// Send synchronization
+	Syncronization_t synchronization;
+	synchronization.timestamps[0].tv_sec = 0;
+	synchronization.timestamps[0].tv_usec = 0;
+	synchronization.timestamps[1].tv_sec = 0;
+	synchronization.timestamps[1].tv_usec = 0;
+	synchronization.timestamps[2].tv_sec = 0;
+	synchronization.timestamps[2].tv_usec = 0;
+	synchronization.count = 0;
+
+	Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
+	synchronizationResponse.write(&this->_contentUDP);
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Syncronization for ssrc 0x");
+	Serial.print  (synchronizationResponse.ssrc, HEX);
+	Serial.print  (", count = ");
+	Serial.print  (synchronizationResponse.count);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" Timestamps = ");
+	Serial.print  (synchronizationResponse.timestamps[0].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[0].tv_usec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[1].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[1].tv_usec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[2].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[2].tv_usec, HEX);
+#endif
+	Serial.println("");
+#endif
+}
+
+/*! \brief .
+*/
 void AppleMidi_Class::OnControlInvitation(void* sender, Invitation_t& invitation)
 {
 	Dissector* dissector = (Dissector*)sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print  ("> Invitation: peer = \"");
-	Serial.print  (invitation.name);
+	Serial.print  ("> Control Invitation: peer = \"");
+	Serial.print  (invitation.sessionName);
 	Serial.print  ("\"");
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (" ,ssrc = 0x");
+	Serial.print  (" ,ssrc 0x");
 	Serial.print  (invitation.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitation.initiatorToken, HEX);
 #endif
 	Serial.println();
 #endif
 
-	// If we know this session already, ignore it.
-	int index;
-	for (index = 0; index < MAX_SESSIONS; index++)
-		if (Sessions[index].ssrc == invitation.ssrc)
-			break;
-	if (index < MAX_SESSIONS)
-	{
-#if (APPLEMIDI_DEBUG)
-	Serial.print  ("Session exists already (maybe a resend of the invite). Free existing slot, then accept again.");
-	Sessions[index].ssrc = 0;
-		// session exists already (maybe a resend of the invite, ignore)
-#endif
-//		return; 
-	}
-
 	// Find a free slot to remember this session in
-	for (index = 0; index < MAX_SESSIONS; index++)
-		if (0 == Sessions[index].ssrc)
-			break;
-	if (index >= MAX_SESSIONS)
+	int freeslot = GetFreeSessionSlot();
+	if (freeslot < 0)
 	{
 		// no free slots, we cant accept invite
+		AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
+		invitationRejected.write(&this->_controlUDP);
+
 		return;
 	}
 
-#if (APPLEMIDI_DEBUG) && (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  ("New session at slot: ");
-	Serial.println(index);
-		// session exists already (maybe a resend of the invite, ignore)
-#endif
+//#if (APPLEMIDI_DEBUG)
+//	Serial.print  ("Allocate session slot at index ");
+//	Serial.print  (freeslot);
+//	Serial.print  (" with ssrc 0x");
+//	Serial.println(invitation.ssrc, HEX);
+//		// session exists already (maybe a resend of the invite, ignore)
+//#endif
 
-	// initiatorToken
-	Sessions[index].initiatorToken = invitation.initiatorToken;
-	Sessions[index].ssrc = invitation.ssrc;
-	Sessions[index].seqNum = 1;
+	// Initiate a session or a new participant in the session?
+	Sessions[freeslot].ssrc = invitation.ssrc;
+	Sessions[freeslot].seqNum = 1;
 
-	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, Name);
+	AppleMIDI_InvitationAccepted acceptInvitation(this->_ssrc, invitation.initiatorToken, SessionName);
 	acceptInvitation.write(&this->_controlUDP);
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Control InvitationAccepted: peer = \"");
+	Serial.print  (SessionName);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (this->_ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitation.initiatorToken, HEX);
+#endif
+	Serial.println();
+#endif
 }
 
 /*! \brief .
@@ -229,38 +448,79 @@ void AppleMidi_Class::OnContentInvitation(void* sender, Invitation_t& invitation
 	Dissector* dissector = (Dissector*)sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print  ("> Invitation: peer = \"");
-	Serial.print  (invitation.name);
+	Serial.print  ("> Content Invitation: peer = \"");
+	Serial.print  (invitation.sessionName);
 	Serial.print  ("\"");
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (" ,ssrc = 0x");
+	Serial.print  (" ,ssrc 0x");
 	Serial.print  (invitation.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitation.initiatorToken, HEX);
 #endif
 	Serial.println();
 #endif
 
-	int index;
-	for (index = 0; index < MAX_SESSIONS; index++)
-		if (Sessions[index].ssrc == invitation.ssrc)
-			break;
-	if (index >= MAX_SESSIONS)
-	{
-		Serial.print("hmm - control session does not exists for ");
-		Serial.println(invitation.ssrc, HEX);
-		return; 
-	}
+	//// Find the slot, it should be there
+	//int index;
+	//for (index = 0; index < MAX_SESSIONS; index++)
+	//	if (Sessions[index].ssrc == invitation.ssrc)
+	//		break;
+	//if (index >= MAX_SESSIONS)
+	//{
+	//	Serial.print  ("Error - control session does not exists for ");
+	//	Serial.print  (invitation.ssrc, HEX);
+	//	Serial.print  (". Rejecting invitation.");
 
-	AppleMIDI_AcceptInvitation acceptInvitation(this->_ssrc, invitation.initiatorToken, Name);
+	//	AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
+	//	invitationRejected.write(&this->_contentUDP);
+
+	//	return;
+	//}
+
+	// Add participant to the session
+	// find a free participant slot
+	//int i = 0;
+	//for (i = 0; i < MAX_PARTICIPANTS_PER_SESSION; i++)
+	//	if (Sessions[index].participants[i].initiatorToken == 0)
+	//		break;
+	//if (i >= MAX_PARTICIPANTS_PER_SESSION)
+	//{
+	//	Serial.println("Error - no free particpant slot.");
+
+	//	AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.name);
+	//	invitationRejected.write(&this->_contentUDP);
+
+	//	return;
+	//}
+
+	AppleMIDI_InvitationAccepted acceptInvitation(this->_ssrc, invitation.initiatorToken, SessionName);
 	acceptInvitation.write(&this->_contentUDP);
 
-#if (APPLEMIDI_DEBUG) && (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  ("New Session created for 0x");
-	Serial.print  (invitation.ssrc, HEX);
-	Serial.print  (" in slot ");
-	Serial.println(index);
+//#if (APPLEMIDI_DEBUG)
+//	Serial.print  ("New Session created for ssrc 0x");
+//	Serial.print  (invitation.ssrc, HEX);
+//	Serial.print  (" in session slot ");
+//	Serial.print  (index);
+//	//Serial.print  (" participant slot ");
+//	//Serial.println(i);
+//	Serial.println();
+//#endif
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Content InvitationAccepted: peer = \"");
+	Serial.print  (SessionName);
+	Serial.print  ("\"");
+	Serial.print  (" ,ssrc 0x");
+	Serial.print  (this->_ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" ,initiatorToken = 0x");
+	Serial.print  (invitation.initiatorToken, HEX);
 #endif
+	Serial.println();
+#endif
+
+	//Sessions[index].participants[i].initiatorToken = invitation.initiatorToken;
+	//Sessions[index].participants[i].sequenceNumber = 1;
 
 	// Save current sessions to MemoryCard
 	// open the file. note that only one file can be open at a time,
@@ -268,7 +528,7 @@ void AppleMidi_Class::OnContentInvitation(void* sender, Invitation_t& invitation
 //	File sessionsList = SD.open("sessions.txt", FILE_WRITE);
 
 	if (this->mConnectedCallback != 0)
-		this->mConnectedCallback(invitation.name);
+		this->mConnectedCallback(invitation.sessionName);
 }
 
 /*! \brief .
@@ -278,7 +538,9 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 	Dissector* dissector = (Dissector*)sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print  ("> Syncronization: count = ");
+	Serial.print  ("> Syncronization for ssrc 0x");
+	Serial.print  (synchronization.ssrc, HEX);
+	Serial.print  (", count = ");
 	Serial.print  (synchronization.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" Timestamps = ");
@@ -298,18 +560,13 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 #endif
 
 	// If we know this session already, ignore it.
-	int index;
-	for (index = 0; index < MAX_SESSIONS; index++)
-		if (Sessions[index].ssrc == synchronization.ssrc)
-			break;
-	if (index >= MAX_SESSIONS)
+
+	int index = GetSessionSlot(synchronization.ssrc);
+	if (index < 0)
 	{
 #if (APPLEMIDI_DEBUG)
 		Serial.println("hmmm - Syncronization for a session that has never started.");
 #endif
-		// TODO: send EndSession?
-//		AppleMIDI_EndSession endSession(this->_ssrc);
-//		endSession.write(&this->_controlUDP);
 		return; 
 	}
 
@@ -327,6 +584,29 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 
 	Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
 	synchronizationResponse.write(&this->_contentUDP);
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("< Syncronization for ssrc 0x");
+	Serial.print  (this->_ssrc, HEX);
+	Serial.print  (", count = ");
+	Serial.print  (synchronizationResponse.count);
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print  (" Timestamps = ");
+	Serial.print  (synchronizationResponse.timestamps[0].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[0].tv_usec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[1].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[1].tv_usec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[2].tv_sec, HEX);
+	Serial.print  (" ");
+	Serial.print  (synchronizationResponse.timestamps[2].tv_usec, HEX);
+#endif
+	Serial.println("");
+#endif
+
 }
 
 /* \brief With the receiver feedback packet, the recipient can tell the sender up to what sequence
@@ -364,38 +644,32 @@ void AppleMidi_Class::OnEndSession(void* sender, EndSession_t& sessionEnd)
 	Dissector* dissector = (Dissector*)sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print  ("> End Session");
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (": src = 0x");
+	Serial.print  ("> End Session for ssrc 0x");
 	Serial.print  (sessionEnd.ssrc, HEX);
+#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (", initiatorToken = 0x");
 	Serial.print  (sessionEnd.initiatorToken, HEX);
 #endif
 	Serial.println();
 #endif
 
-	// If we know this session already, ignore it.
-	int index;
-	for (index = 0; index < MAX_SESSIONS; index++)
-		if (Sessions[index].ssrc == sessionEnd.ssrc)
-			break;
-	if (index >= MAX_SESSIONS)
+	// EndSession uses ssrc as key into session (not initiatorToken)
+	int index = GetSessionSlot(sessionEnd.ssrc);
+	if (index < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.println("hmmm - ending session that has never started.");
+		Serial.print  ("Ending session for ssrc 0x");
+		Serial.print  (sessionEnd.ssrc, HEX);
+		Serial.println(" - ending session that has never started.");
 #endif
-		// TODO: shall we send an invite?
 		return; 
 	}
 
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print("Ending session. Freeing slot ");
-	Serial.print(index);
-	Serial.println(". Bye");
-#endif
-
 	// Free Session Slot
 	Sessions[index].ssrc = 0;
+	Sessions[index].seqNum = 0;
+	//for (int i = 0; i < MAX_PARTICIPANTS_PER_SESSION; i++)
+	//	Sessions[index].participants[i].initiatorToken = 0;
 
 	if (this->mDisconnectedCallback != 0)
 		this->mDisconnectedCallback();
@@ -773,6 +1047,30 @@ void AppleMidi_Class::OnTuneRequest(void* sender)
 }
 
 // -----------------------------------------------------------------------------
+//                                 
+// -----------------------------------------------------------------------------
+
+/*! \brief .
+*/
+int AppleMidi_Class::GetFreeSessionSlot()
+{
+	for (int i = 0; i < MAX_SESSIONS; i++)
+		if (0 == Sessions[i].ssrc)
+			return i;
+	return -1;
+}
+
+/*! \brief .
+*/
+int AppleMidi_Class::GetSessionSlot(const uint32_t ssrc)
+{
+	for (int i = 0; i < MAX_SESSIONS; i++)
+		if (ssrc == Sessions[i].ssrc)
+			return i;
+	return -1;
+}
+
+// -----------------------------------------------------------------------------
 //                                 Output
 // -----------------------------------------------------------------------------
 
@@ -1019,13 +1317,6 @@ StatusByte AppleMidi_Class::getStatus(MidiType inType,
 {
     return ((byte)inType | ((inChannel - 1) & 0x0F));
 }
-
-
-
-
-
-
-// -----------------------------------------------------------------------------
 
 /*! \brief Send a Note On message 
  \param inNoteNumber  Pitch value in the MIDI format (0 to 127). 

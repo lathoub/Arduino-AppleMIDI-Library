@@ -11,23 +11,16 @@
 #pragma once
 
 #include "AppleMidi_Settings.h"
+#include "AppleMidi_Defs.h"
 #include "dissector.h"
 
 #include "utility/AppleMidi_Invitation.h"
-#include "utility/AppleMidi_AcceptInvitation.h"
+#include "utility/AppleMidi_InvitationAccepted.h"
+#include "utility/AppleMidi_InvitationRejected.h"
 #include "utility/AppleMidi_ReceiverFeedback.h"
 #include "utility/AppleMidi_Syncronization.h"
 #include "utility/AppleMidi_BitrateReceiveLimit.h"
 #include "utility/AppleMidi_EndSession.h"
-
-const uint8_t amInvitation          [] = {'I', 'N'};
-const uint8_t amAcceptInvitation    [] = {'O', 'K'};
-const uint8_t amEndSession          [] = {'B', 'Y'};
-const uint8_t amSyncronization      [] = {'C', 'K'};
-const uint8_t amReceiverFeedback    [] = {'R', 'S'};
-const uint8_t amBitrateReceiveLimit [] = {'R', 'L'};
-
-const unsigned char stringTerminator [] = { 0x00 };
 
 #define NOT_ENOUGH_DATA 0
 
@@ -94,7 +87,7 @@ Serial.println("Signature not supported.");
 					invitation.version        = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 					invitation.initiatorToken = AppleMIDI_Util::readUInt32(packetBuffer + offset + 4);
 					invitation.ssrc           = AppleMIDI_Util::readUInt32(packetBuffer + offset + 8);
-					strcpy(invitation.name, (const char*)(packetBuffer + offset + 12));
+					strcpy(invitation.sessionName, (const char*)(packetBuffer + offset + 12));
 
 					appleMidi->OnInvitation(dissector, invitation);
 
@@ -104,11 +97,47 @@ Serial.println("Signature not supported.");
 				}
 			}
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("Not enough data for Invitation");
 #endif
 
 			return NOT_ENOUGH_DATA;
+		}
+		else if (0 == memcmp((void*)(packetBuffer + offset), amInvitationAccepted, sizeof(amInvitationAccepted)))
+		{
+			offset += sizeof(amInvitationAccepted);
+
+			int start = 4 + 4 + 4 + 1;
+
+			// do we have a terminating string?
+			for (int i = start; i < packetSize, offset + i < packetSize; i++) {
+
+				if (0 == memcmp((packetBuffer + offset) + i, stringTerminator, sizeof(stringTerminator))) {
+
+					AppleMIDI_InvitationAccepted invitationAccepted;
+
+					invitationAccepted.version        = AppleMIDI_Util::readUInt32(packetBuffer + offset);
+					invitationAccepted.initiatorToken = AppleMIDI_Util::readUInt32(packetBuffer + offset + 4);
+					invitationAccepted.ssrc           = AppleMIDI_Util::readUInt32(packetBuffer + offset + 8);
+					strcpy(invitationAccepted.name, (const char*)(packetBuffer + offset + 12));
+
+					appleMidi->OnInvitationAccepted(dissector, invitationAccepted);
+
+					offset += (i + 1);
+
+					return offset;
+				}
+			}
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.println("Not enough data for AcceptInvitation");
+#endif
+
+			return NOT_ENOUGH_DATA;
+		}
+		else if (0 == memcmp((void*)(packetBuffer + offset), amInvitationRejected, sizeof(amInvitationRejected)))
+		{
+			offset += sizeof(amInvitationRejected);
 		}
 		else if (0 == memcmp((void*)(packetBuffer + offset), amSyncronization, sizeof(amSyncronization)))
 		{
@@ -131,7 +160,7 @@ Serial.println("Not enough data for Invitation");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("Not enough data for Syncronization");
 #endif
 			return NOT_ENOUGH_DATA;
@@ -154,7 +183,7 @@ Serial.println("Not enough data for Syncronization");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("Not enough data for ReceiverFeedback");
 #endif
 			return NOT_ENOUGH_DATA;
@@ -176,7 +205,7 @@ Serial.println("Not enough data for ReceiverFeedback");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("Not enough data for BitrateReceiveLimit");
 #endif
 			return NOT_ENOUGH_DATA;
@@ -200,7 +229,7 @@ Serial.println("Not enough data for BitrateReceiveLimit");
 				return offset;
 			}
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("Not enough data for EndSession");
 #endif
 			return NOT_ENOUGH_DATA;
