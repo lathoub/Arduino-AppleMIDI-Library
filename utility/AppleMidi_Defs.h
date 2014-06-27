@@ -275,12 +275,12 @@ struct Message
 // generates multiple streams in one RTP session, for example from separate video cameras, each must
 // be identified as a different SSRC.
 
-//enum SessionInitiator
-//{
-//	Undefined,
-//	Remote,
-//	Local,
-//};
+enum SessionInitiator
+{
+	Undefined,
+	Remote,
+	Local,
+};
 
 enum SessioInviteStatus
 {
@@ -290,10 +290,10 @@ enum SessioInviteStatus
 };
 
 typedef struct _SessionInvite_t {
-	SessioInviteStatus status;
-	unsigned long lastSend;
-    IPAddress remoteHost;
-	uint16_t  remotePort;
+	SessioInviteStatus	status;
+	unsigned long		lastSend;
+    IPAddress			remoteHost;
+	uint16_t			remotePort;
 } SessionInvite_t;
 
 //typedef struct _Participant_t {
@@ -302,21 +302,17 @@ typedef struct _SessionInvite_t {
 //} Participant_t;
 
 typedef struct _Session_t {
-    uint32_t ssrc; // the unique identifier
-	unsigned short seqNum;
-//	Participant_t participants[MAX_PARTICIPANTS_PER_SESSION];
+    uint32_t			ssrc; // the unique identifier
+	unsigned short		seqNum;
+//	Participant_t		participants[MAX_PARTICIPANTS_PER_SESSION];
+	SessionInitiator	sessionInitiator;
+	unsigned long		sessionSyncronizedLastTime;
+	uint32_t			sessionSyncronizedCount;
+	bool				sessionSyncronizedBusy;
 } Session_t;
 
-typedef long darwin_time_t;
-typedef int32_t darwin_suseconds_t;
-
-typedef struct _timeval {
-   darwin_time_t      tv_sec;
-   darwin_suseconds_t tv_usec;
-} Timeval_t;
-
 typedef uint32_t MIDISamplingRate;
-typedef long long MIDITimeStamp;
+typedef uint64_t MIDITimeStamp;
 
 // -----------------------------------------------------------------------------
 

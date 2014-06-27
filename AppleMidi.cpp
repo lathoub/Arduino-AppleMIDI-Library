@@ -61,6 +61,9 @@ AppleMidi_Class::AppleMidi_Class()
 #endif
 
 	srand(analogRead(0)); // to generate our random ssrc (see in begin)
+
+	uint32_t initialTimestamp_ = 0; // random number
+	_rtpMidiClock.Init(initialTimestamp_, MIDI_SAMPLING_RATE_DEFAULT);
 }
 
 /*! \brief Default destructor for MIDI_Class.
@@ -243,23 +246,84 @@ void AppleMidi_Class::ManageInvites()
 */
 void AppleMidi_Class::ManageTiming()
 {
-	// TO DO
-
-	if (false)
+	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
-		// Send synchronization
-		Syncronization_t synchronization;
-		synchronization.timestamps[0].tv_sec = 0;
-		synchronization.timestamps[0].tv_usec = 0;
-		synchronization.timestamps[1].tv_sec = 0;
-		synchronization.timestamps[1].tv_usec = 0;
-		synchronization.timestamps[2].tv_sec = 0;
-		synchronization.timestamps[2].tv_usec = 0;
-		synchronization.count = 3;
+		if (Sessions[i].sessionInitiator == Local)
+		{
+			if (!Sessions[i].sessionSyncronizedBusy)
+			{
+				bool doSyncronize = false;
 
-		Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
-		synchronizationResponse.write(&this->_contentUDP);
+				if (Sessions[i].sessionSyncronizedCount < 2)
+				{
+					// immediately after last CK2
+					doSyncronize = true;
+				}
+				else if (Sessions[i].sessionSyncronizedCount < 10)
+				{
+					// every second after last CK2
+					if (Sessions[i].sessionSyncronizedLastTime + 1000 < millis())
+					{
+						doSyncronize = true;
+					}
+				}
+				else
+				{
+					// every 20 seconds after last CK2
+					if (Sessions[i].sessionSyncronizedLastTime + 20000 < millis())
+					{
+						doSyncronize = true;
+					}
+				}
+
+				if (doSyncronize)
+				{
+					Syncronization_t synchronization;
+					synchronization.timestamps[0] = _rtpMidiClock.Now();
+					synchronization.timestamps[1] = 0;
+					synchronization.timestamps[2] = 0;
+					synchronization.count = 0;
+
+					Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
+					synchronizationResponse.write(&this->_contentUDP);
+
+					Sessions[i].sessionSyncronizedBusy = true;
+
+					#if (APPLEMIDI_DEBUG)
+						Serial.print  ("< Syncronization for ssrc 0x");
+						Serial.print  (synchronizationResponse.ssrc, HEX);
+						Serial.print  (", count = ");
+						Serial.print  (synchronizationResponse.count);
+					#if (APPLEMIDI_DEBUG_VERBOSE)
+						Serial.print  (" Timestamps = ");
+						Serial.print  (synchronizationResponse.timestamps[0], HEX);
+						Serial.print  (" ");
+						Serial.print  (synchronizationResponse.timestamps[1], HEX);
+						Serial.print  (" ");
+						Serial.print  (synchronizationResponse.timestamps[2], HEX);
+					#endif
+						Serial.println("");
+					#endif
+				}
+			}
+			else
+			{
+			}
+		}
 	}
+
+	//if (_lastTimeSessionSyncronized + 30000 < millis())
+	//{
+	//	// Send synchronization
+	//	Syncronization_t synchronization;
+	//	synchronization.timestamps[0] = _rtpMidiClock.Now();
+	//	synchronization.timestamps[1] = 0;
+	//	synchronization.timestamps[2] = 0;
+	//	synchronization.count = 0;
+
+	//	Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
+	//	synchronizationResponse.write(&this->_contentUDP);
+	//}
 }
 
 /*! \brief .
@@ -345,41 +409,11 @@ void AppleMidi_Class::OnContentInvitationAccepted(void* sender, InvitationAccept
 
 	Sessions[index].ssrc = invitationAccepted.ssrc;
 	Sessions[index].seqNum = 1;
+	Sessions[index].sessionInitiator = Local; // Arduino is session initiator (master)
+	Sessions[index].sessionSyncronizedLastTime = 0;
+	Sessions[index].sessionSyncronizedCount = 0;
+	Sessions[index].sessionSyncronizedBusy = false; // This will tick off Syncronisation sequence
 
-	// Send synchronization
-	Syncronization_t synchronization;
-	synchronization.timestamps[0].tv_sec = 0;
-	synchronization.timestamps[0].tv_usec = 0;
-	synchronization.timestamps[1].tv_sec = 0;
-	synchronization.timestamps[1].tv_usec = 0;
-	synchronization.timestamps[2].tv_sec = 0;
-	synchronization.timestamps[2].tv_usec = 0;
-	synchronization.count = 0;
-
-	Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
-	synchronizationResponse.write(&this->_contentUDP);
-
-#if (APPLEMIDI_DEBUG)
-	Serial.print  ("< Syncronization for ssrc 0x");
-	Serial.print  (synchronizationResponse.ssrc, HEX);
-	Serial.print  (", count = ");
-	Serial.print  (synchronizationResponse.count);
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (" Timestamps = ");
-	Serial.print  (synchronizationResponse.timestamps[0].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[0].tv_usec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[1].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[1].tv_usec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[2].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[2].tv_usec, HEX);
-#endif
-	Serial.println("");
-#endif
 }
 
 /*! \brief .
@@ -423,6 +457,7 @@ void AppleMidi_Class::OnControlInvitation(void* sender, Invitation_t& invitation
 	// Initiate a session or a new participant in the session?
 	Sessions[freeslot].ssrc = invitation.ssrc;
 	Sessions[freeslot].seqNum = 1;
+	Sessions[freeslot].sessionInitiator = Remote; // Arduino is session responder (slave)
 
 	AppleMIDI_InvitationAccepted acceptInvitation(this->_ssrc, invitation.initiatorToken, SessionName);
 	acceptInvitation.write(&this->_controlUDP);
@@ -532,6 +567,31 @@ void AppleMidi_Class::OnContentInvitation(void* sender, Invitation_t& invitation
 }
 
 /*! \brief .
+
+From: http://en.wikipedia.org/wiki/RTP_MIDI
+
+The session initiator sends a first message (named CK0) to the remote partner, giving its local time on
+64 bits (Note that this is not an absolute time, but a time related to a local reference, generally given 
+in microseconds since the startup of operating system kernel). This time is expressed on 10 kHz sampling 
+clock basis (100 microseconds per increment) The remote partner must answer to this message with a CK1 message, 
+containing its own local time on 64 bits. Both partners then know the difference between their respective clocks 
+and can determine the offset to apply to Timestamp and Deltatime fields in RTP-MIDI protocol. The session 
+initiator finishes this sequence by sending a last message called CK2, containing the local time when it 
+received the CK1 message. This technique allows to compute the average latency of the network, and also to
+compensate a potential delay introduced by a slow starting thread (this situation can occur with non-realtime 
+operating systems like Linux, Windows or OS X)
+
+Apple recommends to repeat this sequence a few times just after opening the session, in order to get better 
+synchronization accuracy (in case of one of the sequence has been delayed accidentally because of a temporary 
+network overload or a latency peak in a thread activation)
+
+This sequence must repeat cyclically (between 2 and 6 times per minute typically), and always by the session 
+initiator, in order to maintain long term synchronization accuracy by compensation of local clock drift, and also
+to detect a loss of communication partner. A partner not answering to multiple CK0 messages shall consider that
+the remote partner is disconnected. In most cases, session initiators switch their state machine into "Invitation"
+state in order to re-establish communication automatically as soon as the distant partner reconnects to the 
+network. Some implementations (especially on personal computers) display also an alert message and offer to the 
+user to choose between a new connection attempt or closing the session.
 */
 void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchronization)
 {
@@ -544,17 +604,11 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 	Serial.print  (synchronization.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" Timestamps = ");
-	Serial.print  (synchronization.timestamps[0].tv_sec, HEX);
+	Serial.print  (synchronization.timestamps[0], HEX);
 	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[0].tv_usec, HEX);
+	Serial.print  (synchronization.timestamps[1], HEX);
 	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[1].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[1].tv_usec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[2].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[2].tv_usec, HEX);
+	Serial.print  (synchronization.timestamps[2], HEX);
 #endif
 	Serial.println("");
 #endif
@@ -570,16 +624,41 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 		return; 
 	}
 
-	synchronization.count++;
-	if (synchronization.count > 2)
+	uint32_t now = _rtpMidiClock.Now();
+
+	if (synchronization.count == 0) /* From session initiator */
 	{
-		synchronization.timestamps[0].tv_sec = 0;
-		synchronization.timestamps[0].tv_usec = 0;
-		synchronization.timestamps[1].tv_sec = 0;
-		synchronization.timestamps[1].tv_usec = 0;
-		synchronization.timestamps[2].tv_sec = 0;
-		synchronization.timestamps[2].tv_usec = 0;
-		synchronization.count = 0;
+		synchronization.count = 1;
+
+		synchronization.timestamps[synchronization.count] = now;
+	}
+	else if (synchronization.count == 1) /* From session responder */
+	{
+		/* compute media delay */
+		//uint64_t diff = (now - synchronization.timestamps[0]) / 2;
+		/* approximate time difference between peer and self */
+		//diff = synchronization.timestamps[2] + diff - now;
+
+		// Send CK2
+        synchronization.count = 2;
+		synchronization.timestamps[synchronization.count] = now;
+
+		/* getting this message means that the responder is still alive! */
+		/* remember the time, if it takes to long to respond, we can assume the responder is dead */
+		/* not implemented at this stage*/
+		Sessions[index].sessionSyncronizedLastTime = millis();
+		Sessions[index].sessionSyncronizedCount++;
+		Sessions[index].sessionSyncronizedBusy = false;
+	}
+	else if (synchronization.count >= 2) /* From session initiator */
+	{
+		/* compute media delay */
+		//uint64_t diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
+		/* approximate time difference between peer and self */
+		//diff = synchronization.timestamps[2] + diff - now;
+
+        synchronization.count = 0;
+        synchronization.timestamps[synchronization.count] = now;
 	}
 
 	Syncronization_t synchronizationResponse(this->_ssrc, synchronization.count, synchronization.timestamps);
@@ -592,17 +671,11 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 	Serial.print  (synchronizationResponse.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" Timestamps = ");
-	Serial.print  (synchronizationResponse.timestamps[0].tv_sec, HEX);
+	Serial.print  (synchronization.timestamps[0], HEX);
 	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[0].tv_usec, HEX);
+	Serial.print  (synchronization.timestamps[1], HEX);
 	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[1].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[1].tv_usec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[2].tv_sec, HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronizationResponse.timestamps[2].tv_usec, HEX);
+	Serial.print  (synchronization.timestamps[2], HEX);
 #endif
 	Serial.println("");
 #endif

@@ -17,6 +17,15 @@ BEGIN_APPLEMIDI_NAMESPACE
 	
 class AppleMIDI_Util {
 public:
+
+	static uint64_t readUInt64(unsigned char* buffer)
+	{
+		unsigned char tmpBuffer[sizeof(uint64_t)];
+		for (int j = sizeof(uint64_t) - 1; j >= 0; j--)
+			tmpBuffer[j] = buffer[sizeof(uint64_t) - 1 - j];
+		return *((uint64_t*)&tmpBuffer[0]);
+	}
+
 	static uint32_t readUInt32(unsigned char* buffer)
 	{
 		unsigned char tmpBuffer[sizeof(uint32_t)];
@@ -36,19 +45,6 @@ public:
 	static uint8_t readUInt8(unsigned char* buffer)
 	{
 		return *((uint8_t*)&buffer[0]);
-	}
-
-	static Timeval_t readTimeval(unsigned char* buffer)
-	{
-		unsigned char tmpBuffer[sizeof(Timeval_t)];
-		for (int j = sizeof(Timeval_t) - 1; j >= 0; j--)
-			tmpBuffer[j] = buffer[7-j];
-
-		Timeval_t timeval;
-		timeval.tv_usec = *((uint32_t*)&tmpBuffer[0]);
-		timeval.tv_sec  = *((uint32_t*)&tmpBuffer[4]);
-
-		return timeval;
 	}
 
 	static uint8_t* toBuffer(uint8_t number)
@@ -82,19 +78,18 @@ public:
 		return buffer;
 	}
 
-	static uint8_t* toBuffer(Timeval_t timeval)
+	static uint8_t* toBuffer(int64_t number)
 	{
-		uint8_t buffer[sizeof(Timeval_t)];
+		uint8_t buffer[sizeof(int64_t)];
 
-		buffer[0] = (timeval.tv_sec >> 24) & 0xFF;
-		buffer[1] = (timeval.tv_sec >> 16) & 0xFF;
-		buffer[2] = (timeval.tv_sec >>  8) & 0xFF;
-		buffer[3] = (timeval.tv_sec >>  0) & 0xFF;
-
-		buffer[4] = (timeval.tv_usec >> 24) & 0xFF;
-		buffer[5] = (timeval.tv_usec >> 16) & 0xFF;
-		buffer[6] = (timeval.tv_usec >>  8) & 0xFF;
-		buffer[7] = (timeval.tv_usec >>  0) & 0xFF;
+		buffer[0] = (number >> 56) & 0xFF;
+		buffer[1] = (number >> 48) & 0xFF;
+		buffer[2] = (number >> 40) & 0xFF;
+		buffer[3] = (number >> 32) & 0xFF;
+		buffer[4] = (number >> 24) & 0xFF;
+		buffer[5] = (number >> 16) & 0xFF;
+		buffer[6] = (number >>  8) & 0xFF;
+		buffer[7] = (number >>  0) & 0xFF;
 
 		return buffer;
 	}

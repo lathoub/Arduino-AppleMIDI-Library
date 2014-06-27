@@ -23,6 +23,8 @@
 #include "utility/AppleMidi_BitrateReceiveLimit.h"
 #include "utility/AppleMidi_EndSession.h"
 
+#include "utility/RtpMidi_Clock.h"
+
 #include "utility/dissector.h"
 
 #include <EthernetUdp.h>
@@ -45,8 +47,10 @@ protected:
 
 	RtpMidi		_rtpMidi;
 
-	SessionInvite_t _sessionInvite;
+	RtpMidi_Clock _rtpMidiClock;
 
+	SessionInvite_t _sessionInvite;
+	
 	// SSRC, Synchronization source.
 	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
 	// carried in the RTP header so as not to be dependent upon the network address. All packets from a

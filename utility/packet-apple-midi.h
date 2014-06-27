@@ -147,11 +147,11 @@ Serial.println("Not enough data for AcceptInvitation");
 			{
 				AppleMIDI_Syncronization syncronization;
 
-				syncronization.ssrc          = AppleMIDI_Util::readUInt32 (packetBuffer + offset);
-				syncronization.count         = AppleMIDI_Util::readUInt8  (packetBuffer + offset + 4);
-				syncronization.timestamps[0] = AppleMIDI_Util::readTimeval(packetBuffer + offset + 4 + 1 + 3);
-				syncronization.timestamps[1] = AppleMIDI_Util::readTimeval(packetBuffer + offset + 4 + 1 + 3 + 8);
-				syncronization.timestamps[2] = AppleMIDI_Util::readTimeval(packetBuffer + offset + 4 + 1 + 3 + 8 + 8);
+				syncronization.ssrc          = AppleMIDI_Util::readUInt32(packetBuffer + offset);
+				syncronization.count         = AppleMIDI_Util::readUInt8 (packetBuffer + offset + 4);
+				syncronization.timestamps[0] = AppleMIDI_Util::readUInt64(packetBuffer + offset + 4 + 1 + 3);
+				syncronization.timestamps[1] = AppleMIDI_Util::readUInt64(packetBuffer + offset + 4 + 1 + 3 + 8);
+				syncronization.timestamps[2] = AppleMIDI_Util::readUInt64(packetBuffer + offset + 4 + 1 + 3 + 8 + 8);
 
 				appleMidi->OnSyncronization(dissector, syncronization);
 

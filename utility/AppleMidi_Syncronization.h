@@ -23,14 +23,14 @@ typedef struct AppleMIDI_Syncronization {
 	uint32_t	ssrc;
 	uint8_t		count;
 	uint8_t		padding[3];
-	Timeval_t	timestamps[3];
+	int64_t		timestamps[3];
 
 	AppleMIDI_Syncronization()
 	{
 		init();
 	}
 
-	AppleMIDI_Syncronization(uint32_t ssrc, uint8_t count, Timeval_t* ts)
+	AppleMIDI_Syncronization(uint32_t ssrc, uint8_t count, int64_t* ts)
 	{
 		init();
 
@@ -58,9 +58,9 @@ typedef struct AppleMIDI_Syncronization {
 		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
 		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
 		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[0]), sizeof(Timeval_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[1]), sizeof(Timeval_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[2]), sizeof(Timeval_t));
+		udp->write(AppleMIDI_Util::toBuffer(timestamps[0]), sizeof(int64_t));
+		udp->write(AppleMIDI_Util::toBuffer(timestamps[1]), sizeof(int64_t));
+		udp->write(AppleMIDI_Util::toBuffer(timestamps[2]), sizeof(int64_t));
 
 		udp->endPacket(); 
 		udp->flush(); // Waits for the transmission of outgoing serial data to complete
