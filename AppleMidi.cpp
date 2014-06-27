@@ -219,7 +219,7 @@ void AppleMidi_Class::ManageInvites()
 			invitation.initiatorToken = 0x12345678;
 			invitation.ssrc = _ssrc;
 			strcpy(invitation.sessionName, SessionName);
-			invitation.write(_sessionInvite.remoteHost, _sessionInvite.remotePort, &_contentUDP);
+			invitation.write(_sessionInvite.remoteHost, _sessionInvite.remotePort + 1, &_contentUDP);
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("< Content Invitation: peer = \"");

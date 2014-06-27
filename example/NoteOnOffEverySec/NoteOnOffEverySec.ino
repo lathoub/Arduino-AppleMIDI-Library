@@ -62,7 +62,7 @@ void setup()
 
   // Actively connect to a remote host
   IPAddress host(192, 168, 1, 142);
-  AppleMIDI.Invite(host, 5004);
+  //AppleMIDI.Invite(host, 5004);
 
   AppleMIDI.OnConnected(OnAppleMidiConnected);
   AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
