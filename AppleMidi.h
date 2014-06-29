@@ -51,6 +51,8 @@ protected:
 
 	SessionInvite_t _sessionInvite;
 	
+	Accept	 _sessionAccept;
+
 	// SSRC, Synchronization source.
 	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
 	// carried in the RTP header so as not to be dependent upon the network address. All packets from a
@@ -157,8 +159,16 @@ private:
 	void ManageInvites();
 	void ManageTiming();
 
-	int GetFreeSessionSlot();
-	int GetSessionSlot(const uint32_t ssrc);
+	int		GetFreeSessionSlot();
+	int		GetSessionSlot(const uint32_t ssrc);
+	void	CreateSession(const int slot, const uint32_t ssrc);
+	void	CreateLocalSessionStep1(const int slot, const uint32_t ssrc);
+	void	CreateLocalSessionStep2(const int slot, const uint32_t ssrc);
+	void	CreateRemoteSessionStep1(const int slot, const uint32_t ssrc);
+	void	CreateRemoteSessionStep2(const int slot, const uint32_t ssrc);
+	void	DeleteSession(const uint32_t ssrc);
+
+	void	DumpSession();
 
 #if APPLEMIDI_USE_CALLBACKS
 public:

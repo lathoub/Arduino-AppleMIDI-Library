@@ -275,6 +275,13 @@ struct Message
 // generates multiple streams in one RTP session, for example from separate video cameras, each must
 // be identified as a different SSRC.
 
+enum Accept
+{
+	NoOne = 0,
+	Peer = 1,
+	Anyone = 0xff,
+};
+
 enum SessionInitiator
 {
 	Undefined,
@@ -294,6 +301,8 @@ typedef struct _SessionInvite_t {
 	unsigned long		lastSend;
     IPAddress			remoteHost;
 	uint16_t			remotePort;
+	int					attempts;
+    uint32_t			ssrc; 
 } SessionInvite_t;
 
 //typedef struct _Participant_t {
@@ -301,14 +310,18 @@ typedef struct _SessionInvite_t {
 //	uint16_t sequenceNumber;
 //} Participant_t;
 
+typedef struct _SessionSyncronization_t {
+	unsigned long		lastTime;
+	uint32_t			count;
+	bool				busy;
+} SessionSyncronization_t;
+
 typedef struct _Session_t {
-    uint32_t			ssrc; // the unique identifier
-	unsigned short		seqNum;
-//	Participant_t		participants[MAX_PARTICIPANTS_PER_SESSION];
-	SessionInitiator	sessionInitiator;
-	unsigned long		sessionSyncronizedLastTime;
-	uint32_t			sessionSyncronizedCount;
-	bool				sessionSyncronizedBusy;
+    uint32_t				ssrc; // the unique identifier
+	unsigned short			seqNum;
+//	Participant_t			participants[MAX_PARTICIPANTS_PER_SESSION];
+	SessionInitiator		initiator;
+	SessionSyncronization_t	syncronization;
 } Session_t;
 
 typedef uint32_t MIDISamplingRate;
