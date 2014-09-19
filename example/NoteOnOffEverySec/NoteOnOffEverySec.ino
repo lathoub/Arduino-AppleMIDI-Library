@@ -92,8 +92,8 @@ void loop()
     int velocity = 55;
     int channel = 1;
 
-//    AppleMIDI.noteOn(note, velocity, channel);
-//    AppleMIDI.noteOff(note, velocity, channel);
+    AppleMIDI.noteOn(note, velocity, channel);
+    AppleMIDI.noteOff(note, velocity, channel);
   }
 }
 
