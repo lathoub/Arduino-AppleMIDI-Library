@@ -60,10 +60,6 @@ void setup()
   // Create a session and wait for a remote host to connect to us
   AppleMIDI.begin("test");
 
-  // Actively connect to a remote host
-  IPAddress host(192, 168, 1, 142);
-  //AppleMIDI.Invite(host, 5004);
-
   AppleMIDI.OnConnected(OnAppleMidiConnected);
   AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
 
@@ -92,8 +88,8 @@ void loop()
     int velocity = 55;
     int channel = 1;
 
-//    AppleMIDI.noteOn(note, velocity, channel);
-//    AppleMIDI.noteOff(note, velocity, channel);
+    AppleMIDI.noteOn(note, velocity, channel);
+    AppleMIDI.noteOff(note, velocity, channel);
   }
 }
 
