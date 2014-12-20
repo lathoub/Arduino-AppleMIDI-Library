@@ -161,24 +161,46 @@ void AppleMidi_Class::run()
 	ManageTiming();
 
 	byte _packetBuffer[UDP_TX_PACKET_MAX_SIZE];
-	// 
+	// UDP_TX_PACKET_MAX_SIZE = 24
+	
+	// Get first packet of CONTROL logic, if any
 	int packetSize = _controlUDP.parsePacket();
-	while (_controlUDP.available() > 0)
-	{
-		int bytesRead = _controlUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
-
-		_controlDissector.addPacket(_packetBuffer, bytesRead);
+	int bytesRead = 0;
+	
+	// While we still have packets to process
+	while (packetSize > 0) {
+	   // While we still have bytes to process in the packet
+	   while (packetSize > 0) {
+         bytesRead = _controlUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+         packetSize = packetSize - bytesRead;
+   	   _controlDissector.addPacket(_packetBuffer, bytesRead);
+	   }
+	   
+	   // Dissect packet only after all bytes have been added to the buffer
 		_controlDissector.dissect();
+	   
+	   // Get next packet
+	   packetSize = _controlUDP.parsePacket();
 	}
-
-	// 
+	
+	// Get first packet of CONTENT logic, if any
 	packetSize = _contentUDP.parsePacket();
-	while (_contentUDP.available() > 0)
-	{
-		int bytesRead = _contentUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
-
-		_contentDissector.addPacket(_packetBuffer, bytesRead);
+	bytesRead = 0;
+	
+	// While we still have packets to process
+	while (packetSize > 0) {
+	   // While we still have bytes to process in the packet
+	   while (packetSize > 0) {
+         bytesRead = _contentUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+         packetSize = packetSize - bytesRead;
+   	   _contentDissector.addPacket(_packetBuffer, bytesRead);
+	   }
+	   
+	   // Dissect packet only after all bytes have been added to the buffer
 		_contentDissector.dissect();
+	   
+	   // Get next packet
+	   packetSize = _contentUDP.parsePacket();
 	}
 }
 

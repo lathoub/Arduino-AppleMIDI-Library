@@ -1241,6 +1241,7 @@ Serial.print ("ReportedBoundsError 2");
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("journal section");
 #endif
+
 			/* lets get the main flags from the recovery journal header */
 			flags = packetBuffer[offset];
 
@@ -1274,12 +1275,22 @@ Serial.print ("ReportedBoundsError 3");
 
 				/* iterate through all the channels specified in header */
 				for (int i = 0; i <= totchan; i++ ) {
-
-					int consumed = 0;//decode_channel_journal( tvb, pinfo, rtp_midi_chanjournals_tree, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print("Processing channel journal: ");
+Serial.println(i); 
+#endif
+					int consumed = decode_channel_journal( rtpMidi, packetBuffer, offset);
+					
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+Serial.print("Consumed by channel journal (");
+Serial.print(i);
+Serial.print("): ");
+Serial.println(consumed);
+#endif
 
 					if ( -1 == consumed ) {
 #ifdef APPLEMIDI_DEBUG
-Serial.print ("ReportedBoundsError 4");
+Serial.println("ReportedBoundsError 4");
 #endif
 				//		THROW( ReportedBoundsError );
 						return -1;
@@ -1290,7 +1301,7 @@ Serial.print ("ReportedBoundsError 4");
 				}
 			}
 		}
-
+		
 		return offset;
 	}
 
@@ -1315,7 +1326,7 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a simple system commands chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_D ) {
-//			ext_consumed = decode_sj_chapter_d( tvb, pinfo, rtp_midi_sj_chapters_tree, offset );
+			ext_consumed = decode_sj_chapter_d(rtpMidi, packetBuffer, offset );
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1331,7 +1342,7 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a sequencer state commands chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_Q ) {
-//			ext_consumed = decode_sj_chapter_q( tvb, pinfo, rtp_midi_sj_chapters_tree, offset );
+			ext_consumed = decode_sj_chapter_q( rtpMidi, packetBuffer, offset );
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1341,7 +1352,7 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a MTC chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_F ) {
-//			ext_consumed = decode_sj_chapter_f( tvb, pinfo, rtp_midi_sj_chapters_tree, offset );
+			ext_consumed = decode_sj_chapter_f( rtpMidi, packetBuffer, offset );
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1352,7 +1363,7 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a Sysex chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_X ) {
-//			ext_consumed = decode_sj_chapter_x( tvb, pinfo, rtp_midi_sj_chapters_tree, offset, sysjourlen - consumed );
+			ext_consumed = decode_sj_chapter_x( rtpMidi, packetBuffer, offset, sysjourlen - consumed );
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1367,20 +1378,23 @@ Serial.println("decode_system_journal");
 		return consumed;
 	}
 
-	/*
-	 * Here a channel-journal is decoded.
-	 */
-	static int
-	decode_channel_journal( AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
-		int				consumed = 0;
-		int				ext_consumed = 0;
+/*
+ * Here a channel-journal is decoded.
+ */
+static int
+decode_channel_journal( AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+   uint32_t				chanflags;
+   uint16_t				chanjourlen;
+   int				consumed = 0;
+   int				ext_consumed = 0;
+
+   /* first we need to get the flags & length of this channel-journal */
+   memcpy(&chanflags, packetBuffer + offset, 3);
+   chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.print("decode_channel_journal");
+   Serial.println("decode_channel_journal");
 #endif
-		/* first we need to get the flags & length of this channel-journal */
-		uint16_t chanflags = packetBuffer[offset];//tvb_get_ntoh24( tvb, offset );
-		uint32_t chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
 
 		/* take care of length of header */
 		offset	 += 3;
@@ -1388,14 +1402,18 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a program change chapter? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_P ) {
-
 			offset	 += 3;
 			consumed += 3;
 		}
 
 		/* Do we have a control chapter? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_C ) {
-//			ext_consumed = decode_cj_chapter_c( tvb, pinfo, rtp_midi_cj_chapters_tree, offset );
+			ext_consumed = decode_cj_chapter_c(rtpMidi, packetBuffer, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("cj_chapter_c: ");
+			Serial.println(ext_consumed);
+#endif		
+			
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1406,7 +1424,12 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a parameter changes? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_M ) {
-//			ext_consumed = decode_cj_chapter_m( tvb, pinfo, rtp_midi_cj_chapters_tree, offset );
+			ext_consumed = decode_cj_chapter_m(rtpMidi, packetBuffer, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("cj_chapter_m: ");
+			Serial.println(ext_consumed);
+#endif		
+
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1426,7 +1449,12 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a note on/off chapter? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_N ) {
-//			ext_consumed = decode_cj_chapter_n( tvb, pinfo, rtp_midi_cj_chapters_tree, offset );
+			ext_consumed = decode_cj_chapter_n(rtpMidi, packetBuffer, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("cj_chapter_n: ");
+			Serial.println(ext_consumed);
+#endif		
+
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1436,7 +1464,12 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a note command extras chapter? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_E ) {
-//			ext_consumed = decode_cj_chapter_e( tvb, pinfo, rtp_midi_cj_chapters_tree, offset );
+			ext_consumed = decode_cj_chapter_e(rtpMidi, packetBuffer, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("cj_chapter_e: ");
+			Serial.println(ext_consumed);
+#endif		
+
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1453,7 +1486,12 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a poly aftertouch chapter? */
 		if ( chanflags & RTP_MIDI_CJ_FLAG_A ) {
-//			ext_consumed = decode_cj_chapter_a( tvb, pinfo, rtp_midi_cj_chapters_tree, offset );
+			ext_consumed = decode_cj_chapter_a(rtpMidi, packetBuffer, offset );
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("cj_chapter_a: ");
+			Serial.println(ext_consumed);
+#endif		
+
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
@@ -1462,7 +1500,13 @@ Serial.println("decode_system_journal");
 
 		/* Make sanity check for consumed data vs. stated length of this channels journal */
 		if ( consumed != chanjourlen ) {
-			return -1;
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		   Serial.print("Calculated consumption for channel journal: ");
+		   Serial.print(consumed);
+         Serial.print(" != Channel Journal Length: ");
+		   Serial.println(chanjourlen);
+#endif		
+			return chanjourlen;
 		}
 
 		return consumed;
@@ -1594,7 +1638,7 @@ Serial.println("errora");
 #endif
 				return ext_consumed;
 			}
-
+			
 			return consumed + ext_consumed;
 		}
 
@@ -2878,6 +2922,612 @@ Serial.println("aborted MIDI-command");
 
 		return consumed;
 	}
+
+/*
+ * Here the chapter Q of the channel-journal is decoded.
+ */
+static int
+decode_sj_chapter_q(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+	uint8_t				header;
+	unsigned int start_offset = offset;
+	int				len = 1;
+
+	/* first we need to get the flags of this chapter */
+	header = packetBuffer[offset];
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_Q_FLAG_C ) {
+		len += 2;
+	}
+	if ( header & RTP_MIDI_SJ_CHAPTER_Q_FLAG_T ) {
+		len += 3;
+	}
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_Q_FLAG_C ) {
+		offset	 += 3;
+	} else {
+		offset++;
+	}
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_Q_FLAG_T ) {
+		offset += 3;
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter F of the channel-journal is decoded.
+ */
+static int
+decode_sj_chapter_f(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+	uint8_t				header;
+	unsigned int start_offset = offset;
+	int				len = 1;
+
+	/* first we need to get the flags of this chapter */
+	header = packetBuffer[offset];
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_F_FLAG_C ) {
+		len += 4;
+	}
+	if ( header & RTP_MIDI_SJ_CHAPTER_F_FLAG_P ) {
+		len += 4;
+	}
+
+	offset++;
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_F_FLAG_C ) {
+		offset	 += 4;
+	}
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_F_FLAG_P ) {
+		offset += 4;
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter X of the channel-journal is decoded.
+ */
+static int
+decode_sj_chapter_x(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int max_length ) {
+	uint8_t				header;
+	uint8_t				octet;
+	unsigned int			consumed = 0;
+	unsigned int			cmdlen   = 0;
+	unsigned int			i;
+
+	/* first we need to get the flags of this chapter */
+	header = packetBuffer[offset];
+
+	consumed++;
+	offset++;
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_X_FLAG_T ) {
+		consumed++;
+		offset++;
+	}
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_X_FLAG_C ) {
+		consumed++;
+		offset++;
+	}
+
+	if ( header & RTP_MIDI_SJ_CHAPTER_X_FLAG_F ) {
+		unsigned int field    = 0;
+		unsigned int fieldlen = 0;
+
+		/* FIRST is "compressed" using only the necessary amount of octets, like delta-time */
+		for ( i=0; i < 4; i++ ) {
+			/* do we still fit in the dissected packet & in the length restriction of this chapter? */
+			if ( ( !( consumed >= max_length ) ) || ( !packetBuffer[offset + fieldlen] ) ) {
+				return -1;
+			}
+
+			octet = packetBuffer[offset + fieldlen];
+			field = ( field << 7 ) | ( octet & RTP_MIDI_DELTA_TIME_OCTET_MASK );
+			fieldlen++;
+
+			if ( ( octet & RTP_MIDI_DELTA_TIME_EXTENSION ) == 0 ) {
+				break;
+			}
+		}
+
+		consumed += fieldlen;
+		offset	 += fieldlen;
+	}
+
+	/* XXX: 'cmdlen' in the following is always 0 (since initialized to 0 above) ??? */
+	if ( header & RTP_MIDI_SJ_CHAPTER_X_FLAG_D ) {
+		while ( consumed < max_length ) {
+			octet = packetBuffer[offset + cmdlen];
+			if ( octet & 0x80 ) {
+				offset += cmdlen;
+				cmdlen	= 0;
+			}
+			consumed += 1;
+		}
+		/* unfinished command still to put into tree */
+		if ( cmdlen ) {
+			offset += cmdlen;
+		}
+	}
+
+	/* this should not ever enter - we still have data, but flag d was apparently not set...  */
+	if ( consumed < max_length ) {
+		consumed = max_length;
+	}
+
+	return consumed;
+}
+
+   /*
+    * Here the chapter D of the channel-journal is decoded.
+    */
+   static int
+   decode_sj_chapter_d(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+      int				header;
+      unsigned int start_offset = offset;
+      int				ext_consumed;
+
+      /* first we need to get the flags of this chapter */
+      header = packetBuffer[offset];
+
+      /* done with header */
+      offset++;
+
+      /* do we have Reset field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_B ) {
+         offset++;
+      }
+
+      /* do we have Tune request field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_G ) {
+         offset++;
+      }
+
+      /* do we have Song select field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_H ) {
+         offset++;
+      }
+
+      /* do we have 0xF4 field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_J ) {
+         ext_consumed = decode_sj_chapter_d_f4(rtpMidi, packetBuffer, offset);
+         if ( ext_consumed < 0 ) {
+            return ext_consumed;
+         }
+         offset	 += ext_consumed;
+      }
+
+      /* do we have 0xF5 field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_K ) {
+         ext_consumed = decode_sj_chapter_d_f5(rtpMidi, packetBuffer, offset);
+         if ( ext_consumed < 0 ) {
+            return ext_consumed;
+         }
+         offset	 += ext_consumed;
+      }
+
+      /* do we have 0xF9 field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_Y ) {
+         ext_consumed = decode_sj_chapter_d_f9(rtpMidi, packetBuffer, offset);
+         if ( ext_consumed < 0 ) {
+            return ext_consumed;
+         }
+         offset	 += ext_consumed;
+      }
+
+      /* do we have 0xFD field? */
+      if ( header & RTP_MIDI_SJ_CHAPTER_D_FLAG_Z ) {
+         ext_consumed = decode_sj_chapter_d_fd(rtpMidi, packetBuffer, offset);
+         if ( ext_consumed < 0 ) {
+            return ext_consumed;
+         }
+         offset += ext_consumed;
+      }
+
+      /* now we know the complete length and set it. */
+      return offset-start_offset;
+   }
+	
+   /*
+    * Here the chapter D F4-field of the system-journal is decoded.
+    */
+   static int decode_sj_chapter_d_f4(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+      int start_offset = offset;
+      uint16_t		 f4flags;
+      uint16_t		 f4length;
+
+      /* Get flags & length */
+      f4flags = packetBuffer[offset];
+      f4length = f4flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_MASK_LENGTH;
+
+      offset	 += 2;
+      f4length -= 2;
+
+      if ( f4flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_C ) {
+         offset++;
+         f4length--;
+      }
+
+      if ( f4flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_V ) {
+         int valuelen = 0;
+         uint8_t octet;
+
+         /* variable length field - ends with an octet with MSB set */
+         for (;;) {
+            octet = packetBuffer[offset+valuelen];
+            valuelen++;
+            if ( octet & 0x80 ) {
+               break;
+            }
+         }
+         offset	 += valuelen;
+         f4length -= valuelen;
+      }
+
+      if ( f4flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_L ) {
+         offset	 += f4length;
+      }
+
+      /* if we still have data, the length-field was incorrect we dump the data here and abort! */
+      if ( f4length > 0 ) {
+         offset += f4length;
+         /* must be a protocol error - since we have a length, we can recover...*/
+      }
+
+      return offset-start_offset;
+   }
+   
+   static int decode_sj_chapter_d_f5(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint16_t		 f5flags;
+	uint16_t		 f5length;
+
+	/* Get flags & length */
+	f5flags = packetBuffer[offset];
+	f5length = f5flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_MASK_LENGTH;
+
+	offset	 += 2;
+	f5length -= 2;
+
+	if ( f5flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_C ) {
+		offset++;
+		f5length--;
+	}
+
+	if ( f5flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_V ) {
+
+		int valuelen = 0;
+		uint8_t octet;
+
+		/* variable length field - ends with an octet with MSB set */
+		for (;;) {
+			octet = packetBuffer[offset+valuelen];
+			valuelen++;
+			if ( octet & 0x80 ) {
+				break;
+			}
+		}
+
+		offset	 += valuelen;
+		f5length -= valuelen;
+	}
+
+	if ( f5flags & RTP_MIDI_SJ_CHAPTER_D_SYSCOM_FLAG_L ) {
+		offset	 += f5length;
+		f5length = 0;
+	}
+
+	/* if we still have data, we dump it here - see above! */
+	if ( f5length > 0 ) {
+		offset += f5length;
+		/* must be a protocol error - since we have a length, we can recover...*/
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter D F9-field of the system-journal is decoded.
+ */
+static int
+decode_sj_chapter_d_f9(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint8_t		 f9flags;
+	uint8_t		 f9length;
+
+	/* Get flags & length */
+	f9flags = packetBuffer[offset];
+	f9length = f9flags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_MASK_LENGTH;
+
+	offset++;
+	f9length--;
+
+	if ( f9flags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_FLAG_C ) {
+		offset++;
+		f9length--;
+	}
+
+	if ( f9flags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_FLAG_L ) {
+		offset	 += f9length;
+		f9length = 0;
+	}
+
+	/* if we still have data, the length-field was incorrect we dump the data here and abort! */
+
+	if ( f9length > 0 ) {
+		offset += f9length;
+		/* must be a protocol error - since we have a length, we can recover...*/
+	}
+
+	return offset-start_offset;
+}
+
+
+/*
+ * Here the chapter D FD-field of the system-journal is decoded.
+ */
+static int
+decode_sj_chapter_d_fd(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint8_t		 fdflags;
+	uint8_t		 fdlength;
+
+	/* Get flags & length */
+	fdflags  = packetBuffer[offset];
+	fdlength = fdflags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_MASK_LENGTH;
+
+	offset++;
+	fdlength--;
+
+	if ( fdflags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_FLAG_C ) {
+		offset++;
+		fdlength--;
+	}
+
+	if ( fdflags & RTP_MIDI_SJ_CHAPTER_D_SYSREAL_FLAG_L ) {
+		offset	 += fdlength;
+		fdlength = 0;
+	}
+
+	/* if we still have data, the length-field was incorrect we dump the data here and abort! */
+
+	if ( fdlength > 0 ) {
+		offset += fdlength;
+		/* must be a protocol error - since we have a length, we can recover...*/
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter c of the channel-journal is decoded.
+ */
+static int
+decode_cj_chapter_c(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint8_t				 octet;
+	int				 count;
+	int				 i;
+
+	octet = packetBuffer[offset];
+	count = octet & 0x7f;
+
+	/* count encoded is n+1 */
+	count++;
+
+	offset++;
+
+	for ( i = 0; i < count; i++ ) {
+		offset++;
+		octet = packetBuffer[offset];
+		offset++;
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter m of the channel-journal is decoded, possibly the most complex part of the RTP-MIDI stuff ;-)
+ */
+static int
+decode_cj_chapter_m(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	uint16_t				header;
+	uint8_t				logitemheader;
+	int				length;
+	int				logitemhdrlen;
+	int				logitemlen;
+	boolean			no_pnum_msb;
+	unsigned int start_offset = offset;
+
+	/* first we need to get the flags & length of this chapter */
+	header = packetBuffer[offset];
+	length = header & RTP_MIDI_CJ_CHAPTER_M_MASK_LENGTH;
+	/* take of length of header */
+	length -= 2;
+
+	/* done with header */
+	offset	 += 2;
+
+	/* do we have the pending field? */
+	if ( header & 0x4000 ) {
+		offset++;
+	}
+
+	/*
+	 * lets find out if we need to decode the pnum_msb:
+	 * if Z = 1 and either U = 1 or W = 1 we don't
+	 */
+	no_pnum_msb = ( header & 0x0400 ) && ( ( header & 0x0800 ) || ( header & 0x1000 ) );
+	logitemhdrlen = no_pnum_msb ? 2 : 3;
+
+	/* lets step through the loglist */
+	while ( length > 0 ) {
+		offset++;
+		length--;
+
+		/* if we have the msb, we need to decode it */
+		if ( !no_pnum_msb ) {
+			offset++;
+			length--;
+		}
+
+		offset++;
+		length--;
+
+		/* do we have a entry-msb field? */
+		if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_J ) {
+			offset++;
+			length--;
+		}
+
+		/* do we have a entry-lsb field? */
+		if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_K ) {
+			offset++;
+			length--;
+		}
+
+		/* do we have an a-button field? */
+		if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_L ) {
+			offset	 += 2;
+			length	 -= 2;
+		}
+
+		/* do we have a c-button field? */
+		if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_M ) {
+			offset	 += 2;
+			length	 -= 2;
+		}
+
+		/* do we have a count field? */
+		if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_N ) {
+			offset++;
+			length--;
+		}
+
+	}
+
+	return offset-start_offset;
+}
+
+
+/*
+ * Here the chapter n of the channel-journal is decoded.
+ */
+static int
+decode_cj_chapter_n(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint16_t				 header;
+	uint8_t				 note;
+	uint8_t				 velocity;
+	int				 log_count;
+	int				 octet_count;
+	int				 low;
+	int				 high;
+	int				 i;
+
+	/* first we need to get the flags & length of this chapter */
+	header = packetBuffer[offset];
+	log_count = ( header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH ) >> 8;
+	low = ( header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW ) >> 4;
+	high = header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH;
+
+	/* how many offbits octets do we have? */
+	if ( low <= high ) {
+		octet_count = high - low + 1;
+	} else if ( ( low == 15 ) && ( high == 0 ) ) {
+		octet_count = 0;
+	} else if ( ( low == 15 ) && ( high == 1 ) ) {
+		octet_count = 0;
+	} else {
+		return -1;
+	}
+
+	/* special case -> no offbit octets, but 128 note-logs */
+	if ( ( log_count == 127 ) && ( low == 15) && ( high == 0 ) ) {
+		log_count++;
+	}
+
+	offset	 += 2;
+
+	if ( log_count > 0 ) {
+		for ( i = 0; i < log_count; i++ ) {
+			offset++;
+			offset++;
+		}
+	}
+
+	if ( octet_count > 0 ) {
+		for ( i = 0; i < octet_count; i++ ) {
+			offset++;
+		}
+	}
+
+	return offset-start_offset;
+}
+
+
+/*
+ * Here the chapter e of the channel-journal is decoded.
+ */
+static int
+decode_cj_chapter_e(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint8_t				 header;
+	uint8_t				 note;
+	uint8_t				 count_vel;
+	uint8_t				 octet;
+	int				 log_count;
+	int				 i;
+
+	/* first we need to get the flags & length of this chapter */
+	header = packetBuffer[offset];
+	log_count = header & RTP_MIDI_CJ_CHAPTER_E_MASK_LENGTH;
+
+	/* count is encoded n+1 */
+	log_count++;
+	offset++;
+
+	for ( i = 0; i < log_count; i++ ) {
+		offset++;
+		offset++;
+	}
+
+	return offset-start_offset;
+}
+
+/*
+ * Here the chapter a of the channel-journal is decoded.
+ */
+static int
+decode_cj_chapter_a(AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	unsigned int start_offset = offset;
+	uint8_t				 header;
+	uint8_t				 note;
+	uint8_t				 pressure;
+	int				 log_count;
+	int				 i;
+
+	/* first we need to get the flags & length of this chapter */
+	header = packetBuffer[offset];
+	log_count = header & RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH;
+
+	/* count is encoded n+1 */
+	log_count++;
+
+	offset++;
+
+	for ( i = 0; i < log_count; i++ ) {
+		offset++;
+	}
+
+	return offset-start_offset;
+}
+
+
 
 };
 
