@@ -38,9 +38,14 @@ typedef struct RtpMidi {
 
 		udp->write(&ddddd, sizeof(ddddd));
 		udp->write(&playLoadType,   sizeof(playLoadType));
-		udp->write(AppleMIDI_Util::toBuffer(sequenceNr), sizeof(sequenceNr));
-		udp->write(AppleMIDI_Util::toBuffer(timestamp), sizeof(timestamp));
-		udp->write(AppleMIDI_Util::toBuffer(ssrc), sizeof(ssrc));
+
+		uint16_t _sequenceNr = AppleMIDI_Util::toEndian(sequenceNr);
+		uint32_t _timestamp  = AppleMIDI_Util::toEndian(timestamp);
+		uint32_t _ssrc       = AppleMIDI_Util::toEndian(ssrc);
+
+		udp->write((uint8_t*) ((void*) (&_sequenceNr)), sizeof(_sequenceNr));
+		udp->write((uint8_t*) ((void*) (&_timestamp)), sizeof(_timestamp));
+		udp->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
 	}
 
 	void endWrite(EthernetUDP* udp)

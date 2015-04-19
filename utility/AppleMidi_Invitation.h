@@ -44,9 +44,17 @@ typedef struct AppleMIDI_Invitation {
 
 		udp->write(signature, sizeof(signature));
 		udp->write(command,   sizeof(command));
-		udp->write(AppleMIDI_Util::toBuffer(version), sizeof(version));
-		udp->write(AppleMIDI_Util::toBuffer(initiatorToken), sizeof(initiatorToken));
-		udp->write(AppleMIDI_Util::toBuffer(ssrc), sizeof(ssrc));
+
+		// To appropriate endian conversion
+		uint32_t _version = AppleMIDI_Util::toEndian(version);
+		uint32_t _initiatorToken = AppleMIDI_Util::toEndian(initiatorToken);
+		uint32_t _ssrc = AppleMIDI_Util::toEndian(ssrc);
+
+		// write then out
+		udp->write((uint8_t*) ((void*) (&_version)), sizeof(_version));
+		udp->write((uint8_t*) ((void*) (&_initiatorToken)), sizeof(_initiatorToken));
+		udp->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
+
 		udp->write((uint8_t*)sessionName, strlen(sessionName) + 1);
 
 		udp->endPacket(); 

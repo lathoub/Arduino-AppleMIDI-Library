@@ -15,9 +15,11 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
+#include <inttypes.h>
+#include <stdint.h>
+
 class AppleMIDI_Util {
 public:
-
 	static uint64_t readUInt64(unsigned char* buffer)
 	{
 		unsigned char tmpBuffer[sizeof(uint64_t)];
@@ -47,51 +49,119 @@ public:
 		return *((uint8_t*)&buffer[0]);
 	}
 
-	static uint8_t* toBuffer(uint8_t number)
+	//static uint8_t* toBuffer(uint8_t number)
+	//{
+	//	uint8_t* buffer = (uint8_t*) malloc(4);
+
+	//	buffer[0] = (number >> 0) & 0xFF;
+
+	//	return buffer;
+	//}
+
+	static uint8_t toEndian(uint8_t number)
 	{
-		uint8_t buffer[sizeof(uint8_t)];
-
-		buffer[0] = (number >> 0) & 0xFF;
-
-		return buffer;
+		return number;
 	}
 
-	static uint8_t* toBuffer(uint16_t number)
+	static int8_t toEndian(int8_t number)
 	{
-		uint8_t buffer[sizeof(uint16_t)];
-
-		buffer[0] = (number >>  8) & 0xFF;
-		buffer[1] = (number >>  0) & 0xFF;
-
-		return buffer;
+		return number;
 	}
 
-	static uint8_t* toBuffer(uint32_t number)
+	static uint16_t toEndian(uint16_t number)
 	{
-		uint8_t buffer[sizeof(uint32_t)];
-
-		buffer[0] = (number >> 24) & 0xFF;
-		buffer[1] = (number >> 16) & 0xFF;
-		buffer[2] = (number >>  8) & 0xFF;
-		buffer[3] = (number >>  0) & 0xFF;
-
-		return buffer;
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_uint16(number);
+#else
+		return number;
+#endif
 	}
 
-	static uint8_t* toBuffer(int64_t number)
+	static int16_t toEndian(int16_t number)
 	{
-		uint8_t buffer[sizeof(int64_t)];
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_int16(number);
+#else
+		return number;
+#endif
+	}
 
-		buffer[0] = (number >> 56) & 0xFF;
-		buffer[1] = (number >> 48) & 0xFF;
-		buffer[2] = (number >> 40) & 0xFF;
-		buffer[3] = (number >> 32) & 0xFF;
-		buffer[4] = (number >> 24) & 0xFF;
-		buffer[5] = (number >> 16) & 0xFF;
-		buffer[6] = (number >>  8) & 0xFF;
-		buffer[7] = (number >>  0) & 0xFF;
+	static uint32_t toEndian(uint32_t number)
+	{
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_uint32(number);
+#else
+		return number;
+#endif
+	}
 
-		return buffer;
+	static int32_t toEndian(int32_t number)
+	{
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_int32(number);
+#else
+		return number;
+#endif
+	}
+
+	static uint64_t toEndian(uint64_t number)
+	{
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_uint64(number);
+#else
+		return number;
+#endif
+	}
+
+	static int64_t toEndian(int64_t number)
+	{
+#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
+		return swap_int64(number);
+#else
+		return number;
+#endif
+	}
+
+private:
+
+	//! Byte swap unsigned short
+	static uint16_t swap_uint16(uint16_t val)
+	{
+		return (val << 8) | (val >> 8);
+	}
+
+	//! Byte swap short
+	static int16_t swap_int16(int16_t val)
+	{
+		return (val << 8) | ((val >> 8) & 0xFF);
+	}
+
+	//! Byte swap unsigned int
+	static uint32_t swap_uint32(uint32_t val)
+	{
+		val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
+		return (val << 16) | (val >> 16);
+	}
+
+	//! Byte swap int
+	static int32_t swap_int32(int32_t val)
+	{
+		val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
+		return (val << 16) | ((val >> 16) & 0xFFFF);
+	}
+
+	static uint64_t swap_uint64(uint64_t val)
+	{
+		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
+		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
+		return (val << 32) | (val >> 32);
+	}
+
+	static int64_t swap_int64(int64_t val)
+	{
+		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
+		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
+		return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
 	}
 
 };

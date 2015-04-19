@@ -244,10 +244,8 @@ void AppleMidi_Class::ManageInvites()
 	Serial.print  (invitation.ssrc, HEX);
 	Serial.print  (" ,Attempt = ");
 	Serial.print  (_sessionInvite.attempts);
-#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitation.initiatorToken, HEX);
-#endif
 	Serial.println();
 #endif
 
@@ -345,12 +343,12 @@ void AppleMidi_Class::ManageTiming()
 						Serial.print  (", count = ");
 						Serial.print  (synchronizationResponse.count);
 					#if (APPLEMIDI_DEBUG_VERBOSE)
-						Serial.print  (" Timestamps = ");
-						Serial.print  (synchronizationResponse.timestamps[0], HEX);
-						Serial.print  (" ");
-						Serial.print  (synchronizationResponse.timestamps[1], HEX);
-						Serial.print  (" ");
-						Serial.print  (synchronizationResponse.timestamps[2], HEX);
+						//Serial.print  (" Timestamps = ");
+						//Serial.print  (synchronizationResponse.timestamps[0], HEX);
+						//Serial.print  (" ");
+						//Serial.print  (synchronizationResponse.timestamps[1], HEX);
+						//Serial.print  (" ");
+						//Serial.print  (synchronizationResponse.timestamps[2], HEX);
 					#endif
 						Serial.println("");
 					#endif
@@ -398,10 +396,8 @@ void AppleMidi_Class::OnControlInvitationAccepted(void* sender, InvitationAccept
 	Serial.print  ("\"");
 	Serial.print  (" ,ssrc 0x");
 	Serial.print  (invitationAccepted.ssrc, HEX);
-#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitationAccepted.initiatorToken, HEX);
-#endif
 	Serial.println();
 #endif
 
@@ -485,10 +481,8 @@ void AppleMidi_Class::OnControlInvitation(void* sender, Invitation_t& invitation
 	Serial.print  ("\"");
 	Serial.print  (" ,ssrc 0x");
 	Serial.print  (invitation.ssrc, HEX);
-#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitation.initiatorToken, HEX);
-#endif
 	Serial.println();
 #endif
 
@@ -522,10 +516,10 @@ void AppleMidi_Class::OnControlInvitation(void* sender, Invitation_t& invitation
 	Serial.print  ("\"");
 	Serial.print  (" ,ssrc 0x");
 	Serial.print  (this->_ssrc, HEX);
-#if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print  (" ,initiatorToken = 0x");
 	Serial.print  (invitation.initiatorToken, HEX);
-	Serial.print  (" ,in slot = ");
+#if (APPLEMIDI_DEBUG_VERBOSE)
+	Serial.print(" ,in slot = ");
 	Serial.print  (index);
 #endif
 	Serial.println();
@@ -627,12 +621,12 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 	Serial.print  (", count = ");
 	Serial.print  (synchronization.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (" Timestamps = ");
-	Serial.print  (synchronization.timestamps[0], HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[1], HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[2], HEX);
+	//Serial.print  (" Timestamps = ");
+	//Serial.print  (synchronization.timestamps[0], HEX);
+	//Serial.print  (" ");
+	//Serial.print  (synchronization.timestamps[1], HEX);
+	//Serial.print  (" ");
+	//Serial.print  (synchronization.timestamps[2], HEX);
 #endif
 	Serial.println("");
 #endif
@@ -694,12 +688,12 @@ void AppleMidi_Class::OnSyncronization(void* sender, Syncronization_t& synchroni
 	Serial.print  (", count = ");
 	Serial.print  (synchronizationResponse.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print  (" Timestamps = ");
-	Serial.print  (synchronization.timestamps[0], HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[1], HEX);
-	Serial.print  (" ");
-	Serial.print  (synchronization.timestamps[2], HEX);
+	//Serial.print  (" Timestamps = ");
+	//Serial.print  (synchronization.timestamps[0], HEX);
+	//Serial.print  (" ");
+	//Serial.print  (synchronization.timestamps[1], HEX);
+	//Serial.print  (" ");
+	//Serial.print  (synchronization.timestamps[2], HEX);
 #endif
 	Serial.println("");
 #endif

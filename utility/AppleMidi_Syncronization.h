@@ -53,14 +53,24 @@ typedef struct AppleMIDI_Syncronization {
 
 		udp->write(signature, sizeof(signature));
 		udp->write(command,   sizeof(command));
-		udp->write(AppleMIDI_Util::toBuffer(ssrc), sizeof(ssrc));
-		udp->write(AppleMIDI_Util::toBuffer(count), sizeof(count));
-		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
-		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
-		udp->write(AppleMIDI_Util::toBuffer((uint8_t)0), sizeof(uint8_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[0]), sizeof(int64_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[1]), sizeof(int64_t));
-		udp->write(AppleMIDI_Util::toBuffer(timestamps[2]), sizeof(int64_t));
+		
+		// To appropriate endian conversion
+		uint32_t _ssrc = AppleMIDI_Util::toEndian(ssrc);
+		uint8_t _count = AppleMIDI_Util::toEndian(count);
+		uint8_t _zero = 0;
+		int64_t _ts0 = AppleMIDI_Util::toEndian(timestamps[0]);
+		int64_t _ts1 = AppleMIDI_Util::toEndian(timestamps[1]);
+		int64_t _ts2 = AppleMIDI_Util::toEndian(timestamps[2]);
+
+		// write then out
+		udp->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
+		udp->write((uint8_t*) ((void*) (&_count)), sizeof(_count));
+		udp->write((uint8_t*) ((void*) (&_zero)), sizeof(_zero));
+		udp->write((uint8_t*) ((void*) (&_zero)), sizeof(_zero));
+		udp->write((uint8_t*) ((void*) (&_zero)), sizeof(_zero));
+		udp->write((uint8_t*) ((void*) (&_ts0)), sizeof(_ts0));
+		udp->write((uint8_t*) ((void*) (&_ts1)), sizeof(_ts1));
+		udp->write((uint8_t*) ((void*) (&_ts2)), sizeof(_ts2));
 
 		udp->endPacket(); 
 		udp->flush(); // Waits for the transmission of outgoing serial data to complete
