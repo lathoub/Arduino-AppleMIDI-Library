@@ -16,8 +16,8 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
-typedef struct AppleMIDI_BitrateReceiveLimit {
-
+class AppleMIDI_BitrateReceiveLimit {
+public:
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	bitratelimit;
@@ -27,16 +27,12 @@ typedef struct AppleMIDI_BitrateReceiveLimit {
 		init();
 	}
 
+private:
 	void init()
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
 	}
-
-	void write(EthernetUDP* udp)
-	{
-	}
-
-} BitrateReceiveLimit_t;
+};
 
 END_APPLEMIDI_NAMESPACE

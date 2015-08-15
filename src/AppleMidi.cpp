@@ -15,7 +15,3 @@
 #if !(APPLEMIDI_BUILD_INPUT) && !(APPLEMIDI_BUILD_OUTPUT)
 #   error To use AppleMIDI, you need to enable at least input or output.
 #endif
-
-#if APPLEMIDI_AUTO_INSTANCIATE && defined(ARDUINO)
-    APPLEMIDI_CREATE_INSTANCE;
-#endif

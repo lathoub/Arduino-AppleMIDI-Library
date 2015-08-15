@@ -11,7 +11,6 @@
 #pragma once
 
 #include <limits.h>
-#include <limits.h>
 
 BEGIN_APPLEMIDI_NAMESPACE
 

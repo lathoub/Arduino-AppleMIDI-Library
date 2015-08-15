@@ -2,19 +2,20 @@
 
 // These need to be included when using standard Ethernet
 #include <SPI.h>
-#include <Ethernet.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
 
 #include "AppleMidi.h"
 
-// Enter a MAC address for your controller below.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
+int status = WL_IDLE_STATUS;
+char ssid[] = "yourNetwork"; //  your network SSID (name)
+char pass[] = "secretPassword";    // your network password (use for WPA, or use as key for WEP)
+int keyIndex = 0;            // your network key Index number (needed only for WEP)
+
 
 unsigned long t0 = millis();
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
+APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
 
 // -----------------------------------------------------------------------------
 //
@@ -29,20 +30,36 @@ void setup()
 
   Serial.print("Getting IP address...");
 
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println();
-    Serial.println( "Failed DHCP, check network cable & reboot" );
-    for (;;)
-      ;
+
+  // check for the presence of the shield:
+  if (WiFi.status() == WL_NO_SHIELD) {
+    Serial.println("WiFi shield not present");
+    // don't continue:
+    while (true);
+  }
+
+  String fv = WiFi.firmwareVersion();
+  if ( fv != "1.1.0" )
+    Serial.println("Please upgrade the firmware");
+
+  // attempt to connect to Wifi network:
+  while ( status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    status = WiFi.begin(ssid);
+
+    // wait 10 seconds for connection:
+    delay(10000);
   }
 
   Serial.println();
   Serial.print("IP address is ");
-  Serial.println(Ethernet.localIP());
+  Serial.println(WiFi.localIP());
 
   Serial.println("OK, now make sure you an rtpMIDI session that is Enabled");
   Serial.print("Add device named Arduino with Host/Port ");
-  Serial.print(Ethernet.localIP());
+  Serial.print(WiFi.localIP());
   Serial.println(":5004");
   Serial.println("Then press the Connect button");
   Serial.println("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes");

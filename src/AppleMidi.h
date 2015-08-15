@@ -27,25 +27,61 @@
 
 #include "utility/dissector.h"
 
-#include <EthernetUdp.h>
-
 BEGIN_APPLEMIDI_NAMESPACE
+
+class IRtpMidi
+{
+public:
+	virtual bool PassesFilter(void* sender, DataByte, DataByte) = 0;
+
+	virtual void OnNoteOn(void* sender, DataByte, DataByte, DataByte) = 0;
+	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte) = 0;
+	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte) = 0;
+	virtual void OnChannelPressure(void* sender, DataByte, DataByte) = 0;
+	virtual void OnPitchBendChange(void* sender, DataByte, int) = 0;
+	virtual void OnProgramChange(void* sender, DataByte, DataByte) = 0;
+	virtual void OnControlChange(void* sender, DataByte, DataByte, DataByte) = 0;
+	virtual void OnTimeCodeQuarterFrame(void* sender, DataByte) = 0;
+	virtual void OnSongSelect(void* sender, DataByte) = 0;
+	virtual void OnSongPosition(void* sender, int) = 0;
+	virtual void OnTuneRequest(void* sender) = 0;
+};
+
+class IAppleMidi : public IRtpMidi
+{
+public:
+	virtual void Invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
+	
+	virtual void OnInvitation(void* sender, AppleMIDI_Invitation&) = 0;
+	virtual void OnEndSession(void* sender, AppleMIDI_EndSession&) = 0;
+	virtual void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&) = 0;
+	
+	virtual void OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
+	virtual void OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
+	virtual void OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
+	
+	virtual void OnSyncronization(void* sender, AppleMIDI_Syncronization&) = 0;
+	virtual void OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit&) = 0;
+	virtual void OnControlInvitation(void* sender, AppleMIDI_Invitation&) = 0;
+	virtual void OnContentInvitation(void* sender, AppleMIDI_Invitation&) = 0;
+};
 
 /*! \brief The main class for AppleMidi_Class handling.\n
 	See member descriptions to know how to use it,
 	or check out the examples supplied with the library.
  */
-class AppleMidi_Class
+template<class UdpClass>
+class AppleMidi_Class : public IAppleMidi
 {
 protected:
 	//
-	EthernetUDP _controlUDP;
-	EthernetUDP _contentUDP;
+	UdpClass _controlUDP;
+	UdpClass _contentUDP;
 
 	Dissector _controlDissector;
 	Dissector _contentDissector;
 
-	RtpMidi		_rtpMidi;
+	RtpMidi<UdpClass>	_rtpMidi;
 
 	RtpMidi_Clock _rtpMidiClock;
 
@@ -74,7 +110,7 @@ protected:
 
 public:
 	// Constructor and Destructor
-	inline AppleMidi_Class();
+	inline  AppleMidi_Class();
 	inline ~AppleMidi_Class();
 
 	int Port;
@@ -89,18 +125,18 @@ public:
 
 	inline void Invite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
-	inline void OnInvitation(void* sender, Invitation_t&);
-	inline void OnEndSession(void* sender, EndSession_t&);
-	inline void OnReceiverFeedback(void* sender, ReceiverFeedback_t&);
+	inline void OnInvitation(void* sender, AppleMIDI_Invitation&);
+	inline void OnEndSession(void* sender, AppleMIDI_EndSession&);
+	inline void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&);
 
-	inline void OnInvitationAccepted(void* sender, InvitationAccepted_t&);
-	inline void OnControlInvitationAccepted(void* sender, InvitationAccepted_t&);
-	inline void OnContentInvitationAccepted(void* sender, InvitationAccepted_t&);
+	inline void OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&);
+	inline void OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&);
+	inline void OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&);
 
-	inline void OnSyncronization(void* sender, Syncronization_t&);
-	inline void OnBitrateReceiveLimit(void* sender, BitrateReceiveLimit_t&);
-	inline void OnControlInvitation(void* sender, Invitation_t&);
-	inline void OnContentInvitation(void* sender, Invitation_t&);
+	inline void OnSyncronization(void* sender, AppleMIDI_Syncronization&);
+	inline void OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit&);
+	inline void OnControlInvitation(void* sender, AppleMIDI_Invitation&);
+	inline void OnContentInvitation(void* sender, AppleMIDI_Invitation&);
 
 	// IRtpMidi
 	inline bool PassesFilter (void* sender, DataByte, DataByte);
@@ -116,6 +152,12 @@ public:
 	inline void OnSongSelect(void* sender, DataByte);
 	inline void OnSongPosition(void* sender, int);
 	inline void OnTuneRequest(void* sender);
+
+private:
+	inline void write(UdpClass&, AppleMIDI_InvitationRejected&);
+	inline void write(UdpClass&, AppleMIDI_InvitationAccepted&);
+	inline void write(UdpClass&, AppleMIDI_Syncronization&);
+	inline void write(UdpClass&, AppleMIDI_Invitation&, IPAddress ip, uint16_t port);
 
 #if APPLEMIDI_BUILD_OUTPUT
     
@@ -216,8 +258,6 @@ public:
     inline void OnReceiveActiveSensing(void (*fptr)(void));
     inline void OnReceiveSystemReset(void (*fptr)(void));
     
-//    void disconnectCallbackFromType(MidiType inType);
-
 private:
     
     inline void launchCallback();
@@ -252,12 +292,6 @@ private:
 };
 
 END_APPLEMIDI_NAMESPACE
-
-// -----------------------------------------------------------------------------
-
-#if APPLEMIDI_AUTO_INSTANCIATE && defined(ARDUINO)
-    extern APPLEMIDI_NAMESPACE::AppleMidi_Class AppleMIDI;
-#endif // APPLEMIDI_AUTO_INSTANCIATE
 
 // -----------------------------------------------------------------------------
 

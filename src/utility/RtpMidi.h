@@ -19,7 +19,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
-typedef struct RtpMidi {
+template<class UdpClass>
+class RtpMidi {
+public:
 	uint8_t		ddddd;
 	uint8_t		playLoadType;
 	uint16_t	sequenceNr;
@@ -32,29 +34,36 @@ typedef struct RtpMidi {
 		playLoadType = PAYLOADTYPE_RTPMIDI;
 	}
 
-	void beginWrite(EthernetUDP* udp)
+	void beginWrite(UdpClass& udp)
 	{
-		udp->beginPacket(udp->remoteIP(), udp->remotePort());
+		udp.beginPacket(udp.remoteIP(), udp.remotePort());
 
-		udp->write(&ddddd, sizeof(ddddd));
-		udp->write(&playLoadType,   sizeof(playLoadType));
+		_write(&udp);
+	}
+
+	void endWrite(UdpClass& udp)
+	{
+		udp.endPacket(); 
+		udp.flush(); // Waits for the transmission of outgoing serial data to complete
+	}
+
+private:
+	void _write(Stream* stream)
+	{
+		stream->write(&ddddd, sizeof(ddddd));
+		stream->write(&playLoadType, sizeof(playLoadType));
 
 		uint16_t _sequenceNr = AppleMIDI_Util::toEndian(sequenceNr);
 		uint32_t _timestamp  = AppleMIDI_Util::toEndian(timestamp);
 		uint32_t _ssrc       = AppleMIDI_Util::toEndian(ssrc);
 
-		udp->write((uint8_t*) ((void*) (&_sequenceNr)), sizeof(_sequenceNr));
-		udp->write((uint8_t*) ((void*) (&_timestamp)), sizeof(_timestamp));
-		udp->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
+		stream->write((uint8_t*) ((void*) (&_sequenceNr)), sizeof(_sequenceNr));
+		stream->write((uint8_t*) ((void*) (&_timestamp)), sizeof(_timestamp));
+		stream->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
 	}
 
-	void endWrite(EthernetUDP* udp)
-	{
-		udp->endPacket(); 
-		udp->flush(); // Waits for the transmission of outgoing serial data to complete
-	}
 
-} RtpMidi_t;
+};
 
 END_APPLEMIDI_NAMESPACE
 

@@ -12,25 +12,23 @@
 
 #include "AppleMidi_Settings.h"
 
-#include <EthernetUdp.h>
-
 #define PACKET_MAX_SIZE 96
 
 BEGIN_APPLEMIDI_NAMESPACE
 
 class Dissector;
-class AppleMidi_Class;
+class IAppleMidi;
 
-typedef int (*FPDISSECTOR)(Dissector*, AppleMidi_Class*, unsigned char* packetBuffer, size_t packetSize);
+typedef int(*FPDISSECTOR_APPLEMIDI)(Dissector*, IAppleMidi*, unsigned char* packetBuffer, size_t packetSize);
 
 class Dissector {
 private:
 	unsigned char _protocolBuffer[PACKET_MAX_SIZE];
 	size_t  _protocolBufferIndex;
 
-	AppleMidi_Class* _appleMidi;
+	IAppleMidi* _appleMidi;
 
-	FPDISSECTOR _externalDissector[5];
+	FPDISSECTOR_APPLEMIDI _externalAppleMidiDissector[5];
 
 public:
 	int _identifier;
@@ -72,12 +70,12 @@ Serial.println("reset");
 
 	void call_dissector()
 	{
-		int nelem = sizeof(_externalDissector) / sizeof(_externalDissector[0]);
+		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
 
 		for (int i = 0; i < nelem; i++) {
-			if (_externalDissector[i]) {
+			if (_externalAppleMidiDissector[i]) {
 
-				int consumed = _externalDissector[i](this, _appleMidi, _protocolBuffer, _protocolBufferIndex);
+				int consumed = _externalAppleMidiDissector[i](this, _appleMidi, _protocolBuffer, _protocolBufferIndex);
 				if (consumed > 0) {
 					purgeBuffer(consumed);
 					return;
@@ -90,15 +88,15 @@ public:
 
 	Dissector()
 	{
-		int nelem = sizeof(_externalDissector) / sizeof(_externalDissector[0]);
+		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
 		for (int i = 0; i < nelem; i++)
-			_externalDissector[i] = NULL;
+			_externalAppleMidiDissector[i] = NULL;
 
 		_protocolBufferIndex = 0;
 	}
 
 	//
-	void init(int identifier, AppleMidi_Class* appleMidi)
+	void init(int identifier, IAppleMidi* appleMidi)
 	{
 		_identifier = identifier;
 		_appleMidi = appleMidi;
@@ -106,12 +104,12 @@ public:
 		_protocolBufferIndex = 0;
 	}
 
-	void addPacketDissector(FPDISSECTOR externalDissector)
+	void addPacketDissector(FPDISSECTOR_APPLEMIDI externalDissector)
 	{
-		int nelem = sizeof(_externalDissector) / sizeof(_externalDissector[0]);
+		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
 		for (int i = 0; i < nelem; i++) {
-			if (!_externalDissector[i]) {
-				_externalDissector[i] = externalDissector;
+			if (!_externalAppleMidiDissector[i]) {
+				_externalAppleMidiDissector[i] = externalDissector;
 				return;
 			}
 		}

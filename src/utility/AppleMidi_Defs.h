@@ -12,9 +12,18 @@
 
 #include "AppleMidi_Namespace.h"
 
-#include <inttypes.h>
-#include <stddef.h>
-#include "EthernetUdp.h"
+#if ARDUINO 
+	#include <Arduino.h>
+#else
+	#include <inttypes.h>
+	typedef uint8_t byte;
+#endif
+
+#include <IPAddress.h>
+
+#ifndef UDP_TX_PACKET_MAX_SIZE
+#define UDP_TX_PACKET_MAX_SIZE 24
+#endif
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -296,6 +305,11 @@ enum SessioInviteStatus
 	WaitingForContentInvitationAccepted,
 };
 
+
+
+
+
+
 typedef struct _SessionInvite_t {
 	SessioInviteStatus	status;
 	unsigned long		lastSend;
@@ -304,11 +318,6 @@ typedef struct _SessionInvite_t {
 	int					attempts;
     uint32_t			ssrc; 
 } SessionInvite_t;
-
-//typedef struct _Participant_t {
-//    uint32_t initiatorToken;
-//	uint16_t sequenceNumber;
-//} Participant_t;
 
 typedef struct _SessionSyncronization_t {
 	unsigned long		lastTime;
@@ -319,7 +328,6 @@ typedef struct _SessionSyncronization_t {
 typedef struct _Session_t {
     uint32_t				ssrc; // the unique identifier
 	unsigned short			seqNum;
-//	Participant_t			participants[MAX_PARTICIPANTS_PER_SESSION];
 	SessionInitiator		initiator;
 	SessionSyncronization_t	syncronization;
 } Session_t;
@@ -331,7 +339,13 @@ typedef uint64_t MIDITimeStamp;
 
 /*! \brief Create an instance of the library 
  */
-#define APPLEMIDI_CREATE_INSTANCE   \
-    appleMidi::AppleMidi_Class AppleMIDI;
+#define APPLEMIDI_CREATE_INSTANCE(Type, Name)                            \
+    APPLEMIDI_NAMESPACE::AppleMidi_Class<Type> Name;
+
+
+/*! \brief Create an instance of the library with EnternetUDP.
+*/
+#define APPLEMIDI_CREATE_DEFAULT_INSTANCE()                                      \
+    APPLEMIDI_CREATE_INSTANCE(EthernetUDP, AppleMIDI);
 
 END_APPLEMIDI_NAMESPACE

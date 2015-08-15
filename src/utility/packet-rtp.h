@@ -78,7 +78,7 @@ struct _rtp_info {
 class PacketRtp {
 public:
 
-	static int dissect_rtp(Dissector* dissector, AppleMidi_Class* rtpMidi, unsigned char* packetBuffer, size_t packetSize)
+	static int dissect_rtp(Dissector* dissector, IRtpMidi* rtpMidi, unsigned char* packetBuffer, size_t packetSize)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("dissect_rtp");

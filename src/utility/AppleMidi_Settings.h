@@ -62,31 +62,6 @@
 #define RTP_PORT         5005   
 
 // -----------------------------------------------------------------------------
-
-// Create a MIDI object automatically on the port defined with MIDI_SERIAL_PORT.
-// You can turn this off by adding #define APPLEMIDI_AUTO_INSTANCIATE 0 just before
-// including <MIDI.h> in your sketch.
-#ifndef APPLEMIDI_AUTO_INSTANCIATE
-#   ifdef ARDUINO
-#       define APPLEMIDI_AUTO_INSTANCIATE    1
-#   else
-#       define APPLEMIDI_AUTO_INSTANCIATE    0   ///< @see APPLEMIDI_CREATE_INSTANCE
-#   endif
-#endif
-
-// -----------------------------------------------------------------------------
-// Default configuration (if APPLEMIDI_AUTO_INSTANCIATE is set)
-
-// Set the default port to use for MIDI.
-#if APPLEMIDI_AUTO_INSTANCIATE
-#   ifdef ARDUINO
-#       include "Arduino.h"
-#   else
-#       error Auto-instanciation disabled. Use APPLEMIDI_CREATE_INSTANCE macro.
-#   endif
-#endif
-
-// -----------------------------------------------------------------------------
 // Misc. options
 
 // Running status enables short messages when sending multiple values
