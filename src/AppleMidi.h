@@ -35,7 +35,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 	See member descriptions to know how to use it,
 	or check out the examples supplied with the library.
  */
-class AppleMidi_Class //: public IAppleMidi, public IRtpMidi
+class AppleMidi_Class
 {
 protected:
 	//
@@ -74,103 +74,89 @@ protected:
 
 public:
 	// Constructor and Destructor
-	AppleMidi_Class();
-	~AppleMidi_Class();
+	inline AppleMidi_Class();
+	inline ~AppleMidi_Class();
 
 	int Port;
 
-	void begin(const char*, uint16_t port = CONTROL_PORT);
+	inline void begin(const char*, uint16_t port = CONTROL_PORT);
 	
-	uint32_t	getSynchronizationSource() { return _ssrc; }
+	inline uint32_t	getSynchronizationSource() { return _ssrc; }
 
-	void run();
+	inline void run();
 
 	// IAppleMidi
 
-	virtual void Invite(IPAddress ip, uint16_t port = CONTROL_PORT);
+	inline void Invite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
-	virtual void OnInvitation(void* sender, Invitation_t&);
-	virtual void OnEndSession(void* sender, EndSession_t&);
-	virtual void OnReceiverFeedback(void* sender, ReceiverFeedback_t&);
+	inline void OnInvitation(void* sender, Invitation_t&);
+	inline void OnEndSession(void* sender, EndSession_t&);
+	inline void OnReceiverFeedback(void* sender, ReceiverFeedback_t&);
 
-	virtual void OnInvitationAccepted(void* sender, InvitationAccepted_t&);
-	virtual void OnControlInvitationAccepted(void* sender, InvitationAccepted_t&);
-	virtual void OnContentInvitationAccepted(void* sender, InvitationAccepted_t&);
+	inline void OnInvitationAccepted(void* sender, InvitationAccepted_t&);
+	inline void OnControlInvitationAccepted(void* sender, InvitationAccepted_t&);
+	inline void OnContentInvitationAccepted(void* sender, InvitationAccepted_t&);
 
-	virtual void OnSyncronization(void* sender, Syncronization_t&);
-	virtual void OnBitrateReceiveLimit(void* sender, BitrateReceiveLimit_t&);
-	virtual void OnControlInvitation(void* sender, Invitation_t&);
-	virtual void OnContentInvitation(void* sender, Invitation_t&);
+	inline void OnSyncronization(void* sender, Syncronization_t&);
+	inline void OnBitrateReceiveLimit(void* sender, BitrateReceiveLimit_t&);
+	inline void OnControlInvitation(void* sender, Invitation_t&);
+	inline void OnContentInvitation(void* sender, Invitation_t&);
 
 	// IRtpMidi
-	virtual bool PassesFilter (void* sender, DataByte, DataByte);
+	inline bool PassesFilter (void* sender, DataByte, DataByte);
 
-	virtual void OnNoteOn (void* sender, DataByte, DataByte, DataByte);
-	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte);
-	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte);
-	virtual void OnChannelPressure(void* sender, DataByte, DataByte);
-	virtual void OnPitchBendChange(void* sender, DataByte, int);
-	virtual void OnProgramChange(void* sender, DataByte, DataByte);
-	virtual void OnControlChange(void* sender, DataByte, DataByte, DataByte);
-	virtual void OnTimeCodeQuarterFrame(void* sender, DataByte);
-	virtual void OnSongSelect(void* sender, DataByte);
-	virtual void OnSongPosition(void* sender, int);
-	virtual void OnTuneRequest(void* sender);
+	inline void OnNoteOn (void* sender, DataByte, DataByte, DataByte);
+	inline void OnNoteOff(void* sender, DataByte, DataByte, DataByte);
+	inline void OnPolyPressure(void* sender, DataByte, DataByte, DataByte);
+	inline void OnChannelPressure(void* sender, DataByte, DataByte);
+	inline void OnPitchBendChange(void* sender, DataByte, int);
+	inline void OnProgramChange(void* sender, DataByte, DataByte);
+	inline void OnControlChange(void* sender, DataByte, DataByte, DataByte);
+	inline void OnTimeCodeQuarterFrame(void* sender, DataByte);
+	inline void OnSongSelect(void* sender, DataByte);
+	inline void OnSongPosition(void* sender, int);
+	inline void OnTuneRequest(void* sender);
 
 #if APPLEMIDI_BUILD_OUTPUT
     
 public:
-    void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
-    void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
-    void programChange(DataByte inProgramNumber, Channel inChannel); 
-    void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
-    void pitchBend(int inPitchValue,    Channel inChannel);
-    void pitchBend(double inPitchValue, Channel inChannel);   
-    void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
-    void afterTouch(DataByte inPressure, Channel inChannel); 
-    void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);    
-    void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
-    void timeCodeQuarterFrame(DataByte inData);
-    void songPosition(unsigned int inBeats);
-    void songSelect(DataByte inSongNumber);
-    void tuneRequest();
-    void activeSensing();
-    void start();
-    void _continue();
-    void stop();
-    void systemReset();
-    void clock();
-    void tick();
+    inline void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
+    inline void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
+    inline void programChange(DataByte inProgramNumber, Channel inChannel); 
+    inline void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
+    inline void pitchBend(int inPitchValue,    Channel inChannel);
+    inline void pitchBend(double inPitchValue, Channel inChannel);   
+    inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
+    inline void afterTouch(DataByte inPressure, Channel inChannel); 
+    inline void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);    
+    inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
+    inline void timeCodeQuarterFrame(DataByte inData);
+    inline void songPosition(unsigned int inBeats);
+    inline void songSelect(DataByte inSongNumber);
+    inline void tuneRequest();
+    inline void activeSensing();
+    inline void start();
+    inline void _continue();
+    inline void stop();
+    inline void systemReset();
+    inline void clock();
+    inline void tick();
     
-public:
-    void send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
-    void send(MidiType inType, DataByte inData1, DataByte inData2);
-    void send(MidiType inType, DataByte inData);
-    void send(MidiType inType);
+protected:
+    inline void send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
+    inline void send(MidiType inType, DataByte inData1, DataByte inData2);
+    inline void send(MidiType inType, DataByte inData);
+    inline void send(MidiType inType);
       
-private:
-    StatusByte getStatus(MidiType inType, Channel inChannel) const;
-   
-    void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
-    void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2);
-    void internalSend(Session_t*, MidiType inType, DataByte inData);
-    void internalSend(Session_t*, MidiType inType);
+private:   
+    inline void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
+    inline void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2);
+    inline void internalSend(Session_t*, MidiType inType, DataByte inData);
+    inline void internalSend(Session_t*, MidiType inType);
 
-	void ManageInvites();
-	void ManageTiming();
+	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 
-	int		GetFreeSessionSlot();
-	int		GetSessionSlot(const uint32_t ssrc);
-	void	CreateSession(const int slot, const uint32_t ssrc);
-	void	CreateLocalSessionStep1(const int slot, const uint32_t ssrc);
-	void	CreateLocalSessionStep2(const int slot, const uint32_t ssrc);
-	void	CreateRemoteSessionStep1(const int slot, const uint32_t ssrc);
-	void	CreateRemoteSessionStep2(const int slot, const uint32_t ssrc);
-	void	DeleteSession(const uint32_t ssrc);
-
-	void	DumpSession();
-
-#if APPLEMIDI_USE_CALLBACKS
+#if APPLEMIDI_USE_EVENTS
 public:
  //   void xxx(void (*fptr)(byte channel, byte note, byte velocity));
 private:
@@ -182,20 +168,21 @@ private:
 
 #endif // APPLEMIDI_BUILD_OUTPUT
 
-private:
-	void sendInvite(IPAddress ipAddress, uint16_t port);
+	inline int	GetFreeSessionSlot();
+	inline int	GetSessionSlot(const uint32_t ssrc);
+	inline void	CreateSession(const int slot, const uint32_t ssrc);
+	inline void	CreateLocalSessionStep1(const int slot, const uint32_t ssrc);
+	inline void	CreateLocalSessionStep2(const int slot, const uint32_t ssrc);
+	inline void	CreateRemoteSessionStep1(const int slot, const uint32_t ssrc);
+	inline void	CreateRemoteSessionStep2(const int slot, const uint32_t ssrc);
+	inline void	DeleteSession(const uint32_t ssrc);
 
-	void ControlInvitation();
-	void ControlEndSession();
-	void ControlReceiverFeedback();
-	void RtpInvitation();
-	void RtpSynchronization();
+	inline void	DumpSession();
+
+	inline void ManageInvites();
+	inline void ManageTiming();
 
 #if APPLEMIDI_BUILD_INPUT
-    
-public:
-    bool read();
-    bool read(Channel inChannel);
     
 private:
     StatusByte mRunningStatus_RX;
@@ -207,27 +194,27 @@ private:
 #if APPLEMIDI_USE_CALLBACKS
     
 public:
-    void OnConnected(void (*fptr)(char*));
-    void OnDisconnected(void (*fptr)());
+    inline void OnConnected(void (*fptr)(char*));
+    inline void OnDisconnected(void (*fptr)());
 
-    void OnReceiveNoteOn(void (*fptr)(byte channel, byte note, byte velocity));
-    void OnReceiveNoteOff(void (*fptr)(byte channel, byte note, byte velocity));
-    void OnReceiveAfterTouchPoly(void (*fptr)(byte channel, byte note, byte pressure));
-    void OnReceiveControlChange(void (*fptr)(byte channel, byte number, byte value));
-    void OnReceiveProgramChange(void (*fptr)(byte channel, byte number));
-    void OnReceiveAfterTouchChannel(void (*fptr)(byte channel, byte pressure));
-    void OnReceivePitchBend(void (*fptr)(byte channel, int bend));
-    void OnReceiveSystemExclusive(void (*fptr)(byte * array, byte size));
-    void OnReceiveTimeCodeQuarterFrame(void (*fptr)(byte data));
-    void OnReceiveSongPosition(void (*fptr)(unsigned int beats));
-    void OnReceiveSongSelect(void (*fptr)(byte songnumber));
-    void OnReceiveTuneRequest(void (*fptr)(void));
-    void OnReceiveClock(void (*fptr)(void));
-    void OnReceiveStart(void (*fptr)(void));
-    void OnReceiveContinue(void (*fptr)(void));
-    void OnReceiveStop(void (*fptr)(void));
-    void OnReceiveActiveSensing(void (*fptr)(void));
-    void OnReceiveSystemReset(void (*fptr)(void));
+    inline void OnReceiveNoteOn(void (*fptr)(byte channel, byte note, byte velocity));
+    inline void OnReceiveNoteOff(void (*fptr)(byte channel, byte note, byte velocity));
+    inline void OnReceiveAfterTouchPoly(void (*fptr)(byte channel, byte note, byte pressure));
+    inline void OnReceiveControlChange(void (*fptr)(byte channel, byte number, byte value));
+    inline void OnReceiveProgramChange(void (*fptr)(byte channel, byte number));
+    inline void OnReceiveAfterTouchChannel(void (*fptr)(byte channel, byte pressure));
+    inline void OnReceivePitchBend(void (*fptr)(byte channel, int bend));
+    inline void OnReceiveSystemExclusive(void (*fptr)(byte * array, byte size));
+    inline void OnReceiveTimeCodeQuarterFrame(void (*fptr)(byte data));
+    inline void OnReceiveSongPosition(void (*fptr)(unsigned int beats));
+    inline void OnReceiveSongSelect(void (*fptr)(byte songnumber));
+    inline void OnReceiveTuneRequest(void (*fptr)(void));
+    inline void OnReceiveClock(void (*fptr)(void));
+    inline void OnReceiveStart(void (*fptr)(void));
+    inline void OnReceiveContinue(void (*fptr)(void));
+    inline void OnReceiveStop(void (*fptr)(void));
+    inline void OnReceiveActiveSensing(void (*fptr)(void));
+    inline void OnReceiveSystemReset(void (*fptr)(void));
     
 //    void disconnectCallbackFromType(MidiType inType);
 
@@ -235,8 +222,8 @@ private:
     
     inline void launchCallback();
 
-    void (*mConnectedCallback)(char*);
-    void (*mDisconnectedCallback)();
+	void(*mConnectedCallback)(char*);
+	void(*mDisconnectedCallback)();
 
     void (*mNoteOffCallback)(byte channel, byte note, byte velocity);
     void (*mNoteOnCallback)(byte channel, byte note, byte velocity);
@@ -274,3 +261,7 @@ END_APPLEMIDI_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
+#include "utility/packet-rtp-midi.h"
+#include "utility/packet-apple-midi.h"
+
+#include "AppleMidi.hpp"
