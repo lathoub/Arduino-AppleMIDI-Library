@@ -310,7 +310,7 @@ enum SessioInviteStatus
 
 
 
-typedef struct _SessionInvite_t {
+typedef struct {
 	SessioInviteStatus	status;
 	unsigned long		lastSend;
     IPAddress			remoteHost;
@@ -319,17 +319,21 @@ typedef struct _SessionInvite_t {
     uint32_t			ssrc; 
 } SessionInvite_t;
 
-typedef struct _SessionSyncronization_t {
+typedef struct {
 	unsigned long		lastTime;
 	uint32_t			count;
 	bool				busy;
 } SessionSyncronization_t;
 
-typedef struct _Session_t {
+typedef struct {
     uint32_t				ssrc; // the unique identifier
 	unsigned short			seqNum;
 	SessionInitiator		initiator;
 	SessionSyncronization_t	syncronization;
+	//IPAddress				controlIP;
+	//uint16_t				controlPort;
+	IPAddress				contentIP;
+	uint16_t				contentPort;
 } Session_t;
 
 typedef uint32_t MIDISamplingRate;

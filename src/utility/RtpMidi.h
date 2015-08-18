@@ -34,9 +34,9 @@ public:
 		playLoadType = PAYLOADTYPE_RTPMIDI;
 	}
 
-	void beginWrite(UdpClass& udp)
+	void beginWrite(UdpClass& udp, IPAddress remoteIP, uint16_t remotePort)
 	{
-		udp.beginPacket(udp.remoteIP(), udp.remotePort());
+		udp.beginPacket(remoteIP, remotePort);
 
 		_write(&udp);
 	}
@@ -61,7 +61,6 @@ private:
 		stream->write((uint8_t*) ((void*) (&_timestamp)), sizeof(_timestamp));
 		stream->write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
 	}
-
 
 };
 

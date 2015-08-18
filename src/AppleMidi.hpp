@@ -297,7 +297,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleM
 		return;
 	}
 
-	CreateLocalSessionStep1(index, invitationAccepted.ssrc);
+	CreateLocalSessionStepControl(index, invitationAccepted.ssrc);
 
 	// Initiate next step in the invitation process
 	_sessionInvite.lastSend = 0;
@@ -339,7 +339,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleM
 		return;
 	}
 
-	CreateLocalSessionStep2(index, invitationAccepted.ssrc);
+	CreateLocalSessionStepContent(index, invitationAccepted.ssrc);
 }
 
 /*! \brief .
@@ -379,7 +379,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	}
 
 	// Initiate a session or a new participant in the session?
-	CreateRemoteSessionStep1(index, invitation.ssrc);
+	CreateRemoteSessionStepControl(index, invitation.ssrc, _controlUDP.remoteIP(), _controlUDP.remotePort());
 
 	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, SessionName);
 	write(_controlUDP, acceptInvitation);
@@ -453,7 +453,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	Serial.println();
 #endif
 
-	CreateRemoteSessionStep2(index, invitation.ssrc);
+	CreateRemoteSessionStepContent(index, invitation.ssrc, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 	if (mConnectedCallback != 0)
 		mConnectedCallback(invitation.sessionName);
@@ -1004,40 +1004,48 @@ int AppleMidi_Class<UdpClass>::GetSessionSlot(const uint32_t ssrc)
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateLocalSessionStep1(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CreateLocalSessionStepControl(const int index, const uint32_t ssrc)
 {
 	CreateSession(index, ssrc);
 	Sessions[index].seqNum = -1;
 	Sessions[index].initiator = Undefined;
+	//Sessions[index].contentIP = ip;
+	//Sessions[index].controlPort = port;
 }
 
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateLocalSessionStep2(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CreateLocalSessionStepContent(const int index, const uint32_t ssrc)
 {
 	CreateSession(index, ssrc);
 	Sessions[index].initiator = Local;
+	//Sessions[index].contentIP = ip;
+	//Sessions[index].contentPort = port;
 }
 
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateRemoteSessionStep1(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CreateRemoteSessionStepControl(const int index, const uint32_t ssrc, IPAddress ip, uint16_t port)
 {
 	CreateSession(index, ssrc);
 	Sessions[index].seqNum = 0;
 	Sessions[index].initiator = Undefined;
+	//Sessions[index].contentIP = ip;
+	//Sessions[index].controlPort = port;
 }
 
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateRemoteSessionStep2(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CreateRemoteSessionStepContent(const int index, const uint32_t ssrc, IPAddress ip, uint16_t port)
 {
 	CreateSession(index, ssrc);
 	Sessions[index].seqNum = 1;
 	Sessions[index].initiator = Remote;
+	Sessions[index].contentIP = ip;
+	Sessions[index].contentPort = port;
 }
 
 /*! \brief .
@@ -1381,7 +1389,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, D
 	{
 		if (Sessions[i].ssrc != 0)
 		{
-			internalSend(&Sessions[i], inType, inData1, inData2, inChannel);
+			internalSend(Sessions[i], inType, inData1, inData2, inChannel);
 		}
 	}
 
@@ -1395,7 +1403,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, D
 	{
 		if (Sessions[i].ssrc != 0)
 		{
-			internalSend(&Sessions[i], inType, inData1, inData2);
+			internalSend(Sessions[i], inType, inData1, inData2);
 		}
 	}
 
@@ -1409,7 +1417,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData)
 	{
 		if (Sessions[i].ssrc != 0)
 		{
-			internalSend(&Sessions[i], inType, inData);
+			internalSend(Sessions[i], inType, inData);
 		}
 	}
 
@@ -1423,7 +1431,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 	{
 		if (Sessions[i].ssrc != 0)
 		{
-			internalSend(&Sessions[i], inType);
+			internalSend(Sessions[i], inType);
 		}
 	}
 
@@ -1442,7 +1450,7 @@ This is an internal method, use it only if you need to send raw data
 from your code, at your own risks.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
 {
 	// Then test if channel is valid
 	if (inChannel >= MIDI_CHANNEL_OFF ||
@@ -1464,7 +1472,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType
 
 		_rtpMidi.sequenceNr++;
 		//		_rtpMidi.timestamp = 
-		_rtpMidi.beginWrite(_contentUDP);
+		_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 		// Length
 		uint8_t length = 3;
@@ -1502,11 +1510,11 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t*, MidiType inType)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType)
 {
 	_rtpMidi.sequenceNr++;
 	//	_rtpMidi.timestamp = 
-	_rtpMidi.beginWrite(_contentUDP);
+	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 1;
 	_contentUDP.write(&length, 1);
@@ -1540,11 +1548,11 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t*, MidiType inType)
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType inType, DataByte inData)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData)
 {
 	_rtpMidi.sequenceNr++;
 	//	_rtpMidi.timestamp = 
-	_rtpMidi.beginWrite(_contentUDP);
+	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 2;
 	_contentUDP.write(&length, 1);
@@ -1573,11 +1581,11 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t* session, MidiType inType, DataByte inData1, DataByte inData2)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2)
 {
 	_rtpMidi.sequenceNr++;
 	//	_rtpMidi.timestamp = 
-	_rtpMidi.beginWrite(_contentUDP);
+	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 3;
 	_contentUDP.write(&length, 1);

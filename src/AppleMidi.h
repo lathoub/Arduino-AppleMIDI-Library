@@ -191,10 +191,10 @@ protected:
     inline void send(MidiType inType);
       
 private:   
-    inline void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
-    inline void internalSend(Session_t*, MidiType inType, DataByte inData1, DataByte inData2);
-    inline void internalSend(Session_t*, MidiType inType, DataByte inData);
-    inline void internalSend(Session_t*, MidiType inType);
+    inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
+    inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2);
+    inline void internalSend(Session_t&, MidiType inType, DataByte inData);
+    inline void internalSend(Session_t&, MidiType inType);
 
 	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 
@@ -213,10 +213,10 @@ private:
 	inline int	GetFreeSessionSlot();
 	inline int	GetSessionSlot(const uint32_t ssrc);
 	inline void	CreateSession(const int slot, const uint32_t ssrc);
-	inline void	CreateLocalSessionStep1(const int slot, const uint32_t ssrc);
-	inline void	CreateLocalSessionStep2(const int slot, const uint32_t ssrc);
-	inline void	CreateRemoteSessionStep1(const int slot, const uint32_t ssrc);
-	inline void	CreateRemoteSessionStep2(const int slot, const uint32_t ssrc);
+	inline void	CreateLocalSessionStepControl(const int slot, const uint32_t ssrc);
+	inline void	CreateLocalSessionStepContent(const int slot, const uint32_t ssrc);
+	inline void	CreateRemoteSessionStepControl(const int slot, const uint32_t ssrc, IPAddress ip, uint16_t port);
+	inline void	CreateRemoteSessionStepContent(const int slot, const uint32_t ssrc, IPAddress ip, uint16_t port);
 	inline void	DeleteSession(const uint32_t ssrc);
 
 	inline void	DumpSession();
