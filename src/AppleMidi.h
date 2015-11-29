@@ -27,6 +27,8 @@
 
 #include "utility/dissector.h"
 
+#define MAX_SESSIONS 4
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 class IRtpMidi
@@ -50,7 +52,7 @@ public:
 class IAppleMidi : public IRtpMidi
 {
 public:
-	virtual void Invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
+	virtual void invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
 	
 	virtual void OnInvitation(void* sender, AppleMIDI_Invitation&) = 0;
 	virtual void OnEndSession(void* sender, AppleMIDI_EndSession&) = 0;
@@ -84,10 +86,8 @@ protected:
 	RtpMidi<UdpClass>	_rtpMidi;
 
 	RtpMidi_Clock _rtpMidiClock;
-
-	SessionInvite_t _sessionInvite;
 	
-	Accept	 _sessionAccept;
+//	Accept	 _sessionAccept;
 
 	// SSRC, Synchronization source.
 	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
@@ -103,10 +103,11 @@ protected:
 	// be identified as a different SSRC.
 	uint32_t _ssrc;
 
-	// Allow for multiple sessions????
 	Session_t	Sessions[MAX_SESSIONS];
 
-	char SessionName[50];
+	char _sessionName[50];
+
+	inline uint32_t	createInitiatorToken();
 
 public:
 	// Constructor and Destructor
@@ -118,12 +119,13 @@ public:
 	inline void begin(const char*, uint16_t port = CONTROL_PORT);
 	
 	inline uint32_t	getSynchronizationSource() { return _ssrc; }
+	inline char*	getSessionName() { return _sessionName; }
 
 	inline void run();
 
 	// IAppleMidi
 
-	inline void Invite(IPAddress ip, uint16_t port = CONTROL_PORT);
+	inline void invite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
 	inline void OnInvitation(void* sender, AppleMIDI_Invitation&);
 	inline void OnEndSession(void* sender, AppleMIDI_EndSession&);
@@ -154,9 +156,9 @@ public:
 	inline void OnTuneRequest(void* sender);
 
 private:
-	inline void write(UdpClass&, AppleMIDI_InvitationRejected&);
-	inline void write(UdpClass&, AppleMIDI_InvitationAccepted&);
-	inline void write(UdpClass&, AppleMIDI_Syncronization&);
+	inline void write(UdpClass&, AppleMIDI_InvitationRejected&, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_InvitationAccepted&, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_Syncronization&, IPAddress ip, uint16_t port);
 	inline void write(UdpClass&, AppleMIDI_Invitation&, IPAddress ip, uint16_t port);
 
 #if APPLEMIDI_BUILD_OUTPUT
@@ -211,13 +213,15 @@ private:
 #endif // APPLEMIDI_BUILD_OUTPUT
 
 	inline int	GetFreeSessionSlot();
-	inline int	GetSessionSlot(const uint32_t ssrc);
-	inline void	CreateSession(const int slot, const uint32_t ssrc);
-	inline void	CreateLocalSessionStepControl(const int slot, const uint32_t ssrc);
-	inline void	CreateLocalSessionStepContent(const int slot, const uint32_t ssrc);
-	inline void	CreateRemoteSessionStepControl(const int slot, const uint32_t ssrc, IPAddress ip, uint16_t port);
-	inline void	CreateRemoteSessionStepContent(const int slot, const uint32_t ssrc, IPAddress ip, uint16_t port);
+	inline int	GetSessionSlotUsingSSrc(const uint32_t ssrc);
+	inline int	GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken);
+	inline void	CreateLocalSession(const int slot, const uint32_t ssrc);
+	inline void	CreateRemoteSession(IPAddress ip, uint16_t port);
+	inline void	CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted);
+	inline void	CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted);
 	inline void	DeleteSession(const uint32_t ssrc);
+	inline void	DeleteSession(int slot);
+	inline void	DeleteSessions();
 
 	inline void	DumpSession();
 
@@ -236,8 +240,8 @@ private:
 #if APPLEMIDI_USE_CALLBACKS
     
 public:
-    inline void OnConnected(void (*fptr)(char*));
-    inline void OnDisconnected(void (*fptr)());
+	inline void OnConnected(void(*fptr)(uint32_t, char*));
+	inline void OnDisconnected(void(*fptr)(uint32_t));
 
     inline void OnReceiveNoteOn(void (*fptr)(byte channel, byte note, byte velocity));
     inline void OnReceiveNoteOff(void (*fptr)(byte channel, byte note, byte velocity));
@@ -262,8 +266,8 @@ private:
     
     inline void launchCallback();
 
-	void(*mConnectedCallback)(char*);
-	void(*mDisconnectedCallback)();
+	void(*mConnectedCallback)(uint32_t, char*);
+	void(*mDisconnectedCallback)(uint32_t);
 
     void (*mNoteOffCallback)(byte channel, byte note, byte velocity);
     void (*mNoteOnCallback)(byte channel, byte note, byte velocity);

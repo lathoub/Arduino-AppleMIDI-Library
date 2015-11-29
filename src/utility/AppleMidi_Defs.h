@@ -298,10 +298,13 @@ enum SessionInitiator
 	Local,
 };
 
-enum SessioInviteStatus
+enum SessionInviteStatus
 {
 	None,
+	SendControlInvite,
+	ReceiveControlInvitation,
 	WaitingForControlInvitationAccepted,
+	SendContentInvite,
 	WaitingForContentInvitationAccepted,
 };
 
@@ -311,15 +314,17 @@ enum SessioInviteStatus
 
 
 typedef struct {
-	SessioInviteStatus	status;
+	SessionInviteStatus	status;
 	unsigned long		lastSend;
     IPAddress			remoteHost;
 	uint16_t			remotePort;
 	int					attempts;
-    uint32_t			ssrc; 
+    uint32_t			ssrc;
+	uint32_t			initiatorToken;
 } SessionInvite_t;
 
 typedef struct {
+	bool				enabled;
 	unsigned long		lastTime;
 	uint32_t			count;
 	bool				busy;
@@ -327,6 +332,7 @@ typedef struct {
 
 typedef struct {
     uint32_t				ssrc; // the unique identifier
+//	char[50]				name;
 	unsigned short			seqNum;
 	SessionInitiator		initiator;
 	SessionSyncronization_t	syncronization;
@@ -334,6 +340,7 @@ typedef struct {
 	//uint16_t				controlPort;
 	IPAddress				contentIP;
 	uint16_t				contentPort;
+	SessionInvite_t			invite;
 } Session_t;
 
 typedef uint32_t MIDISamplingRate;

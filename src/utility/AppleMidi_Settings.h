@@ -25,6 +25,7 @@
 // (MIDI in, out, thru), or to 0 to disable the feature and save space.
 // Note that thru can work only if input and output are enabled.
 
+//#define DEBUG
 #define RELEASE
 
 #if defined(RELEASE)
@@ -45,7 +46,7 @@
 
 #if defined(DEBUG_BUILD)
 #define APPLEMIDI_DEBUG			   1
-#undef APPLEMIDI_DEBUG_VERBOSE
+#undef APPLEMIDI_DEBUG_VERBOSE 
 #endif
 
 #define APPLEMIDI_BUILD_INPUT      1
@@ -75,9 +76,6 @@
 #define APPLEMIDI_USE_1BYTE_PARSING          1
 
 #define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.
-
-#define MAX_SESSIONS 10
-#define MAX_PARTICIPANTS_PER_SESSION 10
 
 // -----------------------------------------------------------------------------
 

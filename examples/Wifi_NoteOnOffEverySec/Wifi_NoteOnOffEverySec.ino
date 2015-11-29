@@ -1,4 +1,4 @@
-// Hardware: Mega 2560 R2 + Ethernet Shield
+// Hardware: Mega 2560 R2 + Wifi Shield
 
 // These need to be included when using standard Ethernet
 #include <SPI.h>
@@ -107,18 +107,18 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(char* name) {
+void OnAppleMidiConnected(long unsigned int ssrc, char* name) {
   isConnected = true;
-  //  Serial.print("Connected to session ");
-  //  Serial.println(name);
+  Serial.print("Connected to session ");
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected() {
+void OnAppleMidiDisconnected(long unsigned int ssrc) {
   isConnected = false;
-  //  Serial.println("Disconnected");
+  Serial.println("Disconnected");
 }
 
 // -----------------------------------------------------------------------------

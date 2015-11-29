@@ -39,7 +39,7 @@ public:
 
 		this->initiatorToken = initiatorToken;
 		this->ssrc           = ssrc;
-		strcpy(this->name, (const char*)name);
+		strcpy(this->name, static_cast<const char*>(name));
 	}
 
 private:

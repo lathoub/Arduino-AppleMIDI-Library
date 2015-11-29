@@ -73,16 +73,16 @@ typedef struct RtpMidi_Clock {
 		unsigned long ticks = millis() - startTime_;
 		unsigned long seconds = ticks / TicksPerSecond();
 
-		uint32_t lapse = (uint32_t)((double) seconds * clockRate_);
+		uint32_t lapse = (uint32_t)(static_cast<double>(seconds) * clockRate_);
 		return lapse;
 	}
 
-	unsigned long Ticks()
+	unsigned long Ticks() const
 	{
 		return millis();
 	}
 
-	unsigned long TicksPerSecond()
+	unsigned long TicksPerSecond() const
 	{
 		return 1000;
 	}
