@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub
  *	@date		04/04/14
  *  License		GPL
  */
@@ -12,7 +12,7 @@
 
 #include "AppleMidi_Settings.h"
 
-#define PACKET_MAX_SIZE 96
+#define PACKET_MAX_SIZE 768
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -39,7 +39,8 @@ private:
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.print  ("Purging left ");
 Serial.print  (index);
-Serial.println(" bytes ");
+Serial.print(" bytes. New _protocolBufferIndex: ");
+Serial.println(sizeof(_protocolBufferIndex - index));
 #endif
 
 		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
@@ -152,7 +153,7 @@ Serial.println("Not enough memory in protocolBuffer, clearing existing parser bu
 			Serial.print  (" ");
 		}
 		Serial.println();
-#endif	
+#endif
 	}
 
 	void dissect()

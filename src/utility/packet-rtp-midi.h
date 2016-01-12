@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.0
- *  @author		lathoub 
+ *  @author		lathoub
  *	@date		01/04/13
  *  License		GPL
  */
@@ -15,7 +15,7 @@
 #include "packet-rtp.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
-	
+
 /* Definitions for protocol name during dissector-register */
 #define RTP_MIDI_DISSECTOR_NAME "RFC 4695/6295 RTP-MIDI"
 #define RTP_MIDI_DISSECTOR_SHORTNAME "RTP-MIDI"
@@ -1116,7 +1116,7 @@ Serial.println("PacketRtpMidi verbose");
 #endif
 	}
 
-	static int 
+	static int
 	dissect_rtp_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
@@ -1277,10 +1277,10 @@ Serial.print ("ReportedBoundsError 3");
 				for (int i = 0; i <= totchan; i++ ) {
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.print("Processing channel journal: ");
-Serial.println(i); 
+Serial.println(i);
 #endif
 					int consumed = decode_channel_journal( (IRtpMidi*)appleMidi, packetBuffer, offset);
-					
+
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.print("Consumed by channel journal (");
 Serial.print(i);
@@ -1301,7 +1301,7 @@ Serial.println("ReportedBoundsError 4");
 				}
 			}
 		}
-		
+
 		return offset;
 	}
 
@@ -1315,7 +1315,7 @@ private:
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_system_journal");
 #endif
-
+		unsigned int start_offset = offset;
 		int				consumed     = 0;
 		int				ext_consumed = 0;
 
@@ -1327,38 +1327,22 @@ Serial.println("decode_system_journal");
 
 		/* Do we have a simple system commands chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_D ) {
-			ext_consumed = decode_sj_chapter_d(rtpMidi, packetBuffer, offset );
-			if ( ext_consumed < 0 ) {
-				return ext_consumed;
-			}
-			consumed += ext_consumed;
-			offset	 += ext_consumed;
+			offset += decode_sj_chapter_d(rtpMidi, packetBuffer, offset );
 		}
 
 		/* Do we have a active sensing chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_V ) {
 			offset++;
-			consumed++;
 		}
 
 		/* Do we have a sequencer state commands chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_Q ) {
-			ext_consumed = decode_sj_chapter_q( rtpMidi, packetBuffer, offset );
-			if ( ext_consumed < 0 ) {
-				return ext_consumed;
-			}
-			consumed += ext_consumed;
-			offset	 += ext_consumed;
+			offset += decode_sj_chapter_q( rtpMidi, packetBuffer, offset );
 		}
 
 		/* Do we have a MTC chapter? */
 		if ( systemflags & RTP_MIDI_SJ_FLAG_F ) {
-			ext_consumed = decode_sj_chapter_f( rtpMidi, packetBuffer, offset );
-			if ( ext_consumed < 0 ) {
-				return ext_consumed;
-			}
-			consumed += ext_consumed;
-			offset	 += ext_consumed;
+			offset += decode_sj_chapter_f( rtpMidi, packetBuffer, offset );
 		}
 
 
@@ -1368,15 +1352,14 @@ Serial.println("decode_system_journal");
 			if ( ext_consumed < 0 ) {
 				return ext_consumed;
 			}
-			consumed += ext_consumed;
+			offset += ext_consumed;
 		}
-
 
 		/* Make sanity check for consumed data vs. stated length of system journal */
-		if ( consumed != sysjourlen ) {
+		if ( offset-start_offset != sysjourlen ) {
 			return -1;
 		}
-		return consumed;
+		return offset-start_offset;
 	}
 
 	/*
@@ -1390,11 +1373,22 @@ Serial.println("decode_system_journal");
 	   int				ext_consumed = 0;
 
 	   /* first we need to get the flags & length of this channel-journal */
-	   memcpy(&chanflags, packetBuffer + offset, 3);
-	   chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
+	   //memcpy(&chanflags, packetBuffer + offset, 3);
+
+	   chanflags = ((uint32_t)*((const uint8_t *)packetBuffer + offset)<<16|  \
+	  			   (uint32_t)*((const uint8_t *)packetBuffer + (offset+1))<<8|   \
+	  			   (uint32_t)*((const uint8_t *)packetBuffer + (offset+2))<<0);
+
+		chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
 
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
-	   Serial.println("decode_channel_journal");
+		Serial.print("Chan Flags: ");
+		Serial.print(chanflags, HEX);
+
+	   Serial.print("decode_channel_journal - Reported channel length: ");
+	   Serial.print(chanjourlen);
+	   Serial.print(", Beginning offset: ");
+	   Serial.println(offset);
 	#endif
 
 			/* take care of length of header */
@@ -1403,6 +1397,10 @@ Serial.println("decode_system_journal");
 
 			/* Do we have a program change chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_P ) {
+				#ifdef APPLEMIDI_DEBUG_VERBOSE
+					Serial.println("cj_flag_p: 3");
+				#endif
+
 				offset	 += 3;
 				consumed += 3;
 			}
@@ -1413,8 +1411,8 @@ Serial.println("decode_system_journal");
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_c: ");
 				Serial.println(ext_consumed);
-	#endif		
-			
+	#endif
+
 				if ( ext_consumed < 0 ) {
 					return ext_consumed;
 				}
@@ -1429,10 +1427,10 @@ Serial.println("decode_system_journal");
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_m: ");
 				Serial.println(ext_consumed);
-	#endif		
+	#endif
 
 				if ( ext_consumed < 0 ) {
-					return ext_consumed;
+					//return ext_consumed;
 				}
 				consumed += ext_consumed;
 				offset	 += ext_consumed;
@@ -1454,10 +1452,10 @@ Serial.println("decode_system_journal");
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_n: ");
 				Serial.println(ext_consumed);
-	#endif		
+	#endif
 
 				if ( ext_consumed < 0 ) {
-					return ext_consumed;
+					//return ext_consumed;
 				}
 				consumed += ext_consumed;
 				offset	 += ext_consumed;
@@ -1469,10 +1467,10 @@ Serial.println("decode_system_journal");
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_e: ");
 				Serial.println(ext_consumed);
-	#endif		
+	#endif
 
 				if ( ext_consumed < 0 ) {
-					return ext_consumed;
+					//return ext_consumed;
 				}
 				consumed += ext_consumed;
 				offset	 += ext_consumed;
@@ -1491,10 +1489,10 @@ Serial.println("decode_system_journal");
 	#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_a: ");
 				Serial.println(ext_consumed);
-	#endif		
+	#endif
 
 				if ( ext_consumed < 0 ) {
-					return ext_consumed;
+					//return ext_consumed;
 				}
 				consumed += ext_consumed;
 			}
@@ -1506,7 +1504,7 @@ Serial.println("decode_system_journal");
 			   Serial.print(consumed);
 			 Serial.print(" != Channel Journal Length: ");
 			   Serial.println(chanjourlen);
-	#endif		
+	#endif
 				return chanjourlen;
 			}
 
@@ -1628,18 +1626,19 @@ Serial.println("RealTime");
 			default:
 				ext_consumed = -1;
 #ifdef APPLEMIDI_DEBUG
-				Serial.println("UnknownA");
+				Serial.println("Unknown midi command octet");
 #endif
 			}
 
 			/* external decoder informed us of error -> pass this through */
 			if ( ext_consumed < 0 ) {
 #ifdef APPLEMIDI_DEBUG
-Serial.println("errora");
+Serial.print("Midi Consumed < 0. ");
+Serial.println(ext_consumed);
 #endif
 				return ext_consumed;
 			}
-			
+
 			return consumed + ext_consumed;
 		}
 
@@ -1672,7 +1671,7 @@ Serial.println("errora");
 		default:
 			ext_consumed = -1;
 #ifdef APPLEMIDI_DEBUG
-			Serial.println("UnknownB");
+			Serial.println("Unknown system command octet");
 #endif
 			break;
 		}
@@ -1680,7 +1679,8 @@ Serial.println("errora");
 		/* external decoder informed us of error -> pass this through */
 		if ( ext_consumed < 0 ) {
 #ifdef APPLEMIDI_DEBUG
-			Serial.println("errorb");
+Serial.print("System Consumed < 0. ");
+Serial.println(ext_consumed);
 #endif
 
 			return ext_consumed;
@@ -1755,9 +1755,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: note_off");
 #endif
-			return -1;
+			return 1;
 		}
 
 		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
@@ -1770,7 +1770,7 @@ Serial.println("aborted MIDI-command");
 #ifdef APPLEMIDI_DEBUG
 Serial.println("not enough");
 #endif
-			return -1;
+			return 1;
 		}
 
 		uint8_t velocity = packetBuffer[offset + 1];
@@ -1781,9 +1781,14 @@ Serial.println("not enough");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command 2");
+Serial.println("aborted MIDI-command 2: note_off");
 #endif
-			return -1;
+
+			// Aborted NoteOff packets might be trying to turn the note off.
+			// We should do this manually just in case
+			rtpMidi->OnNoteOff(NULL, channel, note, 0);
+
+			return 1;
 		}
 
 
@@ -1832,7 +1837,7 @@ Serial.println("!cmd_len");
 			}
 			return -1;
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: note_on");
 #endif
 		}
 
@@ -1857,22 +1862,23 @@ Serial.println("not enough data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command 2");
+Serial.println("aborted MIDI-command 2: note_on");
 #endif
-			return -1;
+			// Aborted NoteOn packets might be trying to turn the note off.
+			// We should do this manually just in case
+			// rtpMidi->OnNoteOff(NULL, channel, note, 0);
+
+			return 0;
 		}
 
-		/* special case velocity=0 for Note-On means Note-Off (to preserve running-status!) */
-		if ( velocity == 0 ) {
-			//status_str = rtp_midi_channel_status_special_off;
+		if (rtpMidi->PassesFilter(NULL, type, channel)) {
+			/* special case velocity=0 for Note-On means Note-Off (to preserve running-status!) */
+			if (velocity == 0) {
+				rtpMidi->OnNoteOff(NULL, channel, note, velocity);
+			} else {
+				rtpMidi->OnNoteOn(NULL, channel, note, velocity);
+			}
 		}
-
-		if ( using_rs ) {
-		} else {
-		}
-
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnNoteOn(NULL, channel, note, velocity);
 
 		return 2;
 	}
@@ -1911,9 +1917,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: poly_pressure");
 #endif
-			return -1;
+			return 1;
 		}
 
 		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
@@ -1926,7 +1932,7 @@ Serial.println("aborted MIDI-command");
 #ifdef APPLEMIDI_DEBUG
 Serial.println("not enough");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		uint8_t pressure = packetBuffer[offset + 1];
@@ -1937,9 +1943,9 @@ Serial.println("not enough");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: poly_pressure");
 #endif
-			return -1;
+			return 1;
 		}
 
 
@@ -1987,9 +1993,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: channel_pressure");
 #endif
-			return -1;
+			return 1;
 		}
 
 
@@ -2042,9 +2048,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: pitch_bend_change");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		/* broken: we have only one further octet */
@@ -2055,7 +2061,7 @@ Serial.println("aborted MIDI-command");
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("not enough");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		uint8_t octet2 = packetBuffer[offset + 1];
@@ -2067,9 +2073,9 @@ Serial.println("not enough");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command 2: pitch_bend_change");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		int pitch = ( octet1 << 7 ) | octet2;
@@ -2125,9 +2131,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: program_change");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 
@@ -2181,9 +2187,9 @@ Serial.println("no further data");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: control_change");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
@@ -2196,7 +2202,7 @@ Serial.println("aborted MIDI-command");
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("not enough");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 		uint8_t value = packetBuffer[offset + 1];
@@ -2207,9 +2213,9 @@ Serial.println("not enough");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command 2: control_change");
 #endif
-			return -1;
+			return cmd_len;
 		}
 
 
@@ -2233,8 +2239,6 @@ Serial.println("aborted MIDI-command");
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_sysex_common_nrt_sd_hdr");
 #endif
-
-		Serial.println("decode_sysex_common_nrt_sd_hdr");
 
 		return 1;
 	}
@@ -2720,7 +2724,7 @@ Serial.println("no further data");
 			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command );
 			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset - 1, 1, ENC_BIG_ENDIAN );
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: mtc_quarter_frame");
 #endif
 			return -1;
 		}
@@ -2761,7 +2765,7 @@ Serial.println("no further data");
 		/* seems to be an aborted MIDI-command */
 		if ( octet1 & RTP_MIDI_COMMAND_STATUS_FLAG ) {
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: song_position_pointer");
 #endif
 			return -1;
 		}
@@ -2780,7 +2784,7 @@ Serial.println("not enough");
 		if ( octet2 & RTP_MIDI_COMMAND_STATUS_FLAG ) {
 			/* this case should never happen */
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command 2: song_position_pointer");
 #endif
 			return -1;
 		}
@@ -2821,7 +2825,7 @@ Serial.println("no further data");
 		/* seems to be an aborted MIDI-command */
 		if ( song_nr & RTP_MIDI_COMMAND_STATUS_FLAG ) {
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("aborted MIDI-command");
+Serial.println("aborted MIDI-command: decode_song_select");
 #endif
 			return -1;
 		}
@@ -2914,12 +2918,6 @@ Serial.println("aborted MIDI-command");
 				break;
 			}
 		}
-
-		// TODO: what to do here???
-		// rtpMidi->OnSys???(NULL);
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_sysex_end");
-#endif
 
 		return consumed;
 	}
@@ -3022,7 +3020,7 @@ Serial.println("aborted MIDI-command");
 			/* FIRST is "compressed" using only the necessary amount of octets, like delta-time */
 			for ( i=0; i < 4; i++ ) {
 				/* do we still fit in the dissected packet & in the length restriction of this chapter? */
-				if ( ( !( consumed >= max_length ) ) || ( !packetBuffer[offset + fieldlen] ) ) {
+				if ( ( !( consumed >= max_length ) ) || ( !packetBuffer[offset + fieldlen + 1] ) ) {
 					return -1;
 				}
 
@@ -3132,11 +3130,11 @@ Serial.println("aborted MIDI-command");
       /* now we know the complete length and set it. */
       return offset-start_offset;
    }
-	
+
 	/*
 	* Here the chapter D F4-field of the system-journal is decoded.
 	*/
-	static int 
+	static int
 	decode_sj_chapter_d_f4(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
       int start_offset = offset;
       uint16_t		 f4flags;
@@ -3182,8 +3180,8 @@ Serial.println("aborted MIDI-command");
 
       return offset-start_offset;
    }
-   
-	static int 
+
+	static int
 	decode_sj_chapter_d_f5(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	unsigned int start_offset = offset;
 	uint16_t		 f5flags;
@@ -3368,10 +3366,42 @@ Serial.println("aborted MIDI-command");
 
 		/* lets step through the loglist */
 		while ( length > 0 ) {
+			if ( no_pnum_msb ) {
+				logitemheader = packetBuffer[offset + 1];
+			} else {
+				logitemheader = packetBuffer[offset + 2];
+			}
+
+			logitemlen = logitemhdrlen;
+
+			/* do we have a msb field? */
+			if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_J ) {
+				logitemlen++;
+			}
+
+			/* do we have a lsb field? */
+			if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_K ) {
+				logitemlen++;
+			}
+
+			/* do we have an a-button field? */
+			if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_L ) {
+				logitemlen +=2;
+			}
+
+			/* do we have a c-button field? */
+			if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_M ) {
+				logitemlen +=2;
+			}
+
+			/* do we have a count field? */
+			if ( logitemheader & RTP_MIDI_CJ_CHAPTER_M_FLAG_N ) {
+				logitemlen++;
+			}
+
 			offset++;
 			length--;
 
-			/* if we have the msb, we need to decode it */
 			if ( !no_pnum_msb ) {
 				offset++;
 				length--;
@@ -3409,7 +3439,6 @@ Serial.println("aborted MIDI-command");
 				offset++;
 				length--;
 			}
-
 		}
 
 		return offset-start_offset;
@@ -3479,9 +3508,6 @@ Serial.println("aborted MIDI-command");
 	decode_cj_chapter_e(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
-		uint8_t				 note;
-		uint8_t				 count_vel;
-		uint8_t				 octet;
 		int				 log_count;
 		int				 i;
 
@@ -3508,8 +3534,6 @@ Serial.println("aborted MIDI-command");
 	decode_cj_chapter_a(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
-		uint8_t				 note;
-		uint8_t				 pressure;
 		int				 log_count;
 		int				 i;
 
@@ -3523,6 +3547,7 @@ Serial.println("aborted MIDI-command");
 		offset++;
 
 		for ( i = 0; i < log_count; i++ ) {
+			offset++;
 			offset++;
 		}
 

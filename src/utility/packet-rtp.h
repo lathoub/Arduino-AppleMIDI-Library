@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub
  *	@date		04/04/14
  *  License		GPL
  */
@@ -182,7 +182,7 @@ Serial.println(sync_src, HEX);
 			rtp_info->info_data_len = reported_length;
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Have all the data");
+Serial.println("We have all the data");
 #endif
 
 			/*
@@ -206,7 +206,7 @@ Serial.println("Have all the data");
 			rtp_info->info_data = NULL;
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("do not all data");
+Serial.println("do not have all the data");
 #endif
 
 		}
@@ -223,7 +223,7 @@ Serial.println(payload_type);
 		}
 
 		if (true) {
-			
+
 			// header
 			offset++;
 
@@ -245,8 +245,8 @@ Serial.println(payload_type);
 			/* Synchronization source identifier 32 bits (4 octets) */
 			//proto_tree_add_uint( rtp_tree, hf_rtp_ssrc, tvb, offset, 4, sync_src );
 			offset += 4;
-		} 
-		else 
+		}
+		else
 		{
 			offset += 12;
 		}
@@ -317,11 +317,11 @@ Serial.println(payload_type);
 			* The padding count is found in the LAST octet of
 			* the packet; it contains the number of octets
 			* that can be ignored at the end of the packet.
-			*/			
+			*/
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.println("padding = ");
 	//		Serial.print  (hdr_extension_id);
-#endif		
+#endif
 			// not supported
 
 			int padding_count = 0;
@@ -342,7 +342,7 @@ Serial.println(payload_type);
 //			int consumed = dissect_rtp_data(dissector, appleMidi, packetBuffer, offset, 0, packetSize, payload_type );
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 	Serial.println("No padding set");
-#endif		
+#endif
 
 			rtp_info->info_payload_offset = offset;
 //			rtp_info->info_payload_len = tvb_length_remaining(tvb, offset);
@@ -350,14 +350,14 @@ Serial.println(payload_type);
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 	Serial.print  ("Offset is ");
 	Serial.println(offset);
-#endif		
+#endif
 
 			return offset;
 		}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 	Serial.println("Nothing processed");
-#endif		
+#endif
 		return 0;
 	}
 
