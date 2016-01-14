@@ -320,6 +320,7 @@ typedef struct {
 	uint16_t			remotePort;
 	int					attempts;
     uint32_t			ssrc;
+	uint32_t			initiatorToken;
 } SessionInvite_t;
 
 typedef struct {
