@@ -1,4 +1,4 @@
-// Hardware: Mega 2560 R2 + Ethernet Shield
+// Hardware: Mega 2560 R2 + Wifi Shield
 
 // These need to be included when using standard Ethernet
 #include <SPI.h>
@@ -12,8 +12,8 @@ char ssid[] = "yourNetwork"; //  your network SSID (name)
 char pass[] = "secretPassword";    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
-
 unsigned long t0 = millis();
+bool isConnected = false;
 
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
 
@@ -86,7 +86,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((millis() - t0) > 1000)
+  if (isConnected && (millis() - t0) > 1000)
   {
     t0 = millis();
     //   Serial.print(".");
@@ -107,16 +107,18 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(char* name) {
-  //  Serial.print("Connected to session ");
-  //  Serial.println(name);
+void OnAppleMidiConnected(long unsigned int ssrc, char* name) {
+  isConnected = true;
+  Serial.print("Connected to session ");
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected() {
-  //  Serial.println("Disconnected");
+void OnAppleMidiDisconnected(long unsigned int ssrc) {
+  isConnected = false;
+  Serial.println("Disconnected");
 }
 
 // -----------------------------------------------------------------------------

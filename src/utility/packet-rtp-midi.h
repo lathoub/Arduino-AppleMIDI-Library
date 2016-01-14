@@ -1196,7 +1196,7 @@ Serial.println (cmd_count);
 				if ( (cmd_count) || (flags & RTP_MIDI_CS_FLAG_Z) ) {
 
 					/* Decode a delta-time - if 0 is returned something went wrong */
-					int consumed = decodetime((IRtpMidi*) appleMidi, packetBuffer, offset, cmd_len);
+					int consumed = decodetime(appleMidi, packetBuffer, offset, cmd_len);
 					if ( -1 == consumed ) {
 #ifdef APPLEMIDI_DEBUG
 Serial.print ("ReportedBoundsError 1");
@@ -1214,8 +1214,8 @@ Serial.print ("ReportedBoundsError 1");
 				if (cmd_len) {
 
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
-					int consumed = decodemidi((IRtpMidi*) appleMidi, packetBuffer, cmd_count, offset, cmd_len, &runningstatus, &rsoffset);
-					if ( -1 == consumed ) {
+					int consumed = decodemidi(appleMidi, packetBuffer, cmd_count, offset, cmd_len, &runningstatus, &rsoffset);
+					if (-1 == consumed) {
 #ifdef APPLEMIDI_DEBUG
 Serial.print ("ReportedBoundsError 2");
 #endif
@@ -1256,7 +1256,7 @@ Serial.println("journal section");
 			/* do we have system journal? */
 			if ( flags & RTP_MIDI_JS_FLAG_Y ) {
 				/* first we need to get the flags & length from the system-journal */
-				int consumed = decode_system_journal((IRtpMidi*) appleMidi, packetBuffer, offset);
+				int consumed = decode_system_journal(appleMidi, packetBuffer, offset);
 
 				if ( -1 == consumed ) {
 #ifdef APPLEMIDI_DEBUG
@@ -1279,8 +1279,7 @@ Serial.print ("ReportedBoundsError 3");
 Serial.print("Processing channel journal: ");
 Serial.println(i);
 #endif
-					int consumed = decode_channel_journal( (IRtpMidi*)appleMidi, packetBuffer, offset);
-
+					int consumed = decode_channel_journal(appleMidi, packetBuffer, offset);
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.print("Consumed by channel journal (");
 Serial.print(i);
@@ -1305,12 +1304,12 @@ Serial.println("ReportedBoundsError 4");
 		return offset;
 	}
 
-private:
+//private:
 	/*
 	* Here the system-journal is decoded.
 	*/
 	static int
-	decode_system_journal(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
+	decode_system_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_system_journal");
@@ -1366,7 +1365,7 @@ Serial.println("decode_system_journal");
 	 * Here a channel-journal is decoded.
 	 */
 	static int
-	decode_channel_journal(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_channel_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	   uint32_t				chanflags;
 	   uint16_t				chanjourlen;
 	   int				consumed = 0;
@@ -1518,7 +1517,7 @@ Serial.println("decode_system_journal");
 	* external decoders.
 	*/
 	static int
-	decodemidi(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
+	decodemidi(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decodemidi");
@@ -1583,7 +1582,8 @@ Serial.println("RealTime");
 			if ( octet < 0xf0 ) {
 				*rsoffset = offset ;
 				*runningstatus = octet;
-			} else {
+			}
+			else {
 				/* system-realtime-commands maintain the current running-status
 				* other system-commands clear the running-status, since we
 				* already handled realtime, we can reset it here */
@@ -1596,32 +1596,39 @@ Serial.println("RealTime");
 			offset++;
 		}
 
-
 		/* non-system MIDI-commands encode the command in the high nibble and the channel
 		* in the low nibble - so we will take care of those cases next */
 
-		if ( octet < 0xf0 ) {
-			switch ( octet >> 4 ) {
+		if (octet < 0xf0) {
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print("MIDI command ");
+			Serial.println(octet >> 4);
+#endif
+			switch (octet >> 4) {
 			case RTP_MIDI_STATUS_CHANNEL_NOTE_OFF:
-				ext_consumed = decode_note_off(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_note_off(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			case RTP_MIDI_STATUS_CHANNEL_NOTE_ON:
-				ext_consumed = decode_note_on(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_note_on(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			case RTP_MIDI_STATUS_CHANNEL_POLYPHONIC_KEY_PRESSURE:
-				ext_consumed = decode_poly_pressure(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_poly_pressure(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
+
+			// If these below calls are uncommented, the ESP8266 crashes when the execution comes here
+			// even if the functions are NOT called. Works fine on ARDUINO
+
 			case RTP_MIDI_STATUS_CHANNEL_CONTROL_CHANGE:
-				ext_consumed = decode_control_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_control_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			case RTP_MIDI_STATUS_CHANNEL_PROGRAM_CHANGE:
-				ext_consumed = decode_program_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_program_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			case RTP_MIDI_STATUS_CHANNEL_CHANNEL_PRESSURE:
-				ext_consumed = decode_channel_pressure(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_channel_pressure(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			case RTP_MIDI_STATUS_CHANNEL_PITCH_BEND_CHANGE:
-				ext_consumed = decode_pitch_bend_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+				ext_consumed = decode_pitch_bend_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
 			default:
 				ext_consumed = -1;
@@ -1631,7 +1638,7 @@ Serial.println("RealTime");
 			}
 
 			/* external decoder informed us of error -> pass this through */
-			if ( ext_consumed < 0 ) {
+			if (ext_consumed < 0) {
 #ifdef APPLEMIDI_DEBUG
 Serial.print("Midi Consumed < 0. ");
 Serial.println(ext_consumed);
@@ -1693,7 +1700,7 @@ Serial.println(ext_consumed);
 	* This decodes the delta-time before a MIDI-command
 	*/
 	static int
-	decodetime(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int cmd_len)
+	decodetime(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int cmd_len)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decodetime");
@@ -1723,7 +1730,7 @@ Serial.println("decodetime");
 	* Here a Note-Off command is decoded.
 	*/
 	static int
-	decode_note_off(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_note_off(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_note_off");
@@ -1806,8 +1813,8 @@ Serial.println("aborted MIDI-command 2: note_off");
 	* Here a Note-On command is decoded.
 	*/
 	static int
-	decode_note_on(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, uint8_t status, unsigned int rsoffset, bool using_rs ) {
-
+	decode_note_on(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, uint8_t status, unsigned int rsoffset, bool using_rs )
+	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_note_on");
 #endif
@@ -1887,7 +1894,7 @@ Serial.println("aborted MIDI-command 2: note_on");
 	* Here polyphonic aftertouch is decoded.
 	*/
 	static int
-	decode_poly_pressure(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_poly_pressure(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_poly_pressure");
@@ -1963,7 +1970,7 @@ Serial.println("aborted MIDI-command: poly_pressure");
 	* Here channel aftertouch is decoded.
 	*/
 	static int
-	decode_channel_pressure(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_channel_pressure(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_channel_pressure");
@@ -2018,7 +2025,7 @@ Serial.println("aborted MIDI-command: channel_pressure");
 	* Here pitch-bend is decoded.
 	*/
 	static int
-	decode_pitch_bend_change(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_pitch_bend_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_pitch_bend_change");
@@ -2101,7 +2108,7 @@ Serial.println("aborted MIDI-command 2: pitch_bend_change");
 	* Here program_change is decoded.
 	*/
 	static int
-	decode_program_change(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_program_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_program_change");
@@ -2157,7 +2164,7 @@ Serial.println("aborted MIDI-command: program_change");
 	* Here control change is decoded.
 	*/
 	static int
-	decode_control_change(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_control_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_control_change");
@@ -2247,7 +2254,7 @@ Serial.println("decode_sysex_common_nrt_sd_hdr");
 	* Here a Sysex-Common Non-Realtime Sample Dump Packet command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_sd_packet(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_sd_packet(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_sysex_common_nrt_sd_packet");
@@ -2261,7 +2268,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime Sample Dump Request command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_sd_req(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_sd_req(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_sd_req");
@@ -2274,7 +2281,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime Sample Dump Extension command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_sd_ext(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_sd_ext(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_sd_ext");
@@ -2288,7 +2295,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime General Information command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_gi(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_gi(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_gi");
@@ -2301,7 +2308,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime File Dump command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_fd(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_fd(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_fd");
@@ -2315,7 +2322,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* As the code-points do not overlap, both RT and NRT are decoded here...
 	*/
 	static unsigned int
-	decode_sysex_common_tuning(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_tuning(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_tuning");
@@ -2328,7 +2335,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime General MIDI command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_gm(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_gm(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_gm");
@@ -2341,7 +2348,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime Downloadable Sounds command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_dls(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_dls(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_dls");
@@ -2354,7 +2361,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime End Of File command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_eof(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_eof(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_eof");
@@ -2367,7 +2374,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime Wait command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_wait(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_wait(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_wait");
@@ -2380,7 +2387,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime Cancel command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_cancel(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_cancel(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_cancel");
@@ -2393,7 +2400,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime NAK command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_nak(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_nak(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_nak");
@@ -2406,7 +2413,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime ACK command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_ack(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_ack(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_ack");
@@ -2420,7 +2427,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* as the codepoints are the same, we decode both realtime and non-realtime here.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt_mtc(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt_mtc(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt_mtc");
@@ -2434,7 +2441,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* As the codepoints are the same, we decode both realtime and non-realtime here.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_mtc_cue(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_mtc_cue(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mtc_cue");
@@ -2447,7 +2454,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Non-Realtime command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_nrt(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_nrt(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_nrt");
@@ -2460,7 +2467,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime MIDI Time Code command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_mtc(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_mtc(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mtc");
@@ -2473,7 +2480,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime MIDI Show Control command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_sc(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_sc(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_sc");
@@ -2486,7 +2493,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime Notation Information command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_ni(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_ni(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_ni");
@@ -2499,7 +2506,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime Device Control command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_dc(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_dc(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_dc");
@@ -2512,7 +2519,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime MIDI Machine Control command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_mmc_command(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_mmc_command(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mmc_command");
@@ -2525,7 +2532,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime MIDI Machine Control response is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt_mmc_response(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt_mmc_response(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt_mmc_response");
@@ -2538,7 +2545,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* Here a Sysex-Common Realtime command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_common_rt(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_rt(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_common_rt");
@@ -2553,7 +2560,7 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 	* We don't know what this data encodes, so we just dump it.
 	*/
 	static unsigned int
-	decode_sysex_common_educational(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
+	decode_sysex_common_educational(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_sysex_common_educational");
@@ -2573,7 +2580,7 @@ Serial.println("decode_sysex_common_educational");
 	* We don't know what this data encodes, so we just dump it.
 	*/
 	static unsigned int
-	decode_sysex_common_manufacturer(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len, unsigned int manu_code) {
+	decode_sysex_common_manufacturer(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int data_len, unsigned int manu_code) {
 
 		int		 consumed	= 0;
 
@@ -2593,7 +2600,7 @@ Serial.println("decode_sysex_common_educational");
 	* Here a Sysex-Start command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_start(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_sysex_start(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_sysex_start");
@@ -2693,7 +2700,7 @@ Serial.println("decode_sysex_start");
 	* Here the MIDI-Time-Code (MTC) Quarter Frame command is decoded.
 	*/
 	static int
-	decode_mtc_quarter_frame(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_mtc_quarter_frame(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_mtc_quarter_frame");
@@ -2746,7 +2753,7 @@ Serial.println("aborted MIDI-command: mtc_quarter_frame");
 	* Here the Song Position Pointer command is decoded.
 	*/
 	static int
-	decode_song_position_pointer(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_song_position_pointer(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_song_position_pointer");
@@ -2806,7 +2813,7 @@ Serial.println("aborted MIDI-command 2: song_position_pointer");
 	* Here a Song-Select command is decoded.
 	*/
 	static int
-	decode_song_select(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_song_select(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("decode_song_select");
@@ -2845,7 +2852,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	* Here the undefined common-command 0xf4 is decoded.
 	*/
 	static int
-	decode_undefined_f4(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_undefined_f4(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_undefined_f4");
@@ -2858,7 +2865,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	* Here the undefined common-command 0xf5 is decoded.
 	*/
 	static int
-	decode_undefined_f5(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_undefined_f5(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_undefined_f5");
@@ -2871,7 +2878,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	* Here a Tune-Request command is decoded.
 	*/
 	static int
-	decode_tune_request(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len) {
+	decode_tune_request(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_tune_request");
@@ -2886,7 +2893,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	* Here a Sysex-End command is decoded - in RTP-MIDI this has a special semantic, it either starts a segmented Sysex-frame or a Sysex-Cancel
 	*/
 	static int
-	decode_sysex_end(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_sysex_end(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_sysex_end");
@@ -2926,7 +2933,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter Q of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_q(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+	decode_sj_chapter_q(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
 		uint8_t				header;
 		unsigned int start_offset = offset;
 		int				len = 1;
@@ -2958,7 +2965,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter F of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_f(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_f(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint8_t				header;
 		unsigned int start_offset = offset;
 		int				len = 1;
@@ -2990,7 +2997,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter X of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_x(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int max_length) {
+	decode_sj_chapter_x(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int max_length) {
 		uint8_t				header;
 		uint8_t				octet;
 		unsigned int			consumed = 0;
@@ -3065,7 +3072,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
     * Here the chapter D of the channel-journal is decoded.
     */
    static int
-	decode_sj_chapter_d(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
       int				header;
       unsigned int start_offset = offset;
       int				ext_consumed;
@@ -3135,7 +3142,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	* Here the chapter D F4-field of the system-journal is decoded.
 	*/
 	static int
-	decode_sj_chapter_d_f4(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f4(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
       int start_offset = offset;
       uint16_t		 f4flags;
       uint16_t		 f4length;
@@ -3182,7 +3189,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
    }
 
 	static int
-	decode_sj_chapter_d_f5(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f5(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	unsigned int start_offset = offset;
 	uint16_t		 f5flags;
 	uint16_t		 f5length;
@@ -3235,7 +3242,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter D F9-field of the system-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_d_f9(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f9(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t		 f9flags;
 		uint8_t		 f9length;
@@ -3271,7 +3278,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter D FD-field of the system-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_d_fd(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_fd(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t		 fdflags;
 		uint8_t		 fdlength;
@@ -3307,7 +3314,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter c of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_c(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_c(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 octet;
 		int				 count;
@@ -3334,7 +3341,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter m of the channel-journal is decoded, possibly the most complex part of the RTP-MIDI stuff ;-)
 	 */
 	static int
-	decode_cj_chapter_m(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_m(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint16_t				header;
 		uint8_t				logitemheader;
 		int				length;
@@ -3449,7 +3456,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter n of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_n(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_n(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint16_t				 header;
 		uint8_t				 note;
@@ -3505,7 +3512,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter e of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_e(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_e(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
 		int				 log_count;
@@ -3531,7 +3538,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter a of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_a(IRtpMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_a(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
 		int				 log_count;
@@ -3553,8 +3560,6 @@ Serial.println("aborted MIDI-command: decode_song_select");
 
 		return offset-start_offset;
 	}
-
-
 
 };
 

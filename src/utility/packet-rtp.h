@@ -101,8 +101,13 @@ Serial.println(packetSize);
 		static int rtp_info_current = 0;
 		struct _rtp_info *rtp_info;
 
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.print("current: ");
+		Serial.println(rtp_info_current);
+#endif
+
 		rtp_info_current++;
-		if (rtp_info_current==4) {
+		if (rtp_info_current == 4) {
 			rtp_info_current=0;
 		}
 		rtp_info = &rtp_info_arr[rtp_info_current];
@@ -150,7 +155,7 @@ Serial.print  ("Seq Number: ");
 Serial.println(seq_num, HEX);
 Serial.print  ("Timestamp : ");
 Serial.println(timestamp, HEX);
-Serial.print  ("Sync Src  : ");
+Serial.print("Sync Src  : ");
 Serial.println(sync_src, HEX);
 #endif
 

@@ -13,6 +13,9 @@
 #######################################
 
 begin	         	 KEYWORD2
+invite	         	 KEYWORD2
+getSessionName	KEYWORD2
+getSynchronizationSource	KEYWORD2
 run		             KEYWORD2
 noteOn	         	 KEYWORD2
 noteOff	             KEYWORD2
@@ -32,6 +35,11 @@ Continue	         KEYWORD2
 stop	             KEYWORD2
 activeSensing	     KEYWORD2
 systemReset	         KEYWORD2
+timeCodeQuarterFrame	         KEYWORD2
+sysEx	         KEYWORD2
+afterTouch	         KEYWORD2
+polyPressure	         KEYWORD2
+tick	         KEYWORD2
 
 #######################################
 # Instances (KEYWORD3)

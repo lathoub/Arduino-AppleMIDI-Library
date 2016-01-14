@@ -73,7 +73,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t port)
 {
 	//
-	strcpy(SessionName, sessionName);
+	strcpy(_sessionName, sessionName);
 
 	Port = port;
 
@@ -87,19 +87,7 @@ inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	_ssrc = *((uint32_t*) &buffer[0]);
 
 	// Initialize Sessions
-	for (int i = 0; i < MAX_SESSIONS; i++)
-	{
-		Sessions[i].ssrc = 0;
-		//for (int j = 0; j < MAX_PARTICIPANTS_PER_SESSION; j++)
-		//{
-		//	Sessions[i].participants[j].initiatorToken = 0;
-		//}
-	}
-
-	_sessionInvite.remotePort = 0;
-	_sessionInvite.lastSend = 0;
-	_sessionInvite.status = None;
-	_sessionInvite.attempts = 0;
+	DeleteSessions();
 
 	// open UDP socket for control messages
 	_controlUDP.begin(Port);
@@ -180,25 +168,19 @@ inline void AppleMidi_Class<UdpClass>::run()
 }
 
 
-/*! \brief
+/*! \brief The Arduino initiates the session.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::Invite(IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::invite(IPAddress ip, uint16_t port)
 {
-	// Ignore if an invite is already pending.
-
-	_sessionInvite.remoteHost = ip;
-	_sessionInvite.remotePort = port;
-	_sessionInvite.lastSend = 0;
-	_sessionInvite.attempts = 0;
-	_sessionInvite.status = WaitingForControlInvitationAccepted;
+	CreateRemoteSession(ip, port);
 
 #if (APPLEMIDI_DEBUG)
-	Serial.println("Posted invitation");
+	Serial.println("Queued invite");
 #endif
 }
 
-/*! \brief .
+/*! \brief The Arduino is being invited to a session.
 */
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::OnInvitation(void* sender, AppleMIDI_Invitation& invitation)
@@ -211,8 +193,7 @@ inline void AppleMidi_Class<UdpClass>::OnInvitation(void* sender, AppleMIDI_Invi
 		OnContentInvitation(sender, invitation);
 }
 
-
-/*! \brief .
+/*! \brief The session has been ended by the remote source.
 */
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndSession& sessionEnd)
@@ -232,7 +213,7 @@ inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndS
 	DeleteSession(sessionEnd.ssrc);
 
 	if (mDisconnectedCallback != 0)
-		mDisconnectedCallback();
+		mDisconnectedCallback(sessionEnd.ssrc);
 }
 
 /* \brief With the receiver feedback packet, the recipient can tell the sender up to what sequence
@@ -250,7 +231,7 @@ inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMID
 }
 
 
-/*! \brief .
+/*! \brief The invitation that we have send, has been accepted.
 */
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
@@ -279,31 +260,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleM
 	Serial.println();
 #endif
 
-	if (_sessionInvite.status != WaitingForControlInvitationAccepted)
-	{
-#if (APPLEMIDI_DEBUG)
-		Serial.println("unexpected _sessionInvite.status");
-#endif
-		return;
-	}
-
-	// Find a free slot for the session
-	int index = GetFreeSessionSlot();
-	if (index < 0)
-	{
-#if (APPLEMIDI_DEBUG)
-		Serial.println("No free slot found");
-#endif
-		return;
-	}
-
-	CreateLocalSessionStepControl(index, invitationAccepted.ssrc);
-
-	// Initiate next step in the invitation process
-	_sessionInvite.lastSend = 0;
-	_sessionInvite.attempts = 0;
-	_sessionInvite.ssrc = invitationAccepted.ssrc;
-	_sessionInvite.status = WaitingForContentInvitationAccepted;
+	CompleteLocalSessionControl(invitationAccepted);
 }
 
 /*! \brief .
@@ -324,25 +281,10 @@ void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleM
 	Serial.println();
 #endif
 
-	// OK - invitations worked out well
-	_sessionInvite.lastSend = 0;
-	_sessionInvite.ssrc = 0;
-	_sessionInvite.status = None;
-
-	// Find a free slot for the session
-	int index = GetSessionSlot(invitationAccepted.ssrc);
-	if (index < 0)
-	{
-#if (APPLEMIDI_DEBUG)
-		Serial.println("Session should exist!, but it doesnt");
-#endif
-		return;
-	}
-
-	CreateLocalSessionStepContent(index, invitationAccepted.ssrc);
+	CompleteLocalSessionContent(invitationAccepted);
 }
 
-/*! \brief .
+/*! \brief Part 1 of being invited into a session, the Control Invitation.
 */
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invitation& invitation)
@@ -362,7 +304,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 
 	// Do we know this ssrc already?
 	// In case initiator reconnects (after a crash of some sort)
-	int index = GetSessionSlot(invitation.ssrc);
+	int index = GetSessionSlotUsingSSrc(invitation.ssrc);
 	if (index < 0)
 	{
 		// No, not existing; must be a new initiator
@@ -372,21 +314,21 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 		{
 			// no free slots, we cant accept invite
 			AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
-			write(_controlUDP, invitationRejected);
+			write(_controlUDP, invitationRejected, _controlUDP.remoteIP(), _controlUDP.remotePort());
 
 			return;
 		}
 	}
 
-	// Initiate a session or a new participant in the session?
-	CreateRemoteSessionStepControl(index, invitation.ssrc, _controlUDP.remoteIP(), _controlUDP.remotePort());
+	// Initiate a session got this ssrc
+	CreateLocalSession(index, invitation.ssrc);
 
-	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, SessionName);
-	write(_controlUDP, acceptInvitation);
+	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, getSessionName());
+	write(_controlUDP, acceptInvitation, _controlUDP.remoteIP(), _controlUDP.remotePort());
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("< Control InvitationAccepted: peer = \"");
-	Serial.print(SessionName);
+	Serial.print(getSessionName());
 	Serial.print("\"");
 	Serial.print(" ,ssrc 0x");
 	Serial.print(_ssrc, HEX);
@@ -421,8 +363,8 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 #endif
 
 	// Find the slot, it should be there because created by control session
-	int index = GetSessionSlot(invitation.ssrc);
-	if (index < 0)
+	int i = GetSessionSlotUsingSSrc(invitation.ssrc);
+	if (i < 0)
 	{
 #if (APPLEMIDI_DEBUG)
 		Serial.print("Error - control session does not exists for ");
@@ -430,17 +372,17 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 		Serial.print(". Rejecting invitation.");
 #endif
 		AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
-		write(_contentUDP, invitationRejected);
+		write(_contentUDP, invitationRejected, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 		return;
 	}
 
-	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, SessionName);
-	write(_contentUDP, acceptInvitation);
+	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, getSessionName());
+	write(_contentUDP, acceptInvitation, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("< Content InvitationAccepted: peer = \"");
-	Serial.print(SessionName);
+	Serial.print(getSessionName());
 	Serial.print("\"");
 	Serial.print(" ,ssrc 0x");
 	Serial.print(_ssrc, HEX);
@@ -453,10 +395,14 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	Serial.println();
 #endif
 
-	CreateRemoteSessionStepContent(index, invitation.ssrc, _contentUDP.remoteIP(), _contentUDP.remotePort());
+	Sessions[i].contentIP = _contentUDP.remoteIP();
+	Sessions[i].contentPort = _contentUDP.remotePort();
+	Sessions[i].invite.status = None;
+	Sessions[i].syncronization.enabled = true; // synchronisation can start
+
 
 	if (mConnectedCallback != 0)
-		mConnectedCallback(invitation.sessionName);
+		mConnectedCallback(invitation.ssrc, invitation.sessionName);
 }
 
 /*! \brief .
@@ -509,7 +455,7 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 
 	// If we know this session already, ignore it.
 
-	int index = GetSessionSlot(synchronization.ssrc);
+	int index = GetSessionSlotUsingSSrc(synchronization.ssrc);
 	if (index < 0)
 	{
 #if (APPLEMIDI_DEBUG)
@@ -556,7 +502,7 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 	}
 
 	AppleMIDI_Syncronization synchronizationResponse(_ssrc, synchronization.count, synchronization.timestamps);
-	write(_contentUDP, synchronizationResponse);
+	write(_contentUDP, synchronizationResponse, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("< Syncronization for ssrc 0x");
@@ -979,8 +925,8 @@ void AppleMidi_Class<UdpClass>::OnTuneRequest(void* sender)
 
 //------------------------------------------------------------------------------
 
-/*! \brief .
-*/
+/*! \brief Find a free session slot.
+ */
 template<class UdpClass>
 int AppleMidi_Class<UdpClass>::GetFreeSessionSlot()
 {
@@ -990,10 +936,10 @@ int AppleMidi_Class<UdpClass>::GetFreeSessionSlot()
 	return -1;
 }
 
-/*! \brief .
+/*! \brief Find the slot of a session, based on the ssrc.
 */
 template<class UdpClass>
-int AppleMidi_Class<UdpClass>::GetSessionSlot(const uint32_t ssrc)
+int AppleMidi_Class<UdpClass>::GetSessionSlotUsingSSrc(const uint32_t ssrc)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 		if (ssrc == Sessions[i].ssrc)
@@ -1001,64 +947,136 @@ int AppleMidi_Class<UdpClass>::GetSessionSlot(const uint32_t ssrc)
 	return -1;
 }
 
-/*! \brief .
+/*! \brief Find the slot of a session, based on the ssrc.
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateLocalSessionStepControl(const int index, const uint32_t ssrc)
+int AppleMidi_Class<UdpClass>::GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken)
 {
-	CreateSession(index, ssrc);
-	Sessions[index].seqNum = -1;
-	Sessions[index].initiator = Undefined;
-	//Sessions[index].contentIP = ip;
-	//Sessions[index].controlPort = port;
+	for (int i = 0; i < MAX_SESSIONS; i++)
+		if (initiatorToken == Sessions[i].invite.initiatorToken)
+			return i;
+	return -1;
 }
 
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateLocalSessionStepContent(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted)
 {
-	CreateSession(index, ssrc);
-	Sessions[index].initiator = Local;
-	//Sessions[index].contentIP = ip;
-	//Sessions[index].contentPort = port;
+	// Find slot, based on initiator token
+	int i = GetSessionSlotUsingInitiatorToken(invitationAccepted.initiatorToken);
+	if (i < 0)
+	{
+#if (APPLEMIDI_DEBUG)
+		Serial.println("hmm, initiatorToken not found");
+#endif
+		return;
+	}
+
+	// 
+	if (Sessions[i].invite.status != WaitingForControlInvitationAccepted)
+	{
+#if (APPLEMIDI_DEBUG) // issue warning
+		Serial.println("status not what expected");
+#endif
+	}
+
+	// Initiate next step in the invitation process
+	Sessions[i].invite.lastSend = 0;
+	Sessions[i].invite.attempts = 0;
+	Sessions[i].invite.ssrc = invitationAccepted.ssrc;
+	Sessions[i].invite.status = SendContentInvite;
 }
 
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateRemoteSessionStepControl(const int index, const uint32_t ssrc, IPAddress ip, uint16_t port)
+void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted)
 {
-	CreateSession(index, ssrc);
-	Sessions[index].seqNum = 0;
-	Sessions[index].initiator = Undefined;
-	//Sessions[index].contentIP = ip;
-	//Sessions[index].controlPort = port;
+	// Find slot, based on initiator token
+	int i = GetSessionSlotUsingInitiatorToken(invitationAccepted.initiatorToken);
+	if (i < 0)
+	{
+#if (APPLEMIDI_DEBUG)
+		Serial.println("hmm, initiatorToken not found");
+#endif
+		return;
+	}
+
+	// 
+	if (Sessions[i].invite.status != WaitingForContentInvitationAccepted)
+	{
+#if (APPLEMIDI_DEBUG) // issue warning
+		Serial.println("status not what expected");
+#endif
+	}
+
+	// Finalize invitation process
+	Sessions[i].ssrc = invitationAccepted.ssrc;
+//	strcpy(Sessions[i].name, invitationAccepted.name);
+	Sessions[i].invite.status = None;
+	Sessions[i].syncronization.enabled = true; // synchronisation can start
+
+	if (mConnectedCallback != 0)
+		mConnectedCallback(Sessions[i].ssrc, invitationAccepted.name);
 }
 
-/*! \brief .
+/*! \brief Initialize session at slot 'index'.
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateRemoteSessionStepContent(const int index, const uint32_t ssrc, IPAddress ip, uint16_t port)
+void AppleMidi_Class<UdpClass>::CreateLocalSession(const int i, const uint32_t ssrc)
 {
-	CreateSession(index, ssrc);
-	Sessions[index].seqNum = 1;
-	Sessions[index].initiator = Remote;
-	Sessions[index].contentIP = ip;
-	Sessions[index].contentPort = port;
+#if (APPLEMIDI_DEBUG)
+	Serial.print  ("New Local Session in slot ");
+	Serial.print  (i);
+	Serial.print  (" with SSRC ");
+	Serial.println(ssrc, HEX);
+#endif
+
+	Sessions[i].ssrc = ssrc;
+	Sessions[i].seqNum = 1;
+	Sessions[i].initiator = Remote;
+	Sessions[i].syncronization.lastTime = 0;
+	Sessions[i].syncronization.count = 0;
+	Sessions[i].syncronization.busy = false;
+	Sessions[i].syncronization.enabled = false;
+	Sessions[i].invite.status = ReceiveControlInvitation;
 }
 
-/*! \brief .
+/*! \brief Initialize session at slot 'index'.
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateSession(const int index, const uint32_t ssrc)
+void AppleMidi_Class<UdpClass>::CreateRemoteSession(IPAddress ip, uint16_t port)
 {
-	Sessions[index].ssrc = ssrc;
-	Sessions[index].seqNum = 1;
-	Sessions[index].initiator = Undefined;
-	Sessions[index].syncronization.lastTime = 0;
-	Sessions[index].syncronization.count = 0;
-	Sessions[index].syncronization.busy = false;
+	int i = GetFreeSessionSlot();
+	if (i < 0)
+	{
+#if (APPLEMIDI_DEBUG)
+		Serial.println("Invite: No free slot availble, invitation cancelled.");
+#endif
+		return;
+	}
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print("New Remote Session in slot ");
+	Serial.println(i);
+#endif
+
+	Sessions[i].ssrc = -1;
+	Sessions[i].seqNum = 0;
+	Sessions[i].initiator = Local;
+	Sessions[i].contentIP = ip;
+	Sessions[i].contentPort = port + 1;
+	Sessions[i].syncronization.lastTime = 0;
+	Sessions[i].syncronization.count = 0;
+	Sessions[i].syncronization.busy = false;
+	Sessions[i].syncronization.enabled = false;
+
+	Sessions[i].invite.remoteHost = ip;
+	Sessions[i].invite.remotePort = port;
+	Sessions[i].invite.lastSend = 0;
+	Sessions[i].invite.attempts = 0;
+	Sessions[i].invite.status = SendControlInvite;
 }
 
 /*! \brief .
@@ -1066,13 +1084,47 @@ void AppleMidi_Class<UdpClass>::CreateSession(const int index, const uint32_t ss
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::DeleteSession(const uint32_t ssrc)
 {
-	int index = GetSessionSlot(ssrc);
-	if (index < 0)
+	// Find the slot first
+	int slot = GetSessionSlotUsingSSrc(ssrc);
+	if (slot < 0)
 		return;
 
-	Sessions[index].ssrc = 0;
-	Sessions[index].seqNum = 0;
-	Sessions[index].initiator = Undefined;
+	DeleteSession(slot);
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::DeleteSession(int slot)
+{
+	// Then zero-ize it
+	Sessions[slot].ssrc = 0;
+	Sessions[slot].seqNum = 0;
+	Sessions[slot].initiator = Undefined;
+	Sessions[slot].invite.status = None;
+	Sessions[slot].syncronization.enabled = false;
+
+#if (APPLEMIDI_DEBUG)
+	Serial.print("Freeing Session slot ");
+	Serial.println(slot);
+#endif
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::DeleteSessions()
+{
+	for (int slot = 0; slot < MAX_SESSIONS; slot++)
+	{
+		Sessions[slot].ssrc = 0;
+		Sessions[slot].initiator = Undefined;
+		Sessions[slot].invite.status = None;
+		Sessions[slot].invite.status = None;
+		Sessions[slot].invite.attempts = 0;
+		Sessions[slot].invite.lastSend = 0;
+		Sessions[slot].syncronization.enabled = false;
+	}
 }
 
 /*! \brief .
@@ -1091,38 +1143,42 @@ void AppleMidi_Class<UdpClass>::DumpSession()
 #endif
 }
 
+
+/*! \brief .
+*/
+template<class UdpClass>
+inline uint32_t AppleMidi_Class<UdpClass>::createInitiatorToken()
+{
+	static int counter = 0;
+	return 0x12345000 + ++counter;
+}
+
 /*! \brief .
 */
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::ManageInvites()
 {
-	if (_sessionInvite.status == None)
+	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
-		// Do nothing
-	}
-	else if (_sessionInvite.status == WaitingForControlInvitationAccepted)
-	{
-		if (_sessionInvite.lastSend + 1000 < millis())
+		Session_t* session = &Sessions[i];
+
+		if (session->invite.status == None)
 		{
-			if (_sessionInvite.attempts >= 10) // Max attempts
-			{
-				// Give up
-				_sessionInvite.lastSend = 0;
-				_sessionInvite.status = None;
-
-				DeleteSession(_sessionInvite.ssrc);
-
-				return;
-			}
-
+			// No invitation pending
+		}
+		else if (session->invite.status == SendControlInvite)
+		{
+			// Send invitation
 			AppleMIDI_Invitation invitation;
-			invitation.initiatorToken = 0x12345678;
+			invitation.initiatorToken = createInitiatorToken();
 			invitation.ssrc = _ssrc;
-			strcpy(invitation.sessionName, SessionName);
-			write(_controlUDP, invitation, _sessionInvite.remoteHost, _sessionInvite.remotePort);
+			strcpy(invitation.sessionName, getSessionName());
+			write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
 
-			_sessionInvite.lastSend = millis();
-			_sessionInvite.attempts++;
+			session->invite.initiatorToken = invitation.initiatorToken;
+			session->invite.lastSend = millis();
+			session->invite.attempts = 1;
+			session->invite.status = WaitingForControlInvitationAccepted;
 
 #if (APPLEMIDI_DEBUG)
 			Serial.print("< Control Invitation: peer = \"");
@@ -1131,34 +1187,60 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			Serial.print(" ,ssrc 0x");
 			Serial.print(invitation.ssrc, HEX);
 			Serial.print(" ,Attempt = ");
-			Serial.print(_sessionInvite.attempts);
+			Serial.print(session->invite.attempts);
 			Serial.print(" ,initiatorToken = 0x");
 			Serial.print(invitation.initiatorToken, HEX);
 			Serial.println();
 #endif
-
 		}
-	}
-	else if (_sessionInvite.status == WaitingForContentInvitationAccepted)
-	{
-		if (_sessionInvite.lastSend + 1000 < millis())
+		else if (session->invite.status == WaitingForControlInvitationAccepted)
 		{
-			if (_sessionInvite.attempts >= 10) // Max attempts
+			if (session->invite.lastSend + 1000 < millis())
 			{
-				// Give up
-				_sessionInvite.lastSend = 0;
-				_sessionInvite.status = None;
+				// If no response received after 1 second, send invitation again
+				// with a maximum of 10 times.
 
-				DeleteSession(_sessionInvite.ssrc);
+				if (session->invite.attempts >= 10) // Max attempts
+				{
+					DeleteSession(i); // give up
+					return;
+				}
 
-				return;
+				// Send invitation
+				AppleMIDI_Invitation invitation;
+				invitation.initiatorToken = session->invite.initiatorToken;
+				invitation.ssrc = _ssrc;
+				strcpy(invitation.sessionName, getSessionName());
+				write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
+
+				session->invite.lastSend = millis();
+				session->invite.attempts++;
+
+#if (APPLEMIDI_DEBUG)
+				Serial.print("< Control Invitation: peer = \"");
+				Serial.print(invitation.sessionName);
+				Serial.print("\"");
+				Serial.print(" ,ssrc 0x");
+				Serial.print(invitation.ssrc, HEX);
+				Serial.print(" ,Attempt = ");
+				Serial.print(session->invite.attempts);
+				Serial.print(" ,initiatorToken = 0x");
+				Serial.print(invitation.initiatorToken, HEX);
+				Serial.println();
+#endif
 			}
-
+		}
+		else if (session->invite.status == SendContentInvite)
+		{
 			AppleMIDI_Invitation invitation;
-			invitation.initiatorToken = 0x12345678;
+			invitation.initiatorToken = session->invite.initiatorToken;
 			invitation.ssrc = _ssrc;
-			strcpy(invitation.sessionName, SessionName);
-			write(_contentUDP, invitation, _sessionInvite.remoteHost, _sessionInvite.remotePort + 1);
+			strcpy(invitation.sessionName, getSessionName());
+			write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
+
+			session->invite.lastSend = millis();
+			session->invite.attempts = 1;
+			session->invite.status = WaitingForContentInvitationAccepted;
 
 #if (APPLEMIDI_DEBUG)
 			Serial.print("< Content Invitation: peer = \"");
@@ -1166,26 +1248,60 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			Serial.print("\"");
 			Serial.print(" ,ssrc 0x");
 			Serial.print(invitation.ssrc, HEX);
-#if (APPLEMIDI_DEBUG_VERBOSE)
+			Serial.print(" ,Attempt = ");
+			Serial.print(session->invite.attempts);
 			Serial.print(" ,initiatorToken = 0x");
 			Serial.print(invitation.initiatorToken, HEX);
-#endif
 			Serial.println();
 #endif
+		}
+		else if (session->invite.status == WaitingForContentInvitationAccepted)
+		{
+			if (session->invite.lastSend + 1000 < millis())
+			{
+				// If no response received after 1 second, send invitation again
+				// with a maximum of 10 times.
 
-			_sessionInvite.lastSend = millis();
+				if (session->invite.attempts >= 10) // Max attempts
+				{
+					DeleteSession(session->invite.ssrc); // Give up
+					return;
+				}
+
+				AppleMIDI_Invitation invitation;
+				invitation.initiatorToken = session->invite.initiatorToken;
+				invitation.ssrc = _ssrc;
+				strcpy(invitation.sessionName, getSessionName());
+				write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
+
+				session->invite.lastSend = millis();
+				session->invite.attempts++;
+
+#if (APPLEMIDI_DEBUG)
+				Serial.print("< Content Invitation: peer = \"");
+				Serial.print(invitation.sessionName);
+				Serial.print("\"");
+				Serial.print(" ,ssrc 0x");
+				Serial.print(invitation.ssrc, HEX);
+				Serial.print(" ,Attempt = ");
+				Serial.print(session->invite.attempts);
+				Serial.print(" ,initiatorToken = 0x");
+				Serial.print(invitation.initiatorToken, HEX);
+				Serial.println();
+#endif
+			}
 		}
 	}
 }
 
-/*! \brief .
+/*! \brief The initiator of the session polls if remote station is still alive.
 */
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::ManageTiming()
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
-		if (Sessions[i].initiator == Local)
+		if (Sessions[i].initiator == Local && Sessions[i].syncronization.enabled)
 		{
 			if (!Sessions[i].syncronization.busy)
 			{
@@ -1222,7 +1338,7 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 					synchronization.count = 0;
 
 					AppleMIDI_Syncronization synchronizationResponse(_ssrc, synchronization.count, synchronization.timestamps);
-					write(_contentUDP, synchronizationResponse);
+					write(_contentUDP, synchronizationResponse, Sessions[i].contentIP, Sessions[i].contentPort);
 
 					Sessions[i].syncronization.busy = true;
 
@@ -1231,6 +1347,10 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 					Serial.print(synchronizationResponse.ssrc, HEX);
 					Serial.print(", count = ");
 					Serial.print(synchronizationResponse.count);
+					Serial.print(", to = ");
+					Serial.print(Sessions[i].contentIP);
+					Serial.print(" ");
+					Serial.print(Sessions[i].contentPort);
 #if (APPLEMIDI_DEBUG_VERBOSE)
 					//Serial.print  (" Timestamps = ");
 					//Serial.print  (synchronizationResponse.timestamps[0], HEX);
@@ -1263,10 +1383,14 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 	//}
 }
 
+// -----------------------------------------------------------------------------
+//                                 
+// -----------------------------------------------------------------------------
+
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationRejected& ir)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationRejected& ir, IPAddress ip, uint16_t port)
 {
-	udp.beginPacket(udp.remoteIP(), udp.remotePort());
+	udp.beginPacket(ip, port);
 
 		udp.write(ir.signature, sizeof(ir.signature));
 		udp.write(ir.command, sizeof(ir.command));
@@ -1288,9 +1412,9 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationAccepted& ia)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationAccepted& ia, IPAddress ip, uint16_t port)
 {
-	udp.beginPacket(udp.remoteIP(), udp.remotePort());
+	udp.beginPacket(ip, port);
 
 		udp.write(ia.signature, sizeof(ia.signature));
 		udp.write(ia.command, sizeof(ia.command));
@@ -1312,9 +1436,9 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncronization& sy)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncronization& sy, IPAddress ip, uint16_t port)
 {
-	udp.beginPacket(udp.remoteIP(), udp.remotePort());
+	udp.beginPacket(ip, port);
 
 	udp.write(sy.signature, sizeof(sy.signature));
 		udp.write(sy.command, sizeof(sy.command));
@@ -1819,9 +1943,12 @@ with previous versions of the library.
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::sysEx(unsigned int inLength, const byte* inArray, 	bool inArrayContainsBoundaries)
 {
+	// USE SEND!!!!!
+
+
 	_rtpMidi.sequenceNr++;
 	//	_rtpMidi.timestamp = 
-	_rtpMidi.beginWrite(_contentUDP);
+//	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = inLength + 1 + ((inArrayContainsBoundaries) ? 0 : 2);
 	_contentUDP.write(&length, 1);
@@ -1994,8 +2121,8 @@ inline void AppleMidi_Class<UdpClass>::tick()
 
 #if APPLEMIDI_USE_CALLBACKS
 
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnConnected(void(*fptr)(char*))    { mConnectedCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnDisconnected(void(*fptr)())      { mDisconnectedCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnConnected(void(*fptr)(uint32_t, char*))    { mConnectedCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnDisconnected(void(*fptr)(uint32_t))      { mDisconnectedCallback = fptr; }
 
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveNoteOff(void(*fptr)(byte channel, byte note, byte velocity))          { mNoteOffCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveNoteOn(void(*fptr)(byte channel, byte note, byte velocity))           { mNoteOnCallback = fptr; }

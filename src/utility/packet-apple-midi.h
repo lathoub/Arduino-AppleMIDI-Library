@@ -58,7 +58,7 @@ Serial.println (packetSize);
 			return NOT_ENOUGH_DATA;
 		}
 
-		if (0 == memcmp((void*)(packetBuffer + offset), amSignature, sizeof(amSignature)))
+		if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amSignature, sizeof(amSignature)))
 		{
 			offset += sizeof(amSignature);
 		}
@@ -106,7 +106,7 @@ Serial.println("Not enough data for Invitation");
 
 			return NOT_ENOUGH_DATA;
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amInvitationAccepted, sizeof(amInvitationAccepted)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amInvitationAccepted, sizeof(amInvitationAccepted)))
 		{
 			offset += sizeof(amInvitationAccepted);
 
@@ -138,11 +138,11 @@ Serial.println("Not enough data for AcceptInvitation");
 
 			return NOT_ENOUGH_DATA;
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amInvitationRejected, sizeof(amInvitationRejected)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amInvitationRejected, sizeof(amInvitationRejected)))
 		{
 			offset += sizeof(amInvitationRejected);
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amSyncronization, sizeof(amSyncronization)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amSyncronization, sizeof(amSyncronization)))
 		{
 			offset += sizeof(amSyncronization);
 
@@ -168,7 +168,7 @@ Serial.println("Not enough data for Syncronization");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amReceiverFeedback, sizeof(amReceiverFeedback)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
 			offset += sizeof(amReceiverFeedback);
 
@@ -191,7 +191,7 @@ Serial.println("Not enough data for ReceiverFeedback");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
 		{
 			offset += sizeof(amBitrateReceiveLimit);
 
@@ -213,7 +213,7 @@ Serial.println("Not enough data for BitrateReceiveLimit");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
-		else if (0 == memcmp((void*)(packetBuffer + offset), amEndSession, sizeof(amEndSession)))
+		else if (0 == memcmp(static_cast<void*>(packetBuffer + offset), amEndSession, sizeof(amEndSession)))
 		{
 			offset += sizeof(amEndSession);
 

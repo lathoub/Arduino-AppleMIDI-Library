@@ -1,17 +1,22 @@
-// These need to be included when using standard Ethernet
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiUdp.h>
+
+#include <SPI.h>
+#include <Ethernet.h>
 
 #include "AppleMidi.h"
 
-char ssid[] = "The Mighty Network"; //  your network SSID (name)
-char pass[] = "0208196700";    // your network password (use for WPA, or use as key for WEP)
+// Enter a MAC address for your controller below.
+// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+byte mac[] = {
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+};
 
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
+
+IPAddress remote1(192, 168, 0, 119); // replace with remote ip
+IPAddress remote2(192, 168, 0, 127); // replace with remote ip
 
 // -----------------------------------------------------------------------------
 //
@@ -26,30 +31,33 @@ void setup()
 
   Serial.print("Getting IP address...");
 
-
-  WiFi.begin(ssid, pass);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println();
+    Serial.println( "Failed DHCP, check network cable & reboot" );
+    for (;;)
+      ;
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
-
 
   Serial.println();
   Serial.print("IP address is ");
-  Serial.println(WiFi.localIP());
-
-  Serial.println("OK, now make sure you an rtpMIDI session that is Enabled");
-  Serial.print("Add device named Arduino with Host/Port ");
-  Serial.print(WiFi.localIP());
-  Serial.println(":5004");
-  Serial.println("Then press the Connect button");
-  Serial.println("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes");
+  Serial.println(Ethernet.localIP());
 
   // Create a session and wait for a remote host to connect to us
-  AppleMIDI.begin("test");
+  AppleMIDI.begin("Arduino");
+
+  Serial.print("AppleMIDI Session ");
+  Serial.print(AppleMIDI.getSessionName());
+  Serial.print(" with SSRC 0x");
+  Serial.println(AppleMIDI.getSynchronizationSource(), HEX);
+
+  Serial.print("OK, now make an active connection to ");
+  Serial.print(remote1);
+  Serial.print(" and ");
+  Serial.println(remote2);
+
+  // This is the invite to the remote participant
+  AppleMIDI.invite(remote1);
+  AppleMIDI.invite(remote2);
 
   AppleMIDI.OnConnected(OnAppleMidiConnected);
   AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
@@ -70,7 +78,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t0) > 1000)
+  if (isConnected && (millis() - t0) > 250)
   {
     t0 = millis();
     //   Serial.print(".");
@@ -91,18 +99,18 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(char* name) {
-  isConnected  = true;
-  //  Serial.print("Connected to session ");
-  //  Serial.println(name);
+void OnAppleMidiConnected(long unsigned int ssrc, char* name) {
+  isConnected = true;
+  Serial.print("Connected to session ");
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected() {
-  isConnected  = false;
-  //  Serial.println("Disconnected");
+void OnAppleMidiDisconnected(long unsigned int ssrc) {
+  isConnected = false;
+  Serial.println("Disconnected");
 }
 
 // -----------------------------------------------------------------------------

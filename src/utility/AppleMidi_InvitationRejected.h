@@ -39,7 +39,7 @@ public:
 
 		this->initiatorToken = initiatorToken;
 		this->ssrc           = ssrc;
-		strcpy(this->sessionName, (const char*)sessionName);
+		strcpy(this->sessionName, static_cast<const char*>(sessionName));
 	}
 
 private:
