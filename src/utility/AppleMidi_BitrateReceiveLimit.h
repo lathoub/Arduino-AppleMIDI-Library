@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub
  *	@date		04/04/14
  *  License		GPL
  */
@@ -15,11 +15,12 @@
 #include "utility/AppleMidi_Util.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
-	
+
 class AppleMIDI_BitrateReceiveLimit {
 public:
 	uint8_t		signature[2];
 	uint8_t		command[2];
+	uint32_t	ssrc;
 	uint32_t	bitratelimit;
 
 	AppleMIDI_BitrateReceiveLimit()
@@ -32,6 +33,7 @@ private:
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
+		bitratelimit = UDP_TX_PACKET_MAX_SIZE;
 	}
 };
 
