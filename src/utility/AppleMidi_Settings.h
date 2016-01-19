@@ -46,7 +46,7 @@
 
 #if defined(DEBUG_BUILD)
 #define APPLEMIDI_DEBUG			   1
-#undef APPLEMIDI_DEBUG_VERBOSE 
+#undef APPLEMIDI_DEBUG_VERBOSE
 #endif
 
 #define APPLEMIDI_BUILD_INPUT      1

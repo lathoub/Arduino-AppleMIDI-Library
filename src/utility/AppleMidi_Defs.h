@@ -22,7 +22,7 @@
 #include <IPAddress.h>
 
 #ifndef UDP_TX_PACKET_MAX_SIZE
-#define UDP_TX_PACKET_MAX_SIZE 128
+#define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
 BEGIN_APPLEMIDI_NAMESPACE

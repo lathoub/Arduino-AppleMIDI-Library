@@ -33,7 +33,7 @@ private:
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
-		bitratelimit = UDP_TX_PACKET_MAX_SIZE;
+		bitratelimit = 128;
 	}
 };
 

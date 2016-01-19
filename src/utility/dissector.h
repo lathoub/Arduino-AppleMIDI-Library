@@ -12,7 +12,7 @@
 
 #include "AppleMidi_Settings.h"
 
-#define PACKET_MAX_SIZE 128
+#define PACKET_MAX_SIZE 768
 
 BEGIN_APPLEMIDI_NAMESPACE
 

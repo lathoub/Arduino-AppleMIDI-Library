@@ -395,7 +395,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 
 	// Send bitrate limit
 	AppleMIDI_BitrateReceiveLimit rateLimit;
-	write(_contentUDP, rateLimit, _contentUDP.remoteIP(), _contentUDP.remotePort());
+	write(_controlUDP, rateLimit, _controlUDP.remoteIP(), _controlUDP.remotePort());
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("< Content InvitationAccepted: peer = \"");
