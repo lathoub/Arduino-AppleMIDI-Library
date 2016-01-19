@@ -167,7 +167,6 @@ inline void AppleMidi_Class<UdpClass>::run()
 	}
 }
 
-
 /*! \brief The Arduino initiates the session.
 */
 template<class UdpClass>
@@ -230,8 +229,7 @@ inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMID
 #endif
 }
 
-
-/*! \brief The invitation that we have send, has been accepted.
+/*! \brief The invitation that we have sent, has been accepted.
 */
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
@@ -308,7 +306,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	if (index < 0)
 	{
 		#if (APPLEMIDI_DEBUG)
-			Serial.println("Session for host does not exist.");
+		Serial.println("Session for host does not exist.");
 		#endif
 
 		// No, not existing; must be a new initiator
@@ -317,7 +315,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 		if (index < 0)
 		{
 			#if (APPLEMIDI_DEBUG)
-				Serial.println("Session invitation rejected.");
+			Serial.println("Session invitation rejected.");
 			#endif
 
 			// no free slots, we cant accept invite
@@ -1159,7 +1157,6 @@ void AppleMidi_Class<UdpClass>::DumpSession()
 #endif
 }
 
-
 /*! \brief .
 */
 template<class UdpClass>
@@ -1449,10 +1446,6 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 
 	udp.endPacket();
 	udp.flush();
-
-	#if (APPLEMIDI_DEBUG)
-		Serial.println("Packet sent?");
-	#endif
 }
 
 template<class UdpClass>

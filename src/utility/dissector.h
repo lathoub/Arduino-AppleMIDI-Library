@@ -12,8 +12,6 @@
 
 #include "AppleMidi_Settings.h"
 
-#define PACKET_MAX_SIZE 768
-
 BEGIN_APPLEMIDI_NAMESPACE
 
 class Dissector;

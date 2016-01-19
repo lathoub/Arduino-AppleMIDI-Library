@@ -77,6 +77,9 @@
 
 #define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.
 
+// Max size of dissectable packet
+#define PACKET_MAX_SIZE 768
+
 // -----------------------------------------------------------------------------
 
 BEGIN_APPLEMIDI_NAMESPACE

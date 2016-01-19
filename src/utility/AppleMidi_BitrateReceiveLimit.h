@@ -33,7 +33,7 @@ private:
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
-		bitratelimit = 128;
+		bitratelimit = PACKET_MAX_SIZE;
 	}
 };
 
