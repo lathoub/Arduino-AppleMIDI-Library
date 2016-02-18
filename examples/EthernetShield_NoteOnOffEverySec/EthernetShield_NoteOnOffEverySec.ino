@@ -89,7 +89,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(long unsigned int ssrc, char* name) {
+void OnAppleMidiConnected(uint32_t ssrc, char* name) {
   isConnected = true;
   Serial.print("Connected to session ");
   Serial.println(name);
@@ -98,7 +98,7 @@ void OnAppleMidiConnected(long unsigned int ssrc, char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(long unsigned int ssrc) {
+void OnAppleMidiDisconnected(uint32_t ssrc) {
   isConnected = false;
   Serial.println("Disconnected");
 }
