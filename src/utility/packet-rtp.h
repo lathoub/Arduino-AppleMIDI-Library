@@ -266,8 +266,8 @@ Serial.println(payload_type);
 			// Not supported
 			if (true) {
 			}
-			for (int i = 0; i < csrc_count; i++ ) {
-				uint32_t csrc_item = AppleMIDI_Util::readUInt32(packetBuffer + offset);
+			for (unsigned int i = 0; i < csrc_count; i++ ) {
+				//uint32_t csrc_item = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 				offset += 4;
 			}
 		}

@@ -3346,10 +3346,10 @@ Serial.println("aborted MIDI-command");
 	static int
 	decode_cj_chapter_m(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint16_t				header;
-		uint8_t				logitemheader;
+		uint8_t				logitemheader = 0;
 		int				length;
-		int				logitemhdrlen;
-		int				logitemlen;
+		//int				logitemhdrlen;
+		//int				logitemlen;
 		boolean			no_pnum_msb;
 		unsigned int start_offset = offset;
 
@@ -3372,7 +3372,7 @@ Serial.println("aborted MIDI-command");
 		 * if Z = 1 and either U = 1 or W = 1 we don't
 		 */
 		no_pnum_msb = ( header & 0x0400 ) && ( ( header & 0x0800 ) || ( header & 0x1000 ) );
-		logitemhdrlen = no_pnum_msb ? 2 : 3;
+		//logitemhdrlen = no_pnum_msb ? 2 : 3;
 
 		/* lets step through the loglist */
 		while ( length > 0 ) {
@@ -3431,8 +3431,8 @@ Serial.println("aborted MIDI-command");
 	decode_cj_chapter_n(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint16_t				 header;
-		uint8_t				 note;
-		uint8_t				 velocity;
+		//uint8_t				 note;
+		//uint8_t				 velocity;
 		int				 log_count;
 		int				 octet_count;
 		int				 low;
@@ -3487,9 +3487,9 @@ Serial.println("aborted MIDI-command");
 	decode_cj_chapter_e(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
-		uint8_t				 note;
-		uint8_t				 count_vel;
-		uint8_t				 octet;
+		//uint8_t				 note;
+		//uint8_t				 count_vel;
+		//uint8_t				 octet;
 		int				 log_count;
 		int				 i;
 
@@ -3516,8 +3516,8 @@ Serial.println("aborted MIDI-command");
 	decode_cj_chapter_a(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
-		uint8_t				 note;
-		uint8_t				 pressure;
+		//uint8_t				 note;
+		//uint8_t				 pressure;
 		int				 log_count;
 		int				 i;
 

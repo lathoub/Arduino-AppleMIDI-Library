@@ -81,7 +81,7 @@ Serial.println("Signature not supported.");
 			int start = 4 + 4 + 4 + 1;
 
 			// do we have a terminating string?
-			for (int i = start; i < packetSize, offset + i < packetSize; i++) {
+			for (unsigned int i = start; /* i < packetSize , */ offset + i < packetSize; i++) {
 
 				if (0 == memcmp((packetBuffer + offset) + i, stringTerminator, sizeof(stringTerminator))) {
 
@@ -113,7 +113,7 @@ Serial.println("Not enough data for Invitation");
 			int start = 4 + 4 + 4 + 1;
 
 			// do we have a terminating string?
-			for (int i = start; i < packetSize, offset + i < packetSize; i++) {
+			for (unsigned int i = start; /* i < packetSize,*/ offset + i < packetSize; i++) {
 
 				if (0 == memcmp((packetBuffer + offset) + i, stringTerminator, sizeof(stringTerminator))) {
 
