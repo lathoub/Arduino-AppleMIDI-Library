@@ -3,7 +3,7 @@
 The goal of this library is to enable an Arduino, with an Ethernet shield, to particpate in an AppleMIDI session
 
 ## Features
-* Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen
+* Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen on Windows
 * Send and receive MIDI commands
 * Easy integration
 * Uses callbacks for to receive MIDI commands
