@@ -27,7 +27,7 @@
 
 #include "utility/dissector.h"
 
-#define MAX_SESSIONS 4
+#define MAX_SESSIONS 1
 
 BEGIN_APPLEMIDI_NAMESPACE
 
