@@ -5,7 +5,7 @@
  *	Version		0.4
  *  @author		lathoub
  *	@date		13/04/14
- *  License		GPL
+ *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -197,7 +197,7 @@ inline void AppleMidi_Class<UdpClass>::OnInvitation(void* sender, AppleMIDI_Invi
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndSession& sessionEnd)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> End Session for ssrc 0x");
@@ -221,7 +221,7 @@ inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndS
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback& receiverFeedback)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> Receiver Feedback: seq = ");
@@ -287,7 +287,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleM
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invitation& invitation)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> (OnControlInvitation) Control Invitation: peer = \"");
@@ -358,7 +358,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invitation& invitation)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> Content Invitation: peer = \"");
@@ -449,7 +449,7 @@ user to choose between a new connection attempt or closing the session.
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncronization& synchronization)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> Syncronization for ssrc 0x");
@@ -539,7 +539,7 @@ MIDI-implementation which is limited to 31250. */
 template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit& bitrateReceiveLimit)
 {
-	Dissector* dissector = (Dissector*) sender;
+	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> BitrateReceiveLimit: Limit = ");

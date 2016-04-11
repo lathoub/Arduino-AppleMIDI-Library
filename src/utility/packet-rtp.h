@@ -5,7 +5,7 @@
  *	Version		0.3
  *  @author		lathoub
  *	@date		04/04/14
- *  License		GPL
+ *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
 #pragma once
@@ -266,8 +266,8 @@ Serial.println(payload_type);
 			// Not supported
 			if (true) {
 			}
-			for (int i = 0; i < csrc_count; i++ ) {
-				uint32_t csrc_item = AppleMIDI_Util::readUInt32(packetBuffer + offset);
+			for (unsigned int i = 0; i < csrc_count; i++ ) {
+				//uint32_t csrc_item = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 				offset += 4;
 			}
 		}

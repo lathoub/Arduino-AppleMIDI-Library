@@ -5,7 +5,7 @@
  *	Version		0.0
  *  @author		lathoub
  *	@date		01/04/13
- *  License		GPL
+ *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
 #pragma once
@@ -3334,10 +3334,10 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	static int
 	decode_cj_chapter_m(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint16_t				header;
-		uint8_t				logitemheader;
+		uint8_t				logitemheader = 0;
 		int				length;
-		int				logitemhdrlen;
-		int				logitemlen;
+		//int				logitemhdrlen;
+		//int				logitemlen;
 		boolean			no_pnum_msb;
 		unsigned int start_offset = offset;
 
@@ -3360,7 +3360,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 		 * if Z = 1 and either U = 1 or W = 1 we don't
 		 */
 		no_pnum_msb = ( header & 0x0400 ) && ( ( header & 0x0800 ) || ( header & 0x1000 ) );
-		logitemhdrlen = no_pnum_msb ? 2 : 3;
+		//logitemhdrlen = no_pnum_msb ? 2 : 3;
 
 		/* lets step through the loglist */
 		while ( length > 0 ) {
@@ -3450,8 +3450,8 @@ Serial.println("aborted MIDI-command: decode_song_select");
 	decode_cj_chapter_n(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint16_t				 header;
-		uint8_t				 note;
-		uint8_t				 velocity;
+		//uint8_t				 note;
+		//uint8_t				 velocity;
 		int				 log_count;
 		int				 octet_count;
 		int				 low;
