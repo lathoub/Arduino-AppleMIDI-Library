@@ -27,7 +27,9 @@
 
 #include "utility/dissector.h"
 
-#define MAX_SESSIONS 4
+// Rev3 Ethernet shield can only handle 4 sockets.
+// We use 2 sockets per session, for port 5004 and 5005
+#define MAX_SESSIONS 2
 
 BEGIN_APPLEMIDI_NAMESPACE
 
