@@ -128,37 +128,42 @@ public:
 		Serial.println();
 #endif
 
-		// enough room in buffer? If so, reset protocolBuffer back to zero
-		if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE)
-		{
-#ifdef APPLEMIDI_DEBUG
-Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
-#endif
+		// TODO: Rework diessector to handle packets in real time without needing full packet to begin
+		if (packetSize > PACKET_MAX_SIZE) {
+			#ifdef APPLEMIDI_DEBUG
+			Serial.println("Packet exceeds PACKET_MAX_SIZE. Packet skipped.");
+			#endif
+		} else if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE) {
+			// enough room in buffer? If so, reset protocolBuffer back to zero
+			#ifdef APPLEMIDI_DEBUG
+			Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
+			#endif
 			reset();
 		}
 
-		// Add to the end of the protocolBuffer
-		memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
-		_protocolBufferIndex += packetSize;
+		if (packetSize < PACKET_MAX_SIZE) {
+			// Add to the end of the protocolBuffer
+			memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
+			_protocolBufferIndex += packetSize;
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.print  ("Protocol buffer contains ");
-		Serial.print  (_protocolBufferIndex);
-		Serial.println(" bytes. Content:");
-		for (int i = 0; i < _protocolBufferIndex; i++)
-		{
-			Serial.print  (_protocolBuffer[i], HEX);
-			Serial.print  (" ");
+			#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print  ("Protocol buffer contains ");
+			Serial.print  (_protocolBufferIndex);
+			Serial.println(" bytes. Content:");
+			for (int i = 0; i < _protocolBufferIndex; i++)
+			{
+				Serial.print  (_protocolBuffer[i], HEX);
+				Serial.print  (" ");
+			}
+			Serial.println();
+			#endif
 		}
-		Serial.println();
-#endif
 	}
 
 	void dissect()
 	{
 		call_dissector();
 	}
-
 };
 
 

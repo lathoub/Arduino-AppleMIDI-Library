@@ -917,6 +917,8 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define RTP_MIDI_COMMON_MTC_QF_HOURS_LS_NIBBLE 0x06
 #define RTP_MIDI_COMMON_MTC_QF_HOURS_MS_NIBBLE 0x07
 
+// Strings from Wireshark
+/*
 #define RTP_MIDI_TREE_NAME_COMMAND "Command Section"
 #define RTP_MIDI_TREE_NAME_COMMAND_SYSEX_MANU "Manufacturer specific data"
 #define RTP_MIDI_TREE_NAME_COMMAND_SYSEX_EDU "Educational data"
@@ -966,6 +968,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define RTP_MIDI_TREE_NAME_CJ_CHAPTER_A "Poly Aftertouch"
 #define RTP_MIDI_TREE_NAME_CJ_CHAPTER_A_LOGLIST "Log List"
 #define RTP_MIDI_TREE_NAME_CJ_CHAPTER_A_LOGITEM "Pressure"
+*/
 
 /* used to mask the most significant bit, which flags the start of a new midi-command! */
 #define RTP_MIDI_COMMAND_STATUS_FLAG 0x80
@@ -1100,34 +1103,30 @@ BEGIN_APPLEMIDI_NAMESPACE
 class PacketRtpMidi {
 
 public:
-	PacketRtpMidi()
-	{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("PacketRtpMidi verbose");
-#endif
+	PacketRtpMidi() {
+		#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("PacketRtpMidi verbose");
+		#endif
 	}
 
-	static int
-	dissect_rtp_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize)
-	{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print ("dissect_rtp_midi ");
-Serial.print (dissector->_identifier);
-Serial.print (", packetSize is ");
-Serial.println (packetSize);
-#endif
+	static int dissect_rtp_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize) {
+		#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.print ("dissect_rtp_midi ");
+		Serial.print (dissector->_identifier);
+		Serial.print (", packetSize is ");
+		Serial.println (packetSize);
+		#endif
 
 		int consumed = PacketRtp::dissect_rtp(dissector, appleMidi, packetBuffer, packetSize);
-		if (consumed <= 0)
-		{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Unprocessed packet (No valid rtp midi content).");
-#endif
+
+		if (consumed <= 0) {
+			#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.println("Unprocessed packet (No valid rtp midi content).");
+			#endif
 			return 0;
 		}
 
 		int offset = consumed;
-
 		int totchan = 0;
 		unsigned int	rsoffset = 0;
 
@@ -1141,10 +1140,10 @@ Serial.println("Unprocessed packet (No valid rtp midi content).");
 		/* ...followed by a length-field of at least 4 bits */
 		unsigned int cmd_len = flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print ("cmd_len is ");
-Serial.println (cmd_len);
-#endif
+		#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.print ("cmd_len is ");
+		Serial.println (cmd_len);
+		#endif
 
 		/* see if we have small or large len-field */
 		if (flags & RTP_MIDI_CS_FLAG_B) {
@@ -1157,17 +1156,10 @@ Serial.println (cmd_len);
 
 		/* if we have a command-section -> dissect it */
 		if (cmd_len) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print ("dissect command section with packet size ");
-Serial.println (packetSize);
-#endif
-
-			/* if the reported command-length larger than data found in packet -> error */
-/*			if ( !tvb_bytes_exist( tvb, offset, cmd_len ) ) {
-				THROW( ReportedBoundsError );
-				return;
-			} */
+			#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.print ("dissect command section with packet size ");
+			Serial.println (packetSize);
+			#endif
 
 			/* No commands decoded yet */
 			int cmd_count = 0;
@@ -1177,23 +1169,21 @@ Serial.println (packetSize);
 
 			/* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
 			while (cmd_len) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print ("cmd count is ");
-Serial.println (cmd_count);
-#endif
+				#ifdef APPLEMIDI_DEBUG_VERBOSE
+				Serial.print ("cmd count is ");
+				Serial.println (cmd_count);
+				#endif
 
 				/* for the first command we only have a delta-time if Z-Flag is set */
 				if ( (cmd_count) || (flags & RTP_MIDI_CS_FLAG_Z) ) {
-
 					/* Decode a delta-time - if 0 is returned something went wrong */
 					int consumed = decodetime(appleMidi, packetBuffer, offset, cmd_len);
 					if ( -1 == consumed ) {
-#ifdef APPLEMIDI_DEBUG
-Serial.print ("ReportedBoundsError 1");
-#endif
-						//THROW( ReportedBoundsError );
-						return -1;
+						#ifdef APPLEMIDI_DEBUG
+						Serial.print ("ReportedBoundsError 1");
+						#endif
+
+						return offset;
 					}
 
 					/* seek to next command and set remaining length */
@@ -1203,14 +1193,14 @@ Serial.print ("ReportedBoundsError 1");
 
 				/* Only decode MIDI-command if there is any data left - it is valid to only have delta-time! */
 				if (cmd_len) {
-
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
 					int consumed = decodemidi(appleMidi, packetBuffer, cmd_count, offset, cmd_len, &runningstatus, &rsoffset);
 					if (-1 == consumed) {
-#ifdef APPLEMIDI_DEBUG
-Serial.print ("ReportedBoundsError 2");
-#endif
-						return -1;
+						#ifdef APPLEMIDI_DEBUG
+						Serial.print ("ReportedBoundsError 2");
+						#endif
+
+						return offset;
 					}
 
 					/* seek to next delta-time and set remaining length */
@@ -1229,9 +1219,9 @@ Serial.print ("ReportedBoundsError 2");
 
 		/* if we have a journal-section -> dissect it */
 		if ( flags & RTP_MIDI_CS_FLAG_J ) {
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("journal section");
-#endif
+			#ifdef APPLEMIDI_DEBUG_VERBOSE
+			Serial.println("journal section");
+			#endif
 
 			/* lets get the main flags from the recovery journal header */
 			flags = packetBuffer[offset];
@@ -1243,18 +1233,17 @@ Serial.println("journal section");
 			/* the checkpoint-sequence-number can be used to see if the recovery journal covers all lost events */
 			offset += 2;
 
-
 			/* do we have system journal? */
 			if ( flags & RTP_MIDI_JS_FLAG_Y ) {
 				/* first we need to get the flags & length from the system-journal */
 				int consumed = decode_system_journal(appleMidi, packetBuffer, offset);
 
 				if ( -1 == consumed ) {
-#ifdef APPLEMIDI_DEBUG
-Serial.print ("ReportedBoundsError 3");
-#endif
-				//		THROW( ReportedBoundsError );
-				return -1;
+					#ifdef APPLEMIDI_DEBUG
+					Serial.print ("ReportedBoundsError 3");
+					#endif
+
+					return offset;
 				}
 
 				/* seek to optional channel-journals-section */
@@ -1263,27 +1252,28 @@ Serial.print ("ReportedBoundsError 3");
 
 			/* do we have channel journal(s)? */
 			if ( flags & RTP_MIDI_JS_FLAG_A	 ) {
-
 				/* iterate through all the channels specified in header */
 				for (int i = 0; i <= totchan; i++ ) {
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print("Processing channel journal: ");
-Serial.println(i);
-#endif
+					#ifdef APPLEMIDI_DEBUG_VERBOSE
+					Serial.print("Processing channel journal: ");
+					Serial.println(i);
+					#endif
+
 					int consumed = decode_channel_journal(appleMidi, packetBuffer, offset);
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print("Consumed by channel journal (");
-Serial.print(i);
-Serial.print("): ");
-Serial.println(consumed);
-#endif
+
+					#ifdef APPLEMIDI_DEBUG_VERBOSE
+					Serial.print("Consumed by channel journal (");
+					Serial.print(i);
+					Serial.print("): ");
+					Serial.println(consumed);
+					#endif
 
 					if ( -1 == consumed ) {
-#ifdef APPLEMIDI_DEBUG
-Serial.println("ReportedBoundsError 4");
-#endif
-				//		THROW( ReportedBoundsError );
-						return -1;
+						#ifdef APPLEMIDI_DEBUG
+						Serial.println("ReportedBoundsError 4");
+						#endif
+
+						return offset;
 					}
 
 					/* seek to next channel-journal */
@@ -1295,16 +1285,15 @@ Serial.println("ReportedBoundsError 4");
 		return offset;
 	}
 
-//private:
 	/*
 	* Here the system-journal is decoded.
 	*/
 	static int
 	decode_system_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
 	{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("decode_system_journal");
-#endif
+		#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_system_journal");
+		#endif
 		unsigned int start_offset = offset;
 		int				consumed     = 0;
 		int				ext_consumed = 0;

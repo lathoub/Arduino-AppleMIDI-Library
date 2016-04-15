@@ -37,7 +37,7 @@ public:
 		// Since all references to this have some length this is being hard coded.
 		// NOTE: Although setting this would conform to the RFC, doing so seems to
 		// cause an OSX receiver to ignore the commands.
-		
+
 		// playLoadType = PAYLOADTYPE_RTPMIDI | 128; // TODO
 
 		playLoadType = PAYLOADTYPE_RTPMIDI;
@@ -63,6 +63,13 @@ private:
 		stream->write(&playLoadType, sizeof(playLoadType));
 
 		uint16_t _sequenceNr = AppleMIDI_Util::toEndian(sequenceNr);
+	
+		/*
+		https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
+		The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
+		the time at which the events are to be played. Zero means "now." The time stamp
+		applies to the first MIDI byte in the packet.
+		*/
 		uint32_t _timestamp  = AppleMIDI_Util::toEndian(timestamp);
 		uint32_t _ssrc       = AppleMIDI_Util::toEndian(ssrc);
 

@@ -124,7 +124,7 @@ inline void AppleMidi_Class<UdpClass>::run()
 	// do syncronization here
 	ManageTiming();
 
-	byte _packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+	byte _packetBuffer[PACKET_MAX_SIZE];
 
 	// Get first packet of CONTROL logic, if any
 	int packetSize = _controlUDP.parsePacket();
@@ -134,7 +134,7 @@ inline void AppleMidi_Class<UdpClass>::run()
 	while (packetSize > 0) {
 		// While we still have bytes to process in the packet
 		while (packetSize > 0) {
-			bytesRead = _controlUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+			bytesRead = _controlUDP.read(_packetBuffer, PACKET_MAX_SIZE);
 			packetSize = packetSize - bytesRead;
 			_controlDissector.addPacket(_packetBuffer, bytesRead);
 		}
@@ -154,7 +154,7 @@ inline void AppleMidi_Class<UdpClass>::run()
 	while (packetSize > 0) {
 		// While we still have bytes to process in the packet
 		while (packetSize > 0) {
-			bytesRead = _contentUDP.read(_packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+			bytesRead = _contentUDP.read(_packetBuffer, PACKET_MAX_SIZE);
 			packetSize = packetSize - bytesRead;
 			_contentDissector.addPacket(_packetBuffer, bytesRead);
 		}
@@ -1623,7 +1623,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 		inData2 &= 0x7F;
 
 		_rtpMidi.sequenceNr++;
-		_rtpMidi.timestamp = _rtpMidiClock.Now();
+		// _rtpMidi.timestamp = _rtpMidiClock.Now();
 		_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 		// Length
@@ -1665,7 +1665,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType)
 {
 	_rtpMidi.sequenceNr++;
-	_rtpMidi.timestamp = _rtpMidiClock.Now();
+	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 1;
@@ -1703,7 +1703,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData)
 {
 	_rtpMidi.sequenceNr++;
-	_rtpMidi.timestamp = _rtpMidiClock.Now();
+	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 2;
@@ -1736,7 +1736,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2)
 {
 	_rtpMidi.sequenceNr++;
-	_rtpMidi.timestamp = _rtpMidiClock.Now();
+	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 3;
@@ -1973,7 +1973,7 @@ inline void AppleMidi_Class<UdpClass>::sysEx(unsigned int inLength, const byte* 
 {
 	// USE SEND!!!!!
 	_rtpMidi.sequenceNr++;
-	_rtpMidi.timestamp = _rtpMidiClock.Now();
+	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 //	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = inLength + 1 + ((inArrayContainsBoundaries) ? 0 : 2);
