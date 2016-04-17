@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.0
- *  @author		lathoub
+ *  @author		lathoub, hackmancoltaire
  *	@date		01/04/13
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -63,7 +63,7 @@ private:
 		stream->write(&playLoadType, sizeof(playLoadType));
 
 		uint16_t _sequenceNr = AppleMIDI_Util::toEndian(sequenceNr);
-	
+
 		/*
 		https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
 		The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
