@@ -27,9 +27,16 @@
 
 #include "utility/dissector.h"
 
-// Rev3 Ethernet shield can only handle 4 sockets.
-// We use 2 sockets per session, for port 5004 and 5005
-#define MAX_SESSIONS 2
+#if defined(ARDUINO)
+#if defined(ESP8266)
+#define MAX_SESSIONS 4 // arbitrary number (tested up to 4 clients)
+#else
+#define MAX_SESSIONS 1 // should be 1. Response times drop significantly when more sessions are active
+#endif
+#else
+#define MAX_SESSIONS 4 // arbitrary number
+#endif
+
 
 BEGIN_APPLEMIDI_NAMESPACE
 
