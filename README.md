@@ -1,6 +1,6 @@
 # AppleMidi for Arduino
 
-The goal of this library is to enable an Arduino, with an Ethernet shield, to particpate in an AppleMIDI session
+The goal of this library is to enable an Arduino(with an Ethernet shield) or ESP8266 to particpate in an AppleMIDI session
 
 ## Features
 * Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen on Windows
