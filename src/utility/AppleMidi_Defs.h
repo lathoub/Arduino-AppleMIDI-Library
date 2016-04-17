@@ -3,7 +3,7 @@
  *  Project     Arduino AppleMIDI Library
  *  @brief      AppleMIDI Library for the Arduino - Definitions
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub, hackmancoltaire
  *	@date		04/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -12,7 +12,7 @@
 
 #include "AppleMidi_Namespace.h"
 
-#if ARDUINO 
+#if ARDUINO
 	#include <Arduino.h>
 #else
 	#include <inttypes.h>
@@ -43,7 +43,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define MIDI_SAMPLING_RATE_96KHZ		96000
 #define MIDI_SAMPLING_RATE_176K4HZ		176400
 #define MIDI_SAMPLING_RATE_192KHZ		192000
-#define MIDI_SAMPLING_RATE_DEFAULT		0
+#define MIDI_SAMPLING_RATE_DEFAULT		10000
 
 // Channel Voice Messages
 #define MIDI_STATUS_NOTE_OFF 0x80
@@ -119,7 +119,7 @@ const unsigned char stringTerminator  [] = {0x00};
 
 
 /*! Enumeration of MIDI types */
-enum MidiType 
+enum MidiType
 {
     InvalidType           = 0x00,    ///< For notifying errors
     NoteOff               = 0x80,    ///< Note Off
@@ -146,7 +146,7 @@ enum MidiType
 // -----------------------------------------------------------------------------
 
 /*! Enumeration of Thru filter modes */
-enum MidiFilterMode 
+enum MidiFilterMode
 {
     Off                   = 0,  ///< Thru disabled (nothing passes through).
     Full                  = 1,  ///< Fully enabled Thru (every incoming message is sent back).
@@ -157,7 +157,7 @@ enum MidiFilterMode
 // -----------------------------------------------------------------------------
 
 /*! \brief Enumeration of Control Change command numbers.
- See the detailed controllers numbers & description here: 
+ See the detailed controllers numbers & description here:
  http://www.somascape.org/midi/tech/spec.html#ctrlnums
  */
 enum MidiControlChangeNumber
@@ -183,7 +183,7 @@ enum MidiControlChangeNumber
     GeneralPurposeController2   = 17,
     GeneralPurposeController3   = 18,
     GeneralPurposeController4   = 19,
-    
+
     // Switches ----------------------------------------------------------------
     Sustain                     = 64,
     Portamento                  = 65,
@@ -191,7 +191,7 @@ enum MidiControlChangeNumber
     SoftPedal                   = 67,
     Legato                      = 68,
     Hold                        = 69,
-    
+
     // Low resolution continuous controllers -----------------------------------
     SoundController1            = 70,   ///< Synth: Sound Variation   FX: Exciter On/Off
     SoundController2            = 71,   ///< Synth: Harmonic Content  FX: Compressor On/Off
@@ -214,7 +214,7 @@ enum MidiControlChangeNumber
     Effects3                    = 93,   ///< Chorus send level
     Effects4                    = 94,   ///< Celeste depth
     Effects5                    = 95,   ///< Phaser depth
-    
+
     // Channel Mode messages ---------------------------------------------------
     AllSoundOff                 = 120,
     ResetAllControllers         = 121,
@@ -229,41 +229,41 @@ enum MidiControlChangeNumber
 
 // -----------------------------------------------------------------------------
 
-/*! The midimsg structure contains decoded data of a MIDI message 
+/*! The midimsg structure contains decoded data of a MIDI message
     read from the serial port with read()
  */
 struct Message
 {
-    
+
     /*! The MIDI channel on which the message was recieved.
-     \n Value goes from 1 to 16. 
+     \n Value goes from 1 to 16.
      */
-    Channel channel; 
-    
-    /*! The type of the message 
+    Channel channel;
+
+    /*! The type of the message
      (see the MidiType enum for types reference)
      */
     MidiType type;
-    
+
     /*! The first data byte.
      \n Value goes from 0 to 127.
      */
     DataByte data1;
-    
-    /*! The second data byte. 
+
+    /*! The second data byte.
      If the message is only 2 bytes long, this one is null.
      \n Value goes from 0 to 127.
      */
     DataByte data2;
-    
+
     /*! System Exclusive dedicated byte array.
-     \n Array length is stocked on 16 bits, 
+     \n Array length is stocked on 16 bits,
      in data1 (LSB) and data2 (MSB)
      */
     DataByte sysexArray[MIDI_SYSEX_ARRAY_SIZE];
-    
+
     /*! This boolean indicates if the message is valid or not.
-     There is no channel consideration here, 
+     There is no channel consideration here,
      validity means the message respects the MIDI norm.
      */
     bool valid;
@@ -348,7 +348,7 @@ typedef uint64_t MIDITimeStamp;
 
 // -----------------------------------------------------------------------------
 
-/*! \brief Create an instance of the library 
+/*! \brief Create an instance of the library
  */
 #define APPLEMIDI_CREATE_INSTANCE(Type, Name)                            \
     APPLEMIDI_NAMESPACE::AppleMidi_Class<Type> Name;

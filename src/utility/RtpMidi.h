@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.0
- *  @author		lathoub 
+ *  @author		lathoub, hackmancoltaire
  *	@date		01/04/13
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -18,7 +18,7 @@
 #define PAYLOADTYPE_RTPMIDI 97
 
 BEGIN_APPLEMIDI_NAMESPACE
-	
+
 template<class UdpClass>
 class RtpMidi {
 public:
@@ -31,6 +31,15 @@ public:
 	RtpMidi()
 	{
 		ddddd = 0b10000000; // TODO
+
+		// Payload types are 7-bit, so we add the Marker bit.
+		// The Marker bit should be 0 only if the command length is 0. Otherwise 1.
+		// Since all references to this have some length this is being hard coded.
+		// NOTE: Although setting this would conform to the RFC, doing so seems to
+		// cause an OSX receiver to ignore the commands.
+
+		// playLoadType = PAYLOADTYPE_RTPMIDI | 128; // TODO
+
 		playLoadType = PAYLOADTYPE_RTPMIDI;
 	}
 
@@ -43,7 +52,7 @@ public:
 
 	void endWrite(UdpClass& udp)
 	{
-		udp.endPacket(); 
+		udp.endPacket();
 		udp.flush(); // Waits for the transmission of outgoing serial data to complete
 	}
 
@@ -54,6 +63,13 @@ private:
 		stream->write(&playLoadType, sizeof(playLoadType));
 
 		uint16_t _sequenceNr = AppleMIDI_Util::toEndian(sequenceNr);
+
+		/*
+		https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
+		The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
+		the time at which the events are to be played. Zero means "now." The time stamp
+		applies to the first MIDI byte in the packet.
+		*/
 		uint32_t _timestamp  = AppleMIDI_Util::toEndian(timestamp);
 		uint32_t _ssrc       = AppleMIDI_Util::toEndian(ssrc);
 
@@ -65,4 +81,3 @@ private:
 };
 
 END_APPLEMIDI_NAMESPACE
-

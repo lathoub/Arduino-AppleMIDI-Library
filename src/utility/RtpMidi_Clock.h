@@ -1,9 +1,9 @@
 /*!
  *  @file		RtpMidi_Clock.h
  *  Project		Arduino AppleMIDI Library
- *	@brief		AppleMIDI Library for the Arduino 
+ *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub, hackmancoltaire
  *	@date		27/06/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -30,9 +30,10 @@ typedef struct RtpMidi_Clock {
 	{
 		timestamp_ = initialTimeStamp;
 		clockRate_ = clockRate;
-		  
-		if( clockRate_ == 0 ) 
-			clockRate_ = (USEC_PER_SEC / 1);
+
+		if (clockRate_ == 0) {
+			clockRate_ = MIDI_SAMPLING_RATE_DEFAULT;
+		}
 
         startTime_ = Ticks();
 	}
@@ -43,17 +44,6 @@ typedef struct RtpMidi_Clock {
     uint32_t Now()
     {
         return CalculateCurrentTimeStamp();
-    }
-
-    /// <summary>
-    ///     Returns the time spent since the initial clock timestamp value.
-    ///     The returned value is expressed in units of "clock pulsations",
-    ///     that are equivalent to seconds, scaled by the clock rate.
-    ///     i.e: 1 second difference will result in a delta value equals to the clock rate.
-    /// </summary>
-    uint32_t Delta()
-    {
-        return CalculateTimeSpent();
     }
 
 	uint32_t CalculateCurrentTimeStamp()
@@ -68,23 +58,24 @@ typedef struct RtpMidi_Clock {
 		return lapse - remainder;
 	}
 
+	/// <summary>
+    ///     Returns the time spent since the initial clock timestamp value.
+    ///     The returned value is expressed in units of "clock pulsations",
+    ///     that are equivalent to seconds, scaled by the clock rate.
+    ///     i.e: 1 second difference will result in a delta value equals to the clock rate.
+    /// </summary>
 	uint32_t CalculateTimeSpent()
 	{
-		unsigned long ticks = millis() - startTime_;
-		unsigned long seconds = ticks / TicksPerSecond();
+		unsigned long ticks = Ticks() - startTime_;
+		unsigned long seconds = ticks / MSEC_PER_SEC;
 
-		uint32_t lapse = (uint32_t)(static_cast<double>(seconds) * clockRate_);
+		uint32_t lapse = (uint32_t)(seconds * clockRate_);
 		return lapse;
 	}
 
 	unsigned long Ticks() const
 	{
 		return millis();
-	}
-
-	unsigned long TicksPerSecond() const
-	{
-		return 1000;
 	}
 
 } RtpMidiClock_t;

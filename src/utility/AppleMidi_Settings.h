@@ -3,7 +3,7 @@
  *  Project     Arduino AppleMIDI Library
  *  @brief      AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub, hackmancoltaire
  *	@date		04/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -46,7 +46,7 @@
 
 #if defined(DEBUG_BUILD)
 #define APPLEMIDI_DEBUG			   1
-#undef APPLEMIDI_DEBUG_VERBOSE 
+#undef APPLEMIDI_DEBUG_VERBOSE
 #endif
 
 #define APPLEMIDI_BUILD_INPUT      1
@@ -59,8 +59,8 @@
 
 // Rtp UDP ports
 
-#define CONTROL_PORT     5004         
-#define RTP_PORT         5005   
+#define CONTROL_PORT     5004
+#define RTP_PORT         5005
 
 // -----------------------------------------------------------------------------
 // Misc. options
@@ -76,6 +76,9 @@
 #define APPLEMIDI_USE_1BYTE_PARSING          1
 
 #define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.
+
+// Max size of dissectable packet
+#define PACKET_MAX_SIZE 768
 
 // -----------------------------------------------------------------------------
 

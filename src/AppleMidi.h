@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		RtpMIDI Library for the Arduino
  *	Version		0.4
- *  @author		lathoub 
+ *  @author		lathoub, hackmancoltaire
  *	@date		13/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -27,7 +27,9 @@
 
 #include "utility/dissector.h"
 
-#define MAX_SESSIONS 1
+// Rev3 Ethernet shield can only handle 4 sockets.
+// We use 2 sockets per session, for port 5004 and 5005
+#define MAX_SESSIONS 2
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -53,15 +55,15 @@ class IAppleMidi : public IRtpMidi
 {
 public:
 	virtual void invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
-	
+
 	virtual void OnInvitation(void* sender, AppleMIDI_Invitation&) = 0;
 	virtual void OnEndSession(void* sender, AppleMIDI_EndSession&) = 0;
 	virtual void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&) = 0;
-	
+
 	virtual void OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
 	virtual void OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
 	virtual void OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
-	
+
 	virtual void OnSyncronization(void* sender, AppleMIDI_Syncronization&) = 0;
 	virtual void OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit&) = 0;
 	virtual void OnControlInvitation(void* sender, AppleMIDI_Invitation&) = 0;
@@ -86,7 +88,7 @@ protected:
 	RtpMidi<UdpClass>	_rtpMidi;
 
 	RtpMidi_Clock _rtpMidiClock;
-	
+
 //	Accept	 _sessionAccept;
 
 	// SSRC, Synchronization source.
@@ -117,7 +119,7 @@ public:
 	int Port;
 
 	inline void begin(const char*, uint16_t port = CONTROL_PORT);
-	
+
 	inline uint32_t	getSynchronizationSource() { return _ssrc; }
 	inline char*	getSessionName() { return _sessionName; }
 
@@ -160,19 +162,20 @@ private:
 	inline void write(UdpClass&, AppleMIDI_InvitationAccepted&, IPAddress ip, uint16_t port);
 	inline void write(UdpClass&, AppleMIDI_Syncronization&, IPAddress ip, uint16_t port);
 	inline void write(UdpClass&, AppleMIDI_Invitation&, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit&, IPAddress ip, uint16_t port);
 
 #if APPLEMIDI_BUILD_OUTPUT
-    
+
 public:
     inline void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
     inline void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
-    inline void programChange(DataByte inProgramNumber, Channel inChannel); 
+    inline void programChange(DataByte inProgramNumber, Channel inChannel);
     inline void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
     inline void pitchBend(int inPitchValue,    Channel inChannel);
-    inline void pitchBend(double inPitchValue, Channel inChannel);   
+    inline void pitchBend(double inPitchValue, Channel inChannel);
     inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
-    inline void afterTouch(DataByte inPressure, Channel inChannel); 
-    inline void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);    
+    inline void afterTouch(DataByte inPressure, Channel inChannel);
+    inline void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);
     inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
     inline void timeCodeQuarterFrame(DataByte inData);
     inline void songPosition(unsigned int inBeats);
@@ -185,14 +188,14 @@ public:
     inline void systemReset();
     inline void clock();
     inline void tick();
-    
+
 protected:
     inline void send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
     inline void send(MidiType inType, DataByte inData1, DataByte inData2);
     inline void send(MidiType inType, DataByte inData);
     inline void send(MidiType inType);
-      
-private:   
+
+private:
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData);
@@ -229,16 +232,16 @@ private:
 	inline void ManageTiming();
 
 #if APPLEMIDI_BUILD_INPUT
-    
+
 private:
     StatusByte mRunningStatus_RX;
     Channel    _inputChannel;
-    
+
     // -------------------------------------------------------------------------
     // Input Callbacks
-    
+
 #if APPLEMIDI_USE_CALLBACKS
-    
+
 public:
 	inline void OnConnected(void(*fptr)(uint32_t, char*));
 	inline void OnDisconnected(void(*fptr)(uint32_t));
@@ -261,9 +264,9 @@ public:
     inline void OnReceiveStop(void (*fptr)(void));
     inline void OnReceiveActiveSensing(void (*fptr)(void));
     inline void OnReceiveSystemReset(void (*fptr)(void));
-    
+
 private:
-    
+
     inline void launchCallback();
 
 	void(*mConnectedCallback)(uint32_t, char*);
@@ -288,8 +291,8 @@ private:
     void (*mStopCallback)(void);
     void (*mActiveSensingCallback)(void);
     void (*mSystemResetCallback)(void);
-  
-#endif // APPLEMIDI_USE_CALLBACKS    
+
+#endif // APPLEMIDI_USE_CALLBACKS
 
 #endif // APPLEMIDI_BUILD_INPUT
 
