@@ -114,7 +114,7 @@ protected:
 
 	Session_t	Sessions[MAX_SESSIONS];
 
-	char _sessionName[50];
+	char _sessionName[SESSION_NAME_MAX_LEN + 1];
 
 	inline uint32_t	createInitiatorToken();
 

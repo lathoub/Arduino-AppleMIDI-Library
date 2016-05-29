@@ -90,7 +90,7 @@ Serial.println("Signature not supported.");
 					invitation.version        = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 					invitation.initiatorToken = AppleMIDI_Util::readUInt32(packetBuffer + offset + 4);
 					invitation.ssrc           = AppleMIDI_Util::readUInt32(packetBuffer + offset + 8);
-					strcpy(invitation.sessionName, (const char*)(packetBuffer + offset + 12));
+					strncpy(invitation.sessionName, (const char*)(packetBuffer + offset + 12), SESSION_NAME_MAX_LEN);
 
 					appleMidi->OnInvitation(dissector, invitation);
 
@@ -122,7 +122,7 @@ Serial.println("Not enough data for Invitation");
 					invitationAccepted.version        = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 					invitationAccepted.initiatorToken = AppleMIDI_Util::readUInt32(packetBuffer + offset + 4);
 					invitationAccepted.ssrc           = AppleMIDI_Util::readUInt32(packetBuffer + offset + 8);
-					strcpy(invitationAccepted.name, (const char*)(packetBuffer + offset + 12));
+					strncpy(invitationAccepted.sessionName, (const char*)(packetBuffer + offset + 12), SESSION_NAME_MAX_LEN);
 
 					appleMidi->OnInvitationAccepted(dissector, invitationAccepted);
 

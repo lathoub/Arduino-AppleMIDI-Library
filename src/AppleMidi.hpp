@@ -72,8 +72,17 @@ All parameters are set to their default values:
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t port)
 {
-	//
-	strcpy(_sessionName, sessionName);
+#if (APPLEMIDI_DEBUG)
+	if (strlen(sessionName) > SESSION_NAME_MAX_LEN)
+	{
+		Serial.print("SessionName exceeds ");
+		Serial.print(sessionName);
+		Serial.print(" exceeds ");
+		Serial.print(SESSION_NAME_MAX_LEN);
+		Serial.println(" chars. Name will be clipped.");
+	}
+#endif
+	strncpy(_sessionName, sessionName, SESSION_NAME_MAX_LEN);
 
 	Port = port;
 
@@ -105,11 +114,10 @@ inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	_rtpMidi.sequenceNr = 1;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("Starting");
-#if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print(" Verbose");
-#endif
-	Serial.println(" logging");
+	Serial.print("Starting Session ");
+	Serial.print(_sessionName);
+	Serial.print(" on port ");
+	Serial.println(Port);
 #endif
 }
 
@@ -249,7 +257,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleM
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> (OnControlInvitationAccepted) Control InvitationAccepted: peer = \"");
-	Serial.print(invitationAccepted.name);
+	Serial.print(invitationAccepted.sessionName);
 	Serial.print("\"");
 	Serial.print(" ,ssrc 0x");
 	Serial.print(invitationAccepted.ssrc, HEX);
@@ -268,7 +276,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleM
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> Content InvitationAccepted: peer = \"");
-	Serial.print(invitationAccepted.name);
+	Serial.print(invitationAccepted.sessionName);
 	Serial.print("\"");
 	Serial.print(" ,ssrc 0x");
 	Serial.print(invitationAccepted.ssrc, HEX);
@@ -1023,12 +1031,11 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_Invitation
 
 	// Finalize invitation process
 	Sessions[i].ssrc = invitationAccepted.ssrc;
-//	strcpy(Sessions[i].name, invitationAccepted.name);
 	Sessions[i].invite.status = None;
 	Sessions[i].syncronization.enabled = true; // synchronisation can start
 
 	if (mConnectedCallback != 0)
-		mConnectedCallback(Sessions[i].ssrc, invitationAccepted.name);
+		mConnectedCallback(Sessions[i].ssrc, invitationAccepted.sessionName);
 }
 
 /*! \brief Initialize session at slot 'index'.
@@ -1181,7 +1188,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			AppleMIDI_Invitation invitation;
 			invitation.initiatorToken = createInitiatorToken();
 			invitation.ssrc = _ssrc;
-			strcpy(invitation.sessionName, getSessionName());
+			strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 			write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
 
 			session->invite.initiatorToken = invitation.initiatorToken;
@@ -1219,7 +1226,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 				AppleMIDI_Invitation invitation;
 				invitation.initiatorToken = session->invite.initiatorToken;
 				invitation.ssrc = _ssrc;
-				strcpy(invitation.sessionName, getSessionName());
+				strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 				write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
 
 				session->invite.lastSend = millis();
@@ -1244,7 +1251,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			AppleMIDI_Invitation invitation;
 			invitation.initiatorToken = session->invite.initiatorToken;
 			invitation.ssrc = _ssrc;
-			strcpy(invitation.sessionName, getSessionName());
+			strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 			write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
 
 			session->invite.lastSend = millis();
@@ -1280,7 +1287,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 				AppleMIDI_Invitation invitation;
 				invitation.initiatorToken = session->invite.initiatorToken;
 				invitation.ssrc = _ssrc;
-				strcpy(invitation.sessionName, getSessionName());
+				strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 				write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
 
 				session->invite.lastSend = millis();
@@ -1437,7 +1444,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 		udp.write((uint8_t*) ((void*) (&_initiatorToken)), sizeof(_initiatorToken));
 		udp.write((uint8_t*) ((void*) (&_ssrc)), sizeof(_ssrc));
 
-		udp.write((uint8_t*) ia.name, strlen(ia.name) + 1);
+		udp.write((uint8_t*) ia.sessionName, strlen(ia.sessionName) + 1);
 
 	udp.endPacket();
 	udp.flush();

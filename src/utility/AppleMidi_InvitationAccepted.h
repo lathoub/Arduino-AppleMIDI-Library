@@ -24,7 +24,7 @@ public:
 	uint32_t	version;
 	uint32_t	initiatorToken;
 	uint32_t	ssrc;
-	char		name[16];
+	char		sessionName[SESSION_NAME_MAX_LEN + 1];
 
 	AppleMIDI_InvitationAccepted()
 	{
@@ -39,7 +39,7 @@ public:
 
 		this->initiatorToken = initiatorToken;
 		this->ssrc           = ssrc;
-		strcpy(this->name, static_cast<const char*>(name));
+		strncpy(this->sessionName, static_cast<const char*>(name), SESSION_NAME_MAX_LEN);
 	}
 
 private:

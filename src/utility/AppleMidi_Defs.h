@@ -25,6 +25,8 @@
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
+#define SESSION_NAME_MAX_LEN 16
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 // -----------------------------------------------------------------------------
