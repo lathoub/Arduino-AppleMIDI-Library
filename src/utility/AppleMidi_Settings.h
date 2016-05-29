@@ -25,8 +25,8 @@
 // (MIDI in, out, thru), or to 0 to disable the feature and save space.
 // Note that thru can work only if input and output are enabled.
 
-#define DEBUG
-//#define RELEASE
+//#define DEBUG
+#define RELEASE
 
 #if defined(RELEASE)
 #define RELEASE_BUILD
