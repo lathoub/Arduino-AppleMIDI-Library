@@ -5,9 +5,8 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 ## Features
 * Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen on Windows
 * Send and receive MIDI commands
-* Easy integration
-* Uses callbacks for to receive MIDI commands
-* Automatic instanciation of AppleMIDI object (see at the end of AppleMidi.h)
+* Uses callbacks to receive MIDI commands (no need for polling)
+* Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 
 ## Hardware
 * Arduino/Genuino (Uno, Mega)
