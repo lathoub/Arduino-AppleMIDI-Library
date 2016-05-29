@@ -8,6 +8,14 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 * Easy integration
 * Uses callbacks for to receive MIDI commands
 * Automatic instanciation of AppleMIDI object (see at the end of AppleMidi.h)
+
+## Hardware
+* Arduino/Genuino (Uno, Mega)
+* ESP8266 (Adafruit HUZZAH ESP8266)
+ 
+## Shields
+* Arduino Ethernet shield (arduino.cc, Wiznet W5100)
+* Arduino Wifi R3 shield (arduino.cc)
  
 ## Arduino IDE (arduino.cc)
 * 1.6.9
