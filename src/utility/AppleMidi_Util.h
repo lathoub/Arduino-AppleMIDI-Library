@@ -18,6 +18,29 @@ BEGIN_APPLEMIDI_NAMESPACE
 #include <inttypes.h>
 #include <stdint.h>
 
+class Debug
+{
+public:
+#if defined(DEBUG_BUILD)
+	static void Assert(bool result, const char* message)
+	{
+		if (!result) Serial.print(message);
+	}
+	static void Write(const char* message)
+	{
+		Serial.print(message);
+	}
+	static void WriteLine(const char* message)
+	{
+		Serial.println(message);
+	}
+#else
+	static void Assert(bool, const char*) {}
+	static void Write(const char*) {}
+	static void WriteLine(const char*) {}
+#endif
+};
+
 class AppleMIDI_Util {
 public:
 	static uint64_t readUInt64(unsigned char* buffer)
