@@ -14,7 +14,7 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * Teensy 3.2
  
-## Shields
+## Network Shields
 * Arduino Ethernet shield (arduino.cc, Wiznet W5100)
 * Arduino Wifi R3 shield (arduino.cc)
 * Teensy WIZ820io W5200
