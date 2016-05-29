@@ -25,8 +25,8 @@
 // (MIDI in, out, thru), or to 0 to disable the feature and save space.
 // Note that thru can work only if input and output are enabled.
 
-//#define DEBUG
-#define RELEASE
+#define DEBUG
+//#define RELEASE
 
 #if defined(RELEASE)
 #define RELEASE_BUILD
@@ -47,6 +47,7 @@
 #if defined(DEBUG_BUILD)
 #define APPLEMIDI_DEBUG			   1
 #undef APPLEMIDI_DEBUG_VERBOSE
+#define APPLEMIDI_DEBUG_PARSING
 #endif
 
 #define APPLEMIDI_BUILD_INPUT      1

@@ -34,11 +34,11 @@ public:
 private:
 	void purgeBuffer(size_t index)
 	{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_PARSING
 Serial.print  ("Purging left ");
 Serial.print  (index);
 Serial.print(" bytes. New _protocolBufferIndex: ");
-Serial.println(sizeof(_protocolBufferIndex - index));
+Serial.println(_protocolBufferIndex - index);
 #endif
 
 		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
@@ -46,7 +46,7 @@ Serial.println(sizeof(_protocolBufferIndex - index));
 
 		if (_protocolBufferIndex < 0)
 		{
-#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG_PARSING
 Serial.print  ("ProtocolBuffer Underrun. _protocolBufferIndex");
 Serial.print  (_protocolBufferIndex);
 Serial.print  (" index ");
@@ -62,7 +62,7 @@ Serial.println(" _protocolBufferIndex set to 0");
 	{
 		_protocolBufferIndex = 0;
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_PARSING
 Serial.println("reset");
 #endif
 	}
@@ -116,7 +116,7 @@ public:
 
 	void addPacket(unsigned char* packetBuffer, size_t packetSize)
 	{
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_PARSING
 		Serial.print  ("Incoming buffer of ");
 		Serial.print  (packetSize);
 		Serial.println(" bytes. These will be appended to the protocolBuffer");
@@ -130,12 +130,12 @@ public:
 
 		// TODO: Rework diessector to handle packets in real time without needing full packet to begin
 		if (packetSize > PACKET_MAX_SIZE) {
-			#ifdef APPLEMIDI_DEBUG
+			#ifdef APPLEMIDI_DEBUG_PARSING
 			Serial.println("Packet exceeds PACKET_MAX_SIZE. Packet skipped.");
 			#endif
 		} else if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE) {
 			// enough room in buffer? If so, reset protocolBuffer back to zero
-			#ifdef APPLEMIDI_DEBUG
+			#ifdef APPLEMIDI_DEBUG_PARSING
 			Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
 			#endif
 			reset();
@@ -146,7 +146,7 @@ public:
 			memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
 			_protocolBufferIndex += packetSize;
 
-			#ifdef APPLEMIDI_DEBUG_VERBOSE
+			#ifdef APPLEMIDI_DEBUG_PARSING
 			Serial.print  ("Protocol buffer contains ");
 			Serial.print  (_protocolBufferIndex);
 			Serial.println(" bytes. Content:");
