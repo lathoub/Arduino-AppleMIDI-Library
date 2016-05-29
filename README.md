@@ -11,7 +11,7 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 
 ## Hardware
 * Arduino/Genuino (Uno, Mega)
-* ESP8266 (Adafruit HUZZAH ESP8266)
+* ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * Teensy 3.2
  
 ## Shields
