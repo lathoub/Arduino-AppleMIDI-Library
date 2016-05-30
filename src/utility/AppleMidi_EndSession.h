@@ -14,10 +14,14 @@
 #include "utility/AppleMidi_Defs.h"
 #include "utility/AppleMidi_Util.h"
 
+#ifdef __cpp
+extern "C" {
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 	
-class AppleMIDI_EndSession {
-public:
+typedef struct AppleMIDI_EndSession 
+{
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	version;
@@ -36,6 +40,11 @@ private:
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amEndSession, sizeof(amEndSession));
 	}
-};
+} AppleMIDI_EndSession_t;
 
 END_APPLEMIDI_NAMESPACE
+
+#ifdef __cpp
+}
+#endif
+

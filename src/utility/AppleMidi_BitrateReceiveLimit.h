@@ -14,10 +14,14 @@
 #include "utility/AppleMidi_Defs.h"
 #include "utility/AppleMidi_Util.h"
 
+#ifdef __cpp
+extern "C" {
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 
-class AppleMIDI_BitrateReceiveLimit {
-public:
+typedef struct AppleMIDI_BitrateReceiveLimit
+{
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	ssrc;
@@ -35,6 +39,10 @@ private:
 		memcpy(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
 		bitratelimit = PACKET_MAX_SIZE;
 	}
-};
+} AppleMIDI_BitrateReceiveLimit_t;
 
 END_APPLEMIDI_NAMESPACE
+
+#ifdef __cpp
+}
+#endif

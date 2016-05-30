@@ -14,10 +14,14 @@
 #include "utility/AppleMidi_Defs.h"
 #include "utility/AppleMidi_Util.h"
 
+#ifdef __cpp
+extern "C" {
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 	
-class AppleMIDI_Syncronization {
-public:
+typedef struct AppleMIDI_Syncronization 
+{
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	ssrc;
@@ -47,6 +51,10 @@ private:
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amSyncronization, sizeof(amSyncronization));
 	}
-};
+} AppleMIDI_Syncronization_t;
 
 END_APPLEMIDI_NAMESPACE
+
+#ifdef __cpp
+}
+#endif

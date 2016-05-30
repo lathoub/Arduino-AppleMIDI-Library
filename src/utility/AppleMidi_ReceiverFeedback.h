@@ -14,10 +14,14 @@
 #include "utility/AppleMidi_Defs.h"
 #include "utility/AppleMidi_Util.h"
 
+#ifdef __cpp
+extern "C" {
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 	
-class AppleMIDI_ReceiverFeedback {
-public:
+typedef struct AppleMIDI_ReceiverFeedback 
+{
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	ssrc;
@@ -36,6 +40,10 @@ private:
 		memcpy(command, amReceiverFeedback, sizeof(amReceiverFeedback));
 	}
 
-};
+} AppleMIDI_ReceiverFeedback_t;
 
 END_APPLEMIDI_NAMESPACE
+
+#ifdef __cpp
+}
+#endif

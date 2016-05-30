@@ -15,10 +15,14 @@
 
 #include "utility/AppleMidi_Util.h"
 
+#ifdef __cpp
+extern "C" {
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 	
-class AppleMIDI_InvitationRejected {
-public:
+typedef struct AppleMIDI_InvitationRejected 
+{
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	version;
@@ -51,6 +55,10 @@ private:
 		version = 2;
 	}
 
-};
+} AppleMIDI_InvitationRejected_t;
 
 END_APPLEMIDI_NAMESPACE
+
+#ifdef __cpp
+}
+#endif
