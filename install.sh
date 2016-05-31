@@ -19,13 +19,13 @@ export AUX_PLATFORMS='declare -A aux_platforms=( [trinket]="adafruit:avr:trinket
 sleep 3
 export DISPLAY=:1.0
 
-# download and install arduino 1.6.5
-wget https://downloads.arduino.cc/arduino-1.6.5-linux64.tar.xz
-tar xf arduino-1.6.5-linux64.tar.xz
-mv arduino-1.6.5 $HOME/arduino_ide
+# download and install arduino 1.6.9
+wget https://downloads.arduino.cc/arduino-1.6.9-linux64.tar.xz
+tar xf arduino-1.6.9-linux64.tar.xz
+mv arduino-1.6.9 $HOME/arduino_ide
 
 # move this library to the arduino libraries folder
-ln -s $PWD $HOME/arduino_ide/libraries/Adafruit_Test_Library
+ln -s $PWD $HOME/arduino_ide/libraries/Arduino_AppleMidi_Library
 
 # add the arduino CLI to our PATH
 export PATH="$HOME/arduino_ide:$PATH"
