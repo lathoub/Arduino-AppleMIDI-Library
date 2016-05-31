@@ -5,9 +5,6 @@ sudo: false
 before_install:
   - source <(curl -SLs https://raw.githubusercontent.com/lathoub/Arduino-AppleMidi-Library/master/install.sh)
 
-install:
-  - arduino --install-library ""
-
 script:
   - build_main_platforms
 
