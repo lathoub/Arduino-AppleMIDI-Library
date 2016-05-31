@@ -17,7 +17,7 @@ APPLEMIDI_CREATE_DEFAULT_INSTANCE();
 void setup()
 {
   // ...setup ethernet connection
-  AppleMIDI.begin("test"); // test will show up as the session name
+  AppleMIDI.begin("test"); // 'test' will show up as the session name
 }
 
 void loop()
