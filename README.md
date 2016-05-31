@@ -8,6 +8,29 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 
+## Basic Usage
+```
+#include "AppleMidi.h"
+
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(); 
+
+void setup()
+{
+  // ...setup ethernet connection
+  AppleMIDI.begin("test");
+}
+
+void loop()
+{
+  AppleMIDI.run();
+  // ...
+  
+  // Send MIDI note 40 on, velocity 55 on channel 1
+  AppleMIDI.noteOn(40, 55, 1);
+}`
+```
+More usages in the `examples` folder
+
 ## Hardware
 * Arduino/Genuino (Uno, Mega)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
