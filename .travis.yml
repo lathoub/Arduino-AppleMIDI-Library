@@ -6,7 +6,8 @@ before_install:
   - source <(curl -SLs https://raw.githubusercontent.com/lathoub/Arduino-AppleMidi-Library/master/install.sh)
 
 script:
-  - build_main_platforms
+  - build_platform uno
+  - build_platform esp8266
 
 notifications:
   email:
