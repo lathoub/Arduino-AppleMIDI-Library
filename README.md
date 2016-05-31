@@ -1,4 +1,4 @@
-# AppleMidi for Arduino[![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMidi-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMidi-Library)
+# AppleMidi for Arduino [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMidi-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMidi-Library)
 
 The goal of this library is to enable an Arduino (with an Ethernet shield) or ESP8266 to particpate in an AppleMIDI session.
 
