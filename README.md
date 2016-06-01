@@ -27,7 +27,7 @@ void loop()
   
   // Send MIDI note 40 on, velocity 55 on channel 1
   AppleMIDI.noteOn(40, 55, 1);
-}`
+}
 ```
 More usages in the `examples` folder
 
