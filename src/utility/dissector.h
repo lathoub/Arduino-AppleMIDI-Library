@@ -21,8 +21,6 @@ typedef int(*FPDISSECTOR_APPLEMIDI)(Dissector*, IAppleMidi*, unsigned char* pack
 
 class Dissector {
 private:
-	unsigned char _protocolBuffer[PACKET_MAX_SIZE];
-	size_t  _protocolBufferIndex;
 
 	IAppleMidi* _appleMidi;
 
@@ -32,56 +30,7 @@ public:
 	int _identifier;
 
 private:
-	void purgeBuffer(size_t index)
-	{
-#ifdef APPLEMIDI_DEBUG_PARSING
-Serial.print  ("Purging left ");
-Serial.print  (index);
-Serial.print(" bytes. New _protocolBufferIndex: ");
-Serial.println(_protocolBufferIndex - index);
-#endif
 
-		memcpy(_protocolBuffer, _protocolBuffer + index, PACKET_MAX_SIZE - index);
-		_protocolBufferIndex -= index;
-
-		if (_protocolBufferIndex < 0)
-		{
-#ifdef APPLEMIDI_DEBUG_PARSING
-Serial.print  ("ProtocolBuffer Underrun. _protocolBufferIndex");
-Serial.print  (_protocolBufferIndex);
-Serial.print  (" index ");
-Serial.print  (index);
-Serial.println(" _protocolBufferIndex set to 0");
-#endif
-
-			_protocolBufferIndex = 0;
-		}
-	}
-
-	void reset()
-	{
-		_protocolBufferIndex = 0;
-
-#ifdef APPLEMIDI_DEBUG_PARSING
-Serial.println("reset");
-#endif
-	}
-
-	void call_dissector()
-	{
-		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
-
-		for (int i = 0; i < nelem; i++) {
-			if (_externalAppleMidiDissector[i]) {
-
-				int consumed = _externalAppleMidiDissector[i](this, _appleMidi, _protocolBuffer, _protocolBufferIndex);
-				if (consumed > 0) {
-					purgeBuffer(consumed);
-					return;
-				}
-			}
-		}
-	}
 
 public:
 
@@ -90,8 +39,6 @@ public:
 		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
 		for (int i = 0; i < nelem; i++)
 			_externalAppleMidiDissector[i] = NULL;
-
-		_protocolBufferIndex = 0;
 	}
 
 	//
@@ -99,8 +46,6 @@ public:
 	{
 		_identifier = identifier;
 		_appleMidi = appleMidi;
-
-		_protocolBufferIndex = 0;
 	}
 
 	void addPacketDissector(FPDISSECTOR_APPLEMIDI externalDissector)
@@ -116,53 +61,32 @@ public:
 
 	void addPacket(unsigned char* packetBuffer, size_t packetSize)
 	{
-#ifdef APPLEMIDI_DEBUG_PARSING
-		Serial.print  ("Incoming buffer of ");
-		Serial.print  (packetSize);
-		Serial.println(" bytes. These will be appended to the protocolBuffer");
-		for (int i = 0; i < packetSize; i++)
-		{
-			Serial.print  (packetBuffer[i], HEX);
-			Serial.print  (" ");
+		#ifdef APPLEMIDI_DEBUG_PARSING
+		Serial.print("Incoming buffer of " + String(packetSize, DEC) + " bytes: ");
+		int idx = 0;
+		while (idx < packetSize) {
+			Serial.print(String(packetBuffer[idx], HEX) + " ");
+			idx++;
 		}
 		Serial.println();
-#endif
+		#endif
 
-		// TODO: Rework diessector to handle packets in real time without needing full packet to begin
-		if (packetSize > PACKET_MAX_SIZE) {
-			#ifdef APPLEMIDI_DEBUG_PARSING
-			Serial.println("Packet exceeds PACKET_MAX_SIZE. Packet skipped.");
-			#endif
-		} else if (_protocolBufferIndex + packetSize > PACKET_MAX_SIZE) {
-			// enough room in buffer? If so, reset protocolBuffer back to zero
-			#ifdef APPLEMIDI_DEBUG_PARSING
-			Serial.println("Not enough memory in protocolBuffer, clearing existing parser buffer.");
-			#endif
-			reset();
-		}
+		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
 
-		if (packetSize <= PACKET_MAX_SIZE) {
-			// Add to the end of the protocolBuffer
-			memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
-			_protocolBufferIndex += packetSize;
-
-			#ifdef APPLEMIDI_DEBUG_PARSING
-			Serial.print  ("Protocol buffer contains ");
-			Serial.print  (_protocolBufferIndex);
-			Serial.println(" bytes. Content:");
-			for (int i = 0; i < _protocolBufferIndex; i++)
-			{
-				Serial.print  (_protocolBuffer[i], HEX);
-				Serial.print  (" ");
+		for (int i = 0; i < nelem; i++) {
+			if (_externalAppleMidiDissector[i]) {
+				int consumed = _externalAppleMidiDissector[i](this, _appleMidi, packetBuffer, packetSize);
+				if (consumed) return;
 			}
-			Serial.println();
-			#endif
 		}
+
+		#ifdef APPLEMIDI_DEBUG_PARSING
+		Serial.println("No dissectors handled last message");
+		#endif
 	}
 
-	void dissect()
-	{
-		call_dissector();
+	void dissect() {
+		// nah screw that
 	}
 };
 
