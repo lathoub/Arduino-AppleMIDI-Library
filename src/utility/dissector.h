@@ -141,7 +141,7 @@ public:
 			reset();
 		}
 
-		if (packetSize < PACKET_MAX_SIZE) {
+		if (packetSize <= PACKET_MAX_SIZE) {
 			// Add to the end of the protocolBuffer
 			memcpy(_protocolBuffer + _protocolBufferIndex, packetBuffer, packetSize);
 			_protocolBufferIndex += packetSize;
