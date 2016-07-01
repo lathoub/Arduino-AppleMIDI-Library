@@ -84,10 +84,6 @@ public:
 		Serial.println("No dissectors handled last message");
 		#endif
 	}
-
-	void dissect() {
-		// nah screw that
-	}
 };
 
 
