@@ -128,44 +128,18 @@ inline void AppleMidi_Class<UdpClass>::run()
 {
 	byte _packetBuffer[PACKET_MAX_SIZE];
 
-	// Get first packet of CONTROL logic, if any
+	// Process one control packet, if available
 	int packetSize = _controlUDP.parsePacket();
-	int bytesRead = 0;
-
-	// While we still have packets to process
-	while (packetSize > 0) {
-		// While we still have bytes to process in the packet
-		while (packetSize > 0) {
-			bytesRead = _controlUDP.read(_packetBuffer, PACKET_MAX_SIZE);
-			packetSize = packetSize - bytesRead;
-			_controlDissector.addPacket(_packetBuffer, bytesRead);
-		}
-
-		// Dissect packet only after all bytes have been added to the buffer
-		_controlDissector.dissect();
-
-		// Get next packet
-		packetSize = _controlUDP.parsePacket();
+	if (packetSize) {
+		packetSize = _controlUDP.read(_packetBuffer, sizeof(_packetBuffer));
+		_controlDissector.addPacket(_packetBuffer, packetSize);
 	}
 
-	// Get first packet of CONTENT logic, if any
+	// Process one control packet, if available
 	packetSize = _contentUDP.parsePacket();
-	bytesRead = 0;
-
-	// While we still have packets to process
-	while (packetSize > 0) {
-		// While we still have bytes to process in the packet
-		while (packetSize > 0) {
-			bytesRead = _contentUDP.read(_packetBuffer, PACKET_MAX_SIZE);
-			packetSize = packetSize - bytesRead;
-			_contentDissector.addPacket(_packetBuffer, bytesRead);
-		}
-
-		// Dissect packet only after all bytes have been added to the buffer
-		_contentDissector.dissect();
-
-		// Get next packet
-		packetSize = _contentUDP.parsePacket();
+	if (packetSize) {
+		packetSize = _contentUDP.read(_packetBuffer, sizeof(_packetBuffer));
+		_contentDissector.addPacket(_packetBuffer, packetSize);
 	}
 
 	// resend invitations

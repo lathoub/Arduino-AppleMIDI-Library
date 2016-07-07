@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub, hackmancoltaire
+ *  @author		lathoub, hackmancoltaire, bluebie
  *	@date		04/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -83,10 +83,6 @@ public:
 		#ifdef APPLEMIDI_DEBUG_PARSING
 		Serial.println("No dissectors handled last message");
 		#endif
-	}
-
-	void dissect() {
-		// nah screw that
 	}
 };
 
