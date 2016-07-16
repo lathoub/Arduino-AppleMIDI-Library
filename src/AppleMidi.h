@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <Ethernet.h>
+
 #include "utility/AppleMidi_Settings.h"
 #include "utility/AppleMidi_Defs.h"
 

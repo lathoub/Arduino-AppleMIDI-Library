@@ -46,8 +46,6 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 	mNoteOffSendEvent				= NULL;
 #endif
 
-	srand(analogRead(0)); // to generate our random ssrc (see in begin)
-
 	uint32_t initialTimestamp_ = 0;
 	_rtpMidiClock.Init(initialTimestamp_, MIDI_SAMPLING_RATE_DEFAULT);
 }
@@ -89,11 +87,7 @@ inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	_inputChannel = MIDI_CHANNEL_OMNI;
 
 	// Generate Synchronization Source
-	// Unique 32 bit number (see definition)
-	byte buffer[4];
-	for (int i = 0; i < 4; i++)
-		buffer[i] = 17 + (rand() % 255);
-	_ssrc = *((uint32_t*) &buffer[0]);
+	_ssrc = Ethernet.localIP();
 
 	// Initialize Sessions
 	DeleteSessions();
