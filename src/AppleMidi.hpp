@@ -68,7 +68,7 @@ All parameters are set to their default values:
 - Full thru mirroring
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t port)
+inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t port)
 {
 #if (APPLEMIDI_DEBUG)
 	if (strlen(sessionName) > SESSION_NAME_MAX_LEN)
@@ -85,6 +85,17 @@ inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	Port = port;
 
 	_inputChannel = MIDI_CHANNEL_OMNI;
+
+	// check if Ethernet.begin was called *before* this function
+	// (we need to be connected ethernet)
+	if (0 == Ethernet.dnsServerIP())
+	{
+#if (APPLEMIDI_DEBUG)
+		Serial.println(F("Board is not connected, call Ethernet.begin before calling AppleMIDI.begin"));
+#endif
+		return false;
+	}
+
 
 	// Generate Synchronization Source
 	_ssrc = Ethernet.localIP();
@@ -113,6 +124,8 @@ inline void AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	Serial.print(" on port ");
 	Serial.println(Port);
 #endif
+
+	return true;
 }
 
 /*! \brief Evaluates incoming Rtp messages.

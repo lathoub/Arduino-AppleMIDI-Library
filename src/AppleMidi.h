@@ -127,7 +127,7 @@ public:
 
 	int Port;
 
-	inline void begin(const char*, uint16_t port = CONTROL_PORT);
+	inline bool begin(const char*, uint16_t port = CONTROL_PORT);
 
 	inline uint32_t	getSynchronizationSource() { return _ssrc; }
 	inline char*	getSessionName() { return _sessionName; }
