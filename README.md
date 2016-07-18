@@ -35,6 +35,7 @@ More usages in the `examples` folder
 * Arduino/Genuino (Uno, Mega)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * Teensy 3.2
+* Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Network Shields
 * Arduino Ethernet shield (arduino.cc, Wiznet W5100)
