@@ -224,6 +224,7 @@ private:
 
 #endif // APPLEMIDI_BUILD_OUTPUT
 
+public:
 	inline int	GetFreeSessionSlot();
 	inline int	GetSessionSlotUsingSSrc(const uint32_t ssrc);
 	inline int	GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken);
