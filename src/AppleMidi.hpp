@@ -46,6 +46,9 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 	mNoteOffSendEvent				= NULL;
 #endif
 
+	// initiative to 0, the actual SSRC will be generated lazily
+	_ssrc = 0;
+
 	uint32_t initialTimestamp_ = 0;
 	_rtpMidiClock.Init(initialTimestamp_, MIDI_SAMPLING_RATE_DEFAULT);
 }
@@ -86,9 +89,6 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 
 	_inputChannel = MIDI_CHANNEL_OMNI;
 
-	// Generate Synchronization Source
-	_ssrc = Ethernet.localIP();
-
 	// Initialize Sessions
 	DeleteSessions();
 
@@ -104,7 +104,7 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	_contentDissector.addPacketDissector(&PacketRtpMidi::dissect_rtp_midi);		// Add parser
 	_contentDissector.addPacketDissector(&PacketAppleMidi::dissect_apple_midi);	// Add parser
 
-	_rtpMidi.ssrc = _ssrc;
+	_rtpMidi.ssrc = 0; // will be initialized when first used
 	_rtpMidi.sequenceNr = 1;
 
 #if (APPLEMIDI_DEBUG)
@@ -143,6 +143,30 @@ inline void AppleMidi_Class<UdpClass>::run()
 
 	// do syncronization here
 	ManageTiming();
+}
+
+/*! \brief Get Synchronization Source, initiatize the SSRC on first time usage (lazy init).
+*/
+template<class UdpClass>
+inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
+{
+	if (0 == _ssrc) // _ssrc initialized to 0 in constructor
+	{
+		// A call randonSeed is mandatory, with millis as a seed.
+		// The time between booting and needing the SSRC for the first time (first  network traffic) is 
+		// a good enough random seed.
+		long seed = (long)micros();
+		randomSeed(seed);
+
+		// not full range of UINT32_MAX (unsigned!), but (signed) long should suffice
+		_ssrc = random(1, LONG_MAX);
+
+#if (APPLEMIDI_DEBUG)
+		Serial.print("Lazy init of SSRC. Value is 0x");
+		Serial.println(_ssrc, HEX);
+#endif
+	}
+	return _ssrc;
 }
 
 /*! \brief The Arduino initiates the session.
@@ -312,7 +336,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	}
 
 	// Send the invitation acceptance packet
-	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, getSessionName());
+	AppleMIDI_InvitationAccepted acceptInvitation(getSynchronizationSource(), invitation.initiatorToken, getSessionName());
 	write(_controlUDP, acceptInvitation, _controlUDP.remoteIP(), _controlUDP.remotePort());
 
 	#if (APPLEMIDI_DEBUG)
@@ -320,7 +344,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 		Serial.print(getSessionName());
 		Serial.print("\"");
 		Serial.print(" ,ssrc 0x");
-		Serial.print(_ssrc, HEX);
+		Serial.print(getSynchronizationSource(), HEX);
 		Serial.print(" ,initiatorToken = 0x");
 		Serial.print(invitation.initiatorToken, HEX);
 	#if (APPLEMIDI_DEBUG_VERBOSE)
@@ -366,7 +390,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 		return;
 	}
 
-	AppleMIDI_InvitationAccepted acceptInvitation(_ssrc, invitation.initiatorToken, getSessionName());
+	AppleMIDI_InvitationAccepted acceptInvitation(getSynchronizationSource(), invitation.initiatorToken, getSessionName());
 	write(_contentUDP, acceptInvitation, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 	// Send bitrate limit
@@ -378,7 +402,7 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	Serial.print(getSessionName());
 	Serial.print("\"");
 	Serial.print(" ,ssrc 0x");
-	Serial.print(_ssrc, HEX);
+	Serial.print(getSynchronizationSource(), HEX);
 #if (APPLEMIDI_DEBUG_VERBOSE)
 	Serial.print(" ,initiatorToken = 0x");
 	Serial.print(invitation.initiatorToken, HEX);
@@ -489,12 +513,12 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 		synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
 	}
 
-	AppleMIDI_Syncronization synchronizationResponse(_ssrc, synchronization.count, synchronization.timestamps);
+	AppleMIDI_Syncronization synchronizationResponse(getSynchronizationSource(), synchronization.count, synchronization.timestamps);
 	write(_contentUDP, synchronizationResponse, _contentUDP.remoteIP(), _contentUDP.remotePort());
 
 #if (APPLEMIDI_DEBUG)
 	Serial.print("< Syncronization for ssrc 0x");
-	Serial.print(_ssrc, HEX);
+	Serial.print(getSynchronizationSource(), HEX);
 	Serial.print(", count = ");
 	Serial.print(synchronizationResponse.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
@@ -1016,7 +1040,7 @@ void AppleMidi_Class<UdpClass>::CreateLocalSession(const int i, const uint32_t s
 #if (APPLEMIDI_DEBUG)
 	Serial.print  ("New Local Session in slot ");
 	Serial.print  (i);
-	Serial.print  (" with SSRC ");
+	Serial.print  (" with SSRC 0x");
 	Serial.println(ssrc, HEX);
 #endif
 
@@ -1157,7 +1181,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			// Send invitation
 			AppleMIDI_Invitation invitation;
 			invitation.initiatorToken = createInitiatorToken();
-			invitation.ssrc = _ssrc;
+			invitation.ssrc = getSynchronizationSource();
 			strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 			write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
 
@@ -1195,7 +1219,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 				// Send invitation
 				AppleMIDI_Invitation invitation;
 				invitation.initiatorToken = session->invite.initiatorToken;
-				invitation.ssrc = _ssrc;
+				invitation.ssrc = getSynchronizationSource();
 				strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 				write(_controlUDP, invitation, session->invite.remoteHost, session->invite.remotePort);
 
@@ -1220,7 +1244,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 		{
 			AppleMIDI_Invitation invitation;
 			invitation.initiatorToken = session->invite.initiatorToken;
-			invitation.ssrc = _ssrc;
+			invitation.ssrc = getSynchronizationSource();
 			strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 			write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
 
@@ -1256,7 +1280,7 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 
 				AppleMIDI_Invitation invitation;
 				invitation.initiatorToken = session->invite.initiatorToken;
-				invitation.ssrc = _ssrc;
+				invitation.ssrc = getSynchronizationSource();
 				strncpy(invitation.sessionName, getSessionName(), SESSION_NAME_MAX_LEN);
 				write(_contentUDP, invitation, session->invite.remoteHost, session->invite.remotePort + 1);
 
@@ -1327,7 +1351,7 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 					synchronization.timestamps[2] = 0;
 					synchronization.count = 0;
 
-					AppleMIDI_Syncronization synchronizationResponse(_ssrc, synchronization.count, synchronization.timestamps);
+					AppleMIDI_Syncronization synchronizationResponse(getSynchronizationSource(), synchronization.count, synchronization.timestamps);
 					write(_contentUDP, synchronizationResponse, Sessions[i].contentIP, Sessions[i].contentPort);
 
 #if (APPLEMIDI_DEBUG)
@@ -1363,7 +1387,7 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 	//	synchronization.timestamps[2] = 0;
 	//	synchronization.count = 0;
 
-	//	AppleMIDI_Syncronization synchronizationResponse(_ssrc, synchronization.count, synchronization.timestamps);
+	//	AppleMIDI_Syncronization synchronizationResponse(getSynchronizationSource(), synchronization.count, synchronization.timestamps);
 	//	synchronizationResponse.write(&_contentUDP);
 	//}
 }
@@ -1573,6 +1597,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 		inData1 &= 0x7F;
 		inData2 &= 0x7F;
 
+		_rtpMidi.ssrc = getSynchronizationSource();
 		_rtpMidi.sequenceNr++;
 		// _rtpMidi.timestamp = _rtpMidiClock.Now();
 		_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
@@ -1615,6 +1640,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType)
 {
+	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
 	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
@@ -1653,6 +1679,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData)
 {
+	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
 	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
@@ -1686,6 +1713,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2)
 {
+	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
 	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
@@ -1923,6 +1951,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::sysEx(unsigned int inLength, const byte* inArray, 	bool inArrayContainsBoundaries)
 {
 	// USE SEND!!!!!
+	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
 	// _rtpMidi.timestamp = _rtpMidiClock.Now();
 //	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);

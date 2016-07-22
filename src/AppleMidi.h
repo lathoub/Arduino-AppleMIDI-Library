@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <Ethernet.h>
-
 #include "utility/AppleMidi_Settings.h"
 #include "utility/AppleMidi_Defs.h"
 
@@ -129,7 +127,7 @@ public:
 
 	inline bool begin(const char*, uint16_t port = CONTROL_PORT);
 
-	inline uint32_t	getSynchronizationSource() { return _ssrc; }
+	inline uint32_t	getSynchronizationSource();
 	inline char*	getSessionName() { return _sessionName; }
 
 	inline void run();
