@@ -86,17 +86,6 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 
 	_inputChannel = MIDI_CHANNEL_OMNI;
 
-	// check if Ethernet.begin was called *before* this function
-	// (we need to be connected ethernet)
-	if (0 == Ethernet.dnsServerIP())
-	{
-#if (APPLEMIDI_DEBUG)
-		Serial.println(F("Board is not connected, call Ethernet.begin before calling AppleMIDI.begin"));
-#endif
-		return false;
-	}
-
-
 	// Generate Synchronization Source
 	_ssrc = Ethernet.localIP();
 
