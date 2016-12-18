@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.3
- *  @author		lathoub 
+ *  @author		lathoub
  *	@date		04/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -19,8 +19,8 @@ extern "C" {
 #endif
 
 BEGIN_APPLEMIDI_NAMESPACE
-	
-typedef struct AppleMIDI_Syncronization 
+
+typedef struct __attribute__((packed)) AppleMIDI_Syncronization
 {
 	uint8_t		signature[2];
 	uint8_t		command[2];
@@ -50,6 +50,7 @@ private:
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amSyncronization, sizeof(amSyncronization));
+		memset(padding, 0, sizeof(padding));
 	}
 } AppleMIDI_Syncronization_t;
 
