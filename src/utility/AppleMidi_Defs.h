@@ -31,6 +31,7 @@
 #define SYNC_CK1 1
 #define SYNC_CK2 2
 
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 // -----------------------------------------------------------------------------

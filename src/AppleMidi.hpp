@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.4
- *  @author		lathoub, hackmancoltaire
+ *  @author		lathoub, hackmancoltaire, chris-zen
  *	@date		13/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -1442,15 +1442,18 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncroniza
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
 
-		// Set the correct endian
-		sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
-		sy.count = AppleMIDI_Util::toEndian(sy.count);
-		sy.timestamps[0] = AppleMIDI_Util::toEndian(sy.timestamps[0]);
-		sy.timestamps[1] = AppleMIDI_Util::toEndian(sy.timestamps[1]);
-		sy.timestamps[2] = AppleMIDI_Util::toEndian(sy.timestamps[2]);
-
-		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&sy), sizeof(sy));
-		Debug::Assert(bytesWritten == sizeof(sy), "error writing sy");
+	PacketWriter<UdpClass> writer(udp);
+	writer.write(sy.signature[0]);
+	writer.write(sy.signature[1]);
+	writer.write(sy.command[0]);
+	writer.write(sy.command[1]);
+	writer.write(sy.ssrc);
+	writer.write(sy.count);
+	writer.writePadding(3);
+	writer.write(sy.timestamps[0]);
+	writer.write(sy.timestamps[1]);
+	writer.write(sy.timestamps[2]);
+	Debug::Assert(writer.allWritten(), "error writing sy");
 
 	success = udp.endPacket();
 	Debug::Assert(success, "udp.endPacket failed");
