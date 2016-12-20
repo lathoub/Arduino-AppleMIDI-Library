@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
 BEGIN_APPLEMIDI_NAMESPACE
 
 template<class UdpClass>
