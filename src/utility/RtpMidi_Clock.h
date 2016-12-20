@@ -23,8 +23,8 @@ typedef struct RtpMidi_Clock {
 
 	uint32_t clockRate_;
 
-    unsigned long startTime_;
-    uint32_t timestamp_;
+  unsigned long startTime_;
+  uint32_t timestamp_;
 
 	void Init(uint32_t initialTimeStamp, uint32_t clockRate)
 	{
@@ -35,41 +35,39 @@ typedef struct RtpMidi_Clock {
 			clockRate_ = MIDI_SAMPLING_RATE_DEFAULT;
 		}
 
-        startTime_ = Ticks();
+    startTime_ = Ticks();
 	}
 
-    /// <summary>
-    ///     Returns an timestamp value suitable for inclusion in a RTP packet header.
-    /// </summary>
-    uint32_t Now()
-    {
-        return CalculateCurrentTimeStamp();
-    }
+	/// <summary>
+	///     Returns an timestamp value suitable for inclusion in a RTP packet header.
+	/// </summary>
+	uint32_t Now()
+	{
+		return CalculateCurrentTimeStamp();
+	}
 
 	uint32_t CalculateCurrentTimeStamp()
 	{
 		uint32_t lapse = CalculateTimeSpent();
 
 		// check for potential overflow
-		if (timestamp_ + lapse < UINT_MAX )
+		if (lapse < 0xffffffff - timestamp_)
 			return timestamp_ + lapse;
 
-		uint32_t remainder = UINT_MAX  - timestamp_;
+		uint32_t remainder = 0xffffffff - timestamp_;
 		return lapse - remainder;
 	}
 
 	/// <summary>
-    ///     Returns the time spent since the initial clock timestamp value.
-    ///     The returned value is expressed in units of "clock pulsations",
-    ///     that are equivalent to seconds, scaled by the clock rate.
-    ///     i.e: 1 second difference will result in a delta value equals to the clock rate.
-    /// </summary>
+	///     Returns the time spent since the initial clock timestamp value.
+	///     The returned value is expressed in units of "clock pulsations",
+	///     that are equivalent to seconds, scaled by the clock rate.
+	///     i.e: 1 second difference will result in a delta value equals to the clock rate.
+	/// </summary>
 	uint32_t CalculateTimeSpent()
 	{
-		unsigned long ticks = Ticks() - startTime_;
-		unsigned long seconds = ticks / MSEC_PER_SEC;
-
-		uint32_t lapse = (uint32_t)(seconds * clockRate_);
+		uint32_t ticks = Ticks() - startTime_;
+		uint32_t lapse = (ticks * clockRate_) / MSEC_PER_SEC;
 		return lapse;
 	}
 

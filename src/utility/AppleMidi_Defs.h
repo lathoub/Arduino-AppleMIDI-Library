@@ -27,6 +27,11 @@
 
 #define SESSION_NAME_MAX_LEN 16
 
+#define SYNC_CK0 0
+#define SYNC_CK1 1
+#define SYNC_CK2 2
+
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 // -----------------------------------------------------------------------------

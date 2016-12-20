@@ -3,7 +3,7 @@
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *	Version		0.4
- *  @author		lathoub, hackmancoltaire
+ *  @author		lathoub, hackmancoltaire, chris-zen
  *	@date		13/04/14
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
@@ -83,6 +83,7 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 		Serial.println(" chars. Name will be clipped.");
 	}
 #endif
+
 	strncpy(_sessionName, sessionName, SESSION_NAME_MAX_LEN);
 
 	Port = port;
@@ -153,7 +154,7 @@ inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
 	if (0 == _ssrc) // _ssrc initialized to 0 in constructor
 	{
 		// A call randonSeed is mandatory, with millis as a seed.
-		// The time between booting and needing the SSRC for the first time (first  network traffic) is 
+		// The time between booting and needing the SSRC for the first time (first  network traffic) is
 		// a good enough random seed.
 		long seed = (long)micros();
 		randomSeed(seed);
@@ -469,7 +470,7 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 	Serial.println("");
 #endif
 
-	// If we know this session already, ignore it.
+	// If we don't know this session, ignore it.
 
 	int index = GetSessionSlotUsingSSrc(synchronization.ssrc);
 	if (index < 0)
@@ -480,37 +481,38 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 		return;
 	}
 
-	if (synchronization.count == 0) /* From session initiator */
-	{
-		synchronization.count = 1;
-		synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
-	}
-	else if (synchronization.count == 1) /* From session responder */
-	{
-		/* compute media delay */
-		//uint64_t diff = (now - synchronization.timestamps[0]) / 2;
-		/* approximate time difference between peer and self */
-		//diff = synchronization.timestamps[2] + diff - now;
+	switch (synchronization.count) {
+		case SYNC_CK0: /* From session initiator */
+			synchronization.count = SYNC_CK1;
+			synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
+			break;
 
-		// Send CK2
-		synchronization.count = 2;
-		synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
+		case SYNC_CK1: /* From session responder */
+			/* compute media delay */
+			//uint64_t diff = (now - synchronization.timestamps[0]) / 2;
+			/* approximate time difference between peer and self */
+			//diff = synchronization.timestamps[2] + diff - now;
 
-		/* getting this message means that the responder is still alive! */
-		/* remember the time, if it takes to long to respond, we can assume the responder is dead */
-		/* not implemented at this stage*/
-		//Sessions[index].syncronization.lastTime = _rtpMidiClock.Now();
-		//Sessions[index].syncronization.count++;
-	}
-	else if (synchronization.count == 2) /* From session initiator */
-	{
-		/* compute media delay */
-		//uint64_t diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
-		/* approximate time difference between peer and self */
-		//diff = synchronization.timestamps[2] + diff - now;
+			// Send CK2
+			synchronization.count = SYNC_CK2;
+			synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
 
-		synchronization.count = 0;
-		synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
+			/* getting this message means that the responder is still alive! */
+			/* remember the time, if it takes to long to respond, we can assume the responder is dead */
+			/* not implemented at this stage*/
+			//Sessions[index].syncronization.lastTime = _rtpMidiClock.Now();
+			//Sessions[index].syncronization.count++;
+			break;
+
+		case SYNC_CK2: /* From session initiator */
+			/* compute media delay */
+			//uint64_t diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
+			/* approximate time difference between peer and self */
+			//diff = synchronization.timestamps[2] + diff - now;
+
+			synchronization.count = SYNC_CK0;
+			synchronization.timestamps[synchronization.count] = _rtpMidiClock.Now();
+			break;
 	}
 
 	AppleMIDI_Syncronization synchronizationResponse(getSynchronizationSource(), synchronization.count, synchronization.timestamps);
@@ -1440,15 +1442,18 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncroniza
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
 
-		// Set the correct endian
-		sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
-		sy.count = AppleMIDI_Util::toEndian(sy.count);
-		sy.timestamps[0] = AppleMIDI_Util::toEndian(sy.timestamps[0]);
-		sy.timestamps[1] = AppleMIDI_Util::toEndian(sy.timestamps[1]);
-		sy.timestamps[2] = AppleMIDI_Util::toEndian(sy.timestamps[2]);
-
-		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&sy), sizeof(sy));
-		Debug::Assert(bytesWritten == sizeof(sy), "error writing sy");
+	PacketWriter<UdpClass> writer(udp);
+	writer.write(sy.signature[0]);
+	writer.write(sy.signature[1]);
+	writer.write(sy.command[0]);
+	writer.write(sy.command[1]);
+	writer.write(sy.ssrc);
+	writer.write(sy.count);
+	writer.writePadding(3);
+	writer.write(sy.timestamps[0]);
+	writer.write(sy.timestamps[1]);
+	writer.write(sy.timestamps[2]);
+	Debug::Assert(writer.allWritten(), "error writing sy");
 
 	success = udp.endPacket();
 	Debug::Assert(success, "udp.endPacket failed");
@@ -1599,7 +1604,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 
 		_rtpMidi.ssrc = getSynchronizationSource();
 		_rtpMidi.sequenceNr++;
-		// _rtpMidi.timestamp = _rtpMidiClock.Now();
+		_rtpMidi.timestamp = _rtpMidiClock.Now();
 		_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 		// Length
@@ -1642,7 +1647,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
-	// _rtpMidi.timestamp = _rtpMidiClock.Now();
+	_rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 1;
@@ -1681,7 +1686,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
-	// _rtpMidi.timestamp = _rtpMidiClock.Now();
+	_rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 2;
@@ -1715,7 +1720,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
-	// _rtpMidi.timestamp = _rtpMidiClock.Now();
+	_rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 	uint8_t length = 3;

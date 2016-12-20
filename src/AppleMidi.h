@@ -26,6 +26,7 @@
 #include "utility/RtpMidi_Clock.h"
 
 #include "utility/dissector.h"
+#include "utility/PacketWriter.hpp"
 
 #if defined(ARDUINO)
 #if defined(ESP8266)
