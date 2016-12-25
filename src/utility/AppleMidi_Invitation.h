@@ -21,7 +21,7 @@ extern "C" {
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
-typedef struct AppleMIDI_Invitation 
+typedef struct __attribute__((packed)) AppleMIDI_Invitation
 {
 	uint8_t		signature[2];
 	uint8_t		command[2];

@@ -25,7 +25,7 @@
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
-#define SESSION_NAME_MAX_LEN 16
+#define SESSION_NAME_MAX_LEN 24
 
 #define SYNC_CK0 0
 #define SYNC_CK1 1

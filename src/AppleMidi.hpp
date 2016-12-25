@@ -1399,7 +1399,7 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 // -----------------------------------------------------------------------------
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationRejected& ir, IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationRejected ir, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1418,7 +1418,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationAccepted& ia, IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationAccepted ia, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1429,7 +1429,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 		ia.ssrc           = AppleMIDI_Util::toEndian(ia.ssrc);
 
 		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ia), ia.getLength());
-		Debug::Assert(bytesWritten == sizeof(ia), "error writing ia");
+		Debug::Assert(bytesWritten == ia.getLength(), "error writing ia");
 
 	success = udp.endPacket();
 	Debug::Assert(success, "udp.endPacket failed");
@@ -1437,11 +1437,30 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncronization& sy, IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncronization sy, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
 
+#if (APPLEMIDI_DEBUG)
+	Serial.print("Syncronization timestamps: 0x");
+	Serial.print((uint32_t)sy.timestamps[0], HEX);
+	Serial.print(", 0x");
+	Serial.print((uint32_t)sy.timestamps[1], HEX);
+	Serial.print(", 0x");
+	Serial.print((uint32_t)sy.timestamps[2], HEX);
+	Serial.println("");
+#endif
+
+	sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
+	sy.count = AppleMIDI_Util::toEndian(sy.count);
+	sy.timestamps[0] = AppleMIDI_Util::toEndian(sy.timestamps[0]);
+	sy.timestamps[1] = AppleMIDI_Util::toEndian(sy.timestamps[1]);
+	sy.timestamps[2] = AppleMIDI_Util::toEndian(sy.timestamps[2]);
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&sy), sizeof(sy));
+	Debug::Assert(bytesWritten == sizeof(sy), "error writing sy");
+
+/*	
 	PacketWriter<UdpClass> writer(udp);
 	writer.write(sy.signature[0]);
 	writer.write(sy.signature[1]);
@@ -1454,14 +1473,14 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncroniza
 	writer.write(sy.timestamps[1]);
 	writer.write(sy.timestamps[2]);
 	Debug::Assert(writer.allWritten(), "error writing sy");
-
+*/
 	success = udp.endPacket();
 	Debug::Assert(success, "udp.endPacket failed");
 	udp.flush();
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation& in, IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation in, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1472,7 +1491,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 		in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
 
 		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), in.getLength());
-		Debug::Assert(bytesWritten == sizeof(in), "error writing in");
+		Debug::Assert(bytesWritten == in.getLength(), "error writing in");
 
 	success = udp.endPacket();
 	Debug::Assert(success, "udp.endPacket failed");
@@ -1480,7 +1499,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit& in, IPAddress ip, uint16_t port)
+inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit in, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");

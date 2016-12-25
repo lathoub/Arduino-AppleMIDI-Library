@@ -1755,7 +1755,7 @@ Serial.println("aborted MIDI-command: note_off");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("not enough");
+Serial.println("not enough q");
 #endif
 			return 1;
 		}
@@ -1836,7 +1836,7 @@ Serial.println("aborted MIDI-command: note_on");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("not enough data");
+Serial.println("not enough w");
 #endif
 			return -1;
 		}
@@ -1917,7 +1917,7 @@ Serial.println("aborted MIDI-command: poly_pressure");
 			} else {
 			}
 #ifdef APPLEMIDI_DEBUG
-Serial.println("not enough");
+Serial.println("not enough e");
 #endif
 			return cmd_len;
 		}
@@ -2045,8 +2045,8 @@ Serial.println("aborted MIDI-command: pitch_bend_change");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("not enough");
+#ifdef APPLEMIDI_DEBUG
+Serial.println("not enough r");
 #endif
 			return cmd_len;
 		}
@@ -2059,7 +2059,7 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command 2: pitch_bend_change");
 #endif
 			return cmd_len;
@@ -2090,7 +2090,7 @@ Serial.println("aborted MIDI-command 2: pitch_bend_change");
 	static int
 	decode_program_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("decode_program_change");
 #endif
 
@@ -2103,7 +2103,7 @@ Serial.println("decode_program_change");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("no further data");
 #endif
 			return -1;
@@ -2117,7 +2117,7 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command: program_change");
 #endif
 			return cmd_len;
@@ -2146,7 +2146,7 @@ Serial.println("aborted MIDI-command: program_change");
 	static int
 	decode_control_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("decode_control_change");
 #endif
 
@@ -2159,7 +2159,7 @@ Serial.println("decode_control_change");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("no further data");
 #endif
 			return -1;
@@ -2173,7 +2173,7 @@ Serial.println("no further data");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command: control_change");
 #endif
 			return cmd_len;
@@ -2186,8 +2186,8 @@ Serial.println("aborted MIDI-command: control_change");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("not enough");
+#ifdef APPLEMIDI_DEBUG
+Serial.println("not enough t");
 #endif
 			return cmd_len;
 		}
@@ -2199,7 +2199,7 @@ Serial.println("not enough");
 			if ( using_rs ) {
 			} else {
 			}
-#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG
 Serial.println("aborted MIDI-command 2: control_change");
 #endif
 			return cmd_len;
@@ -2760,7 +2760,7 @@ Serial.println("aborted MIDI-command: song_position_pointer");
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("not enough");
+Serial.println("not enough y");
 #endif
 			return -1;
 		}

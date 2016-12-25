@@ -166,11 +166,11 @@ public:
 	inline void OnTuneRequest(void* sender);
 
 private:
-	inline void write(UdpClass&, AppleMIDI_InvitationRejected&, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_InvitationAccepted&, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_Syncronization&, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_Invitation&, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit&, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_InvitationRejected, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_InvitationAccepted, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_Syncronization, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_Invitation, IPAddress ip, uint16_t port);
+	inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit, IPAddress ip, uint16_t port);
 
 #if APPLEMIDI_BUILD_OUTPUT
 

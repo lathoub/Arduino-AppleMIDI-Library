@@ -23,8 +23,8 @@ typedef struct RtpMidi_Clock {
 
 	uint32_t clockRate_;
 
-  unsigned long startTime_;
-  uint32_t timestamp_;
+	unsigned long startTime_;
+	uint32_t timestamp_;
 
 	void Init(uint32_t initialTimeStamp, uint32_t clockRate)
 	{
@@ -35,7 +35,7 @@ typedef struct RtpMidi_Clock {
 			clockRate_ = MIDI_SAMPLING_RATE_DEFAULT;
 		}
 
-    startTime_ = Ticks();
+		startTime_ = Ticks();
 	}
 
 	/// <summary>
@@ -51,10 +51,10 @@ typedef struct RtpMidi_Clock {
 		uint32_t lapse = CalculateTimeSpent();
 
 		// check for potential overflow
-		if (lapse < 0xffffffff - timestamp_)
+		if (lapse < UINT32_MAX - timestamp_)
 			return timestamp_ + lapse;
 
-		uint32_t remainder = 0xffffffff - timestamp_;
+		uint32_t remainder = UINT32_MAX - timestamp_;
 		return lapse - remainder;
 	}
 

@@ -20,12 +20,13 @@ extern "C" {
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-typedef struct AppleMIDI_Syncronization
+typedef struct __attribute__((packed)) AppleMIDI_Syncronization
 {
 	uint8_t		signature[2];
 	uint8_t		command[2];
 	uint32_t	ssrc;
 	uint8_t		count;
+	uint8_t		padding[3];
 	uint64_t	timestamps[3];
 
 	AppleMIDI_Syncronization()
@@ -49,6 +50,7 @@ private:
 	{
 		memcpy(signature, amSignature, sizeof(amSignature));
 		memcpy(command, amSyncronization, sizeof(amSyncronization));
+		memset(padding, 0, sizeof(padding));
 	}
 } AppleMIDI_Syncronization_t;
 

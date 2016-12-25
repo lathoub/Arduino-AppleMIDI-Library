@@ -20,7 +20,7 @@ extern "C" {
 
 BEGIN_APPLEMIDI_NAMESPACE
 	
-typedef struct AppleMIDI_EndSession 
+typedef struct __attribute__((packed)) AppleMIDI_EndSession
 {
 	uint8_t		signature[2];
 	uint8_t		command[2];
