@@ -32,7 +32,7 @@ void loop()
 More usages in the `examples` folder
 
 ## Hardware
-* Arduino/Genuino (Uno, Mega)
+* Arduino/Genuino (Mega) (Uno and Arduino Ethernet don't have enough memory)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
@@ -43,7 +43,7 @@ More usages in the `examples` folder
 * Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
-* 1.6.9
+* 1.8.0
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
