@@ -46,6 +46,11 @@ typedef struct AppleMIDI_InvitationAccepted
 		strncpy(this->sessionName, static_cast<const char*>(name), SESSION_NAME_MAX_LEN);
 	}
 
+	inline uint8_t getLength()
+	{
+		return sizeof(AppleMIDI_InvitationAccepted) - (SESSION_NAME_MAX_LEN) + strlen(sessionName);
+	}
+
 private:
 	void init()
 	{

@@ -1428,7 +1428,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 		ia.initiatorToken = AppleMIDI_Util::toEndian(ia.initiatorToken);
 		ia.ssrc           = AppleMIDI_Util::toEndian(ia.ssrc);
 
-		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ia), sizeof(ia));
+		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ia), ia.getLength());
 		Debug::Assert(bytesWritten == sizeof(ia), "error writing ia");
 
 	success = udp.endPacket();
@@ -1471,7 +1471,7 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 		in.initiatorToken = AppleMIDI_Util::toEndian(in.initiatorToken);
 		in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
 
-		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), sizeof(in));
+		size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), in.getLength());
 		Debug::Assert(bytesWritten == sizeof(in), "error writing in");
 
 	success = udp.endPacket();
