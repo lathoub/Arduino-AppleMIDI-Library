@@ -1,0 +1,12 @@
+{
+  "name": "AppleMidi",
+  "keywords": "communication, protocol",
+  "description": "Library code for AppleMIDI protocol",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lathoub/Arduino-AppleMidi-Library.git"
+  },
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
