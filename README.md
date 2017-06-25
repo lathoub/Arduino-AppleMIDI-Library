@@ -43,7 +43,7 @@ More usages in the `examples` folder
 * Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
-* 1.8.0
+* 1.8.3
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
