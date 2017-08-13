@@ -102,8 +102,7 @@ static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
   Serial.print(F("Incoming NoteOn from channel:"));
   Serial.print(channel);
   Serial.print(F(" note:"));
-  Serial.print(note);
-  Serial.print(F(" velocity:"));
+  Serial.print(note);  Serial.print(F(" velocity:"));
   Serial.print(velocity);
   Serial.println();
 }
@@ -125,7 +124,7 @@ static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiClock() {
-  Serial.println(F("Clock"));
+/  Serial.println(F("Clock"));
 }
 
 // -----------------------------------------------------------------------------
@@ -173,7 +172,7 @@ static void OnAppleMidiActiveSensing() {
 // -----------------------------------------------------------------------------
 static void OnAppleMidiReset() {
   Serial.println(F("Reset"));
-  asm volatile ("jmp 0");
+  // asm volatile ("jmp 0");
 }
 
 // -----------------------------------------------------------------------------
