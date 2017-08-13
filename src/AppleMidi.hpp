@@ -1627,7 +1627,13 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 		_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
 		// Length
-		uint8_t length = 16 | 3; // Adds the P-Flag to the length octet
+		uint8_t length = 16; // Add the P-Flag and then length octet
+		if (inType == ProgramChange || inType == AfterTouchChannel) {
+			length |= 2;
+		}
+		else {
+			length |= 3;
+		}
 		_contentUDP.write(&length, 1);
 
 		// Command Section
