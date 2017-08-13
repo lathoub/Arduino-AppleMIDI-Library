@@ -1,5 +1,3 @@
-
-#include <SPI.h>
 #include <Ethernet.h>
 
 #include "AppleMidi.h"
@@ -15,6 +13,14 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
 
+// Code size:
+//
+// IDE 1.8.3
+//
+// Arduino Ethernet / Uno
+// Sketch uses 23976 bytes (74%) of program storage space. Maximum is 32256 bytes.
+// Global variables use 969 bytes (47%) of dynamic memory, leaving 1079 bytes for local variables. Maximum is 2048 bytes.
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -26,25 +32,25 @@ void setup()
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
-  Serial.print("Getting IP address...");
+  Serial.print(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
     Serial.println();
-    Serial.println( "Failed DHCP, check network cable & reboot" );
+    Serial.println(F("Failed DHCP, check network cable & reboot"));
     for (;;)
       ;
   }
 
   Serial.println();
-  Serial.print("IP address is ");
+  Serial.print(F("IP address is "));
   Serial.println(Ethernet.localIP());
 
-  Serial.println("OK, now make sure you an rtpMIDI session that is Enabled");
-  Serial.print("Add device named Arduino with Host/Port ");
+  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  Serial.print(F("Add device named Arduino with Host/Port "));
   Serial.print(Ethernet.localIP());
-  Serial.println(":5004");
-  Serial.println("Then press the Connect button");
-  Serial.println("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes");
+  Serial.println(F(":5004"));
+  Serial.println(F("Then press the Connect button"));
+  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
   AppleMIDI.begin("test");
@@ -55,7 +61,7 @@ void setup()
   AppleMIDI.OnReceiveNoteOn(OnAppleMidiNoteOn);
   AppleMIDI.OnReceiveNoteOff(OnAppleMidiNoteOff);
 
-  Serial.println("Sending NoteOn/Off of note 45, every second");
+  Serial.println(F("Sending NoteOn/Off of note 45, every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -71,11 +77,11 @@ void loop()
   if (isConnected && (millis() - t0) > 1000)
   {
     t0 = millis();
-    //   Serial.print(".");
+    //   Serial.print(F(".");
 
-    int note = 45;
-    int velocity = 55;
-    int channel = 1;
+    byte note = 45;
+    byte velocity = 55;
+    byte channel = 1;
 
     AppleMIDI.noteOn(note, velocity, channel);
     AppleMIDI.noteOff(note, velocity, channel);
@@ -91,7 +97,7 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(uint32_t ssrc, char* name) {
   isConnected = true;
-  Serial.print("Connected to session ");
+  Serial.print(F("Connected to session "));
   Serial.println(name);
 }
 
@@ -100,18 +106,18 @@ void OnAppleMidiConnected(uint32_t ssrc, char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(uint32_t ssrc) {
   isConnected = false;
-  Serial.println("Disconnected");
+  Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  Serial.print("Incoming NoteOn from channel:");
+static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
+  Serial.print(F("Incoming NoteOn from channel:"));
   Serial.print(channel);
-  Serial.print(" note:");
+  Serial.print(F(" note:"));
   Serial.print(note);
-  Serial.print(" velocity:");
+  Serial.print(F(" velocity:"));
   Serial.print(velocity);
   Serial.println();
 }
@@ -119,12 +125,12 @@ void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  Serial.print("Incoming NoteOff from channel:");
+static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
+  Serial.print(F("Incoming NoteOff from channel:"));
   Serial.print(channel);
-  Serial.print(" note:");
+  Serial.print(F(" note:"));
   Serial.print(note);
-  Serial.print(" velocity:");
+  Serial.print(F(" velocity:"));
   Serial.print(velocity);
   Serial.println();
 }
