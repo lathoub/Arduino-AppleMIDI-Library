@@ -1500,7 +1500,7 @@ public:
 	decodemidi(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("decodemidi");
+Serial.println(F("decodemidi"));
 #endif
 
 		int	consumed = 0;
@@ -1520,26 +1520,33 @@ Serial.print ("sanity check failed");
 		/* midi realtime-data -> one octet -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
 		* not be intermingled with other MIDI-commands, so we handle this case right here and return */
 		if ( octet >= 0xf8 ) {
-			//proto_item *command_item;
-			//proto_tree *command_tree;
-			//const gchar *valstr;
-
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("RealTime");
+Serial.println(F("RealTime"));
 #endif
 
-			//valstr = val_to_str( octet, rtp_midi_common_status, rtp_midi_unknown_value_hex );
-			//command_item = proto_tree_add_text(tree, tvb, offset, 1, "%s", valstr );
-			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command);
-			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset, 1, ENC_BIG_ENDIAN );
+			switch (octet)
+			{
+			case RTP_MIDI_STATUS_COMMON_REALTIME_TIMING_CLOCK:
+				ext_consumed = decode_realtime_timing_clock(rtpMidi);
+				break;
+			case RTP_MIDI_STATUS_COMMON_REALTIME_START:
+				ext_consumed = decode_realtime_start(rtpMidi);
+				break;
+			case RTP_MIDI_STATUS_COMMON_REALTIME_CONTINUE:
+				ext_consumed = decode_realtime_continue(rtpMidi);
+				break;
+			case RTP_MIDI_STATUS_COMMON_REALTIME_STOP:
+				ext_consumed = decode_realtime_stop(rtpMidi);
+				break;
+			case RTP_MIDI_STATUS_COMMON_REALTIME_ACTIVE_SENSING:
+				ext_consumed = decode_realtime_active_sensing(rtpMidi);
+				break;
+			case RTP_MIDI_STATUS_COMMON_REALTIME_SYSTEM_RESET:
+				ext_consumed = decode_realtime_system_reset(rtpMidi);
+				break;
+			}
 
-			//if ( cmd_count ) {
-			//	col_add_fstr(pinfo->cinfo, COL_INFO,", %s", valstr );
-			//} else {
-			//	col_add_str(pinfo->cinfo, COL_INFO, valstr );
-			//}
-
-			return 1;
+			return ext_consumed;
 		}
 
 		/* see if this first octet is a status message */
@@ -1653,8 +1660,8 @@ Serial.println(ext_consumed);
 			ext_consumed = decode_tune_request(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
 			break;
 		case RTP_MIDI_STATUS_COMMON_SYSEX_END:
-			ext_consumed = decode_sysex_end(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
-			break;
+			ext_consumed = decode_sysex_end(rtpMidi, packetBuffer, cmd_count, offset, cmd_len);
+			break;		
 		default:
 			ext_consumed = -1;
 #ifdef APPLEMIDI_DEBUG
@@ -2776,7 +2783,7 @@ Serial.println("aborted MIDI-command 2: song_position_pointer");
 			return -1;
 		}
 
-		int position = ( octet1 << 7 ) | octet2;
+		unsigned short position = ( octet1 << 7 ) | octet2;
 
 		//if ( cmd_count ) {
 		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
@@ -2908,6 +2915,111 @@ Serial.println("aborted MIDI-command: decode_song_select");
 
 		return consumed;
 	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Timing Clock. Sent 24 times per quarter note when synchronization is required
+	*/
+	static int
+	decode_realtime_timing_clock(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_timing_clock");
+#endif
+
+		rtpMidi->OnClock(NULL);
+
+		return 1;
+	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Start. Start the current sequence playing. (This message will be followed with Timing Clocks).
+	*/
+	static int
+	decode_realtime_start(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_start");
+#endif
+
+		rtpMidi->OnStart(NULL);
+
+		return 1;
+	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Continue. Continue at the point the sequence was Stopped.
+	*/
+	static int
+	decode_realtime_continue(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_continue");
+#endif
+
+		rtpMidi->OnContinue(NULL);
+
+		return 1;
+	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Stop. Stop the current sequence.
+	*/
+	static int
+		decode_realtime_stop(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_stop");
+#endif
+
+		rtpMidi->OnStop(NULL);
+
+		return 1;
+	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Active Sensing. This message is intended to be sent repeatedly to tell the receiver 
+	* that a connection is alive. Use of this message is optional. When initially received, 
+	* the receiver will expect to receive another Active Sensing message each 300ms (max), 
+	* and if it does not then it will assume that the connection has been terminated.
+	* At termination, the receiver will turn off all voices and return to normal 
+	* (non- active sensing) operation. 
+	*/
+	static int
+	decode_realtime_active_sensing(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_active_sensing");
+#endif
+
+		rtpMidi->OnActiveSensing(NULL);
+
+		return 1;
+	}
+
+	/*
+	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+	* Reset. Reset all receivers in the system to power-up status. This should be used sparingly, 
+	* preferably under manual control. In particular, it should not be sent on power-up.
+	*/
+	static int
+	decode_realtime_system_reset(IAppleMidi* rtpMidi) {
+
+#ifdef APPLEMIDI_DEBUG_VERBOSE
+		Serial.println("decode_realtime_system_reset");
+#endif
+
+		rtpMidi->OnReset(NULL);
+
+		return 1;
+	}
+
+
+
 
 	/*
 	 * Here the chapter Q of the channel-journal is decoded.

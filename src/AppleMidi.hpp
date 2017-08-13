@@ -36,7 +36,7 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 	mContinueCallback				= NULL;
 	mStopCallback					= NULL;
 	mActiveSensingCallback			= NULL;
-	mSystemResetCallback			= NULL;
+	mResetCallback			= NULL;
 #endif
 
 #if APPLEMIDI_USE_EVENTS
@@ -897,7 +897,7 @@ void AppleMidi_Class<UdpClass>::OnSongSelect(void* sender, DataByte songNr)
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSongPosition(void* sender, int value)
+void AppleMidi_Class<UdpClass>::OnSongPosition(void* sender, unsigned short value)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> SongPosition (c=");
@@ -935,6 +935,85 @@ void AppleMidi_Class<UdpClass>::OnTuneRequest(void* sender)
 
 	if (mTuneRequestCallback)
 		mTuneRequestCallback();
+}
+
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnClock(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> Clock ()");
+#endif
+
+	if (mClockCallback)
+		mClockCallback();
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnStart(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> Start ()");
+#endif
+
+	if (mStartCallback)
+		mStartCallback();
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnContinue(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> Continue ()");
+#endif
+
+	if (mContinueCallback)
+		mContinueCallback();
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnStop(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> Stop ()");
+#endif
+
+	if (mStopCallback)
+		mStopCallback();
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnActiveSensing(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> ActiveSensing ()");
+#endif
+
+	if (mActiveSensingCallback)
+		mActiveSensingCallback();
+}
+
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnReset(void* sender)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> Reset ()");
+#endif
+
+	if (mResetCallback)
+		mResetCallback();
 }
 
 //------------------------------------------------------------------------------
@@ -1662,7 +1741,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 
 		return;
 	}
-	else if (inType >= TuneRequest && inType <= SystemReset)
+	else if (inType >= TuneRequest && inType <= Reset)
 		internalSend(session, inType); // System Real-time and 1 byte.
 
 }
@@ -1688,7 +1767,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	case Stop:
 	case Continue:
 	case ActiveSensing:
-	case SystemReset:
+	case Reset:
 		_contentUDP.write(&octet, 1);
 		break;
 	default:
@@ -2110,7 +2189,7 @@ inline void AppleMidi_Class<UdpClass>::timeCodeQuarterFrame(DataByte inData)
 \param inBeats    The number of beats since the start of the song.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::songPosition(unsigned int inBeats)
+inline void AppleMidi_Class<UdpClass>::songPosition(unsigned short inBeats)
 {
 	byte octet1 = inBeats & 0x7F;
 	byte octet2 = (inBeats >> 7) & 0x7F;
@@ -2130,9 +2209,9 @@ inline void AppleMidi_Class<UdpClass>::songSelect(DataByte inSongNumber)
 
 /*! \brief Send a Song Select message */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::systemReset()
+inline void AppleMidi_Class<UdpClass>::reset()
 {
-	send(SystemReset);
+	send(Reset);
 }
 
 /*! \brief Send a Song Select message */
@@ -2169,7 +2248,7 @@ template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveAfterTo
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceivePitchBend(void(*fptr)(byte channel, int bend))                        { mPitchBendCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSystemExclusive(void(*fptr)(byte* array, byte size))                  { mSystemExclusiveCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTimeCodeQuarterFrame(void(*fptr)(byte data))                          { mTimeCodeQuarterFrameCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongPosition(void(*fptr)(unsigned int beats))                         { mSongPositionCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongPosition(void(*fptr)(unsigned short beats))                       { mSongPositionCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongSelect(void(*fptr)(byte songnumber))                              { mSongSelectCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTuneRequest(void(*fptr)(void))                                        { mTuneRequestCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveClock(void(*fptr)(void))                                              { mClockCallback = fptr; }
@@ -2177,7 +2256,7 @@ template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveStart(v
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveContinue(void(*fptr)(void))                                           { mContinueCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveStop(void(*fptr)(void))                                               { mStopCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveActiveSensing(void(*fptr)(void))                                      { mActiveSensingCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSystemReset(void(*fptr)(void))                                        { mSystemResetCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveReset(void(*fptr)(void))                                              { mResetCallback = fptr; }
 
 #endif
 
