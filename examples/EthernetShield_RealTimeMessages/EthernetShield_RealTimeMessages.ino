@@ -172,7 +172,6 @@ static void OnAppleMidiActiveSensing() {
 // -----------------------------------------------------------------------------
 static void OnAppleMidiReset() {
   Serial.println(F("Reset"));
-  // asm volatile ("jmp 0");
 }
 
 // -----------------------------------------------------------------------------
