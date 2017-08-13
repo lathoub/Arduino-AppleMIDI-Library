@@ -32,7 +32,7 @@ void loop()
 More usages in the `examples` folder
 
 ## Hardware
-* Arduino/Genuino (Mega) (Uno and Arduino Ethernet don't have enough memory)
+* Arduino/Genuino (Mega, Uno and Arduino Ethernet)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
