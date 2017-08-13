@@ -165,7 +165,11 @@ static void OnAppleMidiActiveSensing() {
 }
 
 // -----------------------------------------------------------------------------
-//
+// (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+// Reset. 
+// Reset all receivers in the system to power-up status. This should be used 
+// sparingly, preferably under manual control. In particular, it should not be 
+// sent on power-up.
 // -----------------------------------------------------------------------------
 static void OnAppleMidiReset() {
   Serial.println(F("Reset"));
@@ -173,10 +177,10 @@ static void OnAppleMidiReset() {
 }
 
 // -----------------------------------------------------------------------------
-// Reset. 
-// Reset all receivers in the system to power-up status. This should be used 
-// sparingly, preferably under manual control. In particular, it should not be 
-// sent on power-up.
+// (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+// Song Position Pointer. 
+// This is an internal 14 bit register that holds the number of MIDI beats 
+// (1 beat= six MIDI clocks) since the start of the song. l is the LSB, m the MSB.
 // -----------------------------------------------------------------------------
 static void OnAppleMidiSongPosition(unsigned short a) {
   Serial.print  (F("SongPosition: "));
