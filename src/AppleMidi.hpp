@@ -2112,7 +2112,7 @@ default value for ArrayContainsBoundaries is set to 'false' for compatibility
 with previous versions of the library.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, const byte* inArray, 	bool inArrayContainsBoundaries)
+inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, byte* inArray, bool inArrayContainsBoundaries)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("sysEx ");
