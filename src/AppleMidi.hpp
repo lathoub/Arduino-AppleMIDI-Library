@@ -26,7 +26,7 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 	mProgramChangeCallback			= NULL;
 	mAfterTouchChannelCallback		= NULL;
 	mPitchBendCallback				= NULL;
-	mSystemExclusiveCallback		= NULL;
+	mSysExCallback					= NULL;
 	mTimeCodeQuarterFrameCallback	= NULL;
 	mSongPositionCallback			= NULL;
 	mSongSelectCallback				= NULL;
@@ -36,7 +36,7 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 	mContinueCallback				= NULL;
 	mStopCallback					= NULL;
 	mActiveSensingCallback			= NULL;
-	mResetCallback			= NULL;
+	mResetCallback			        = NULL;
 #endif
 
 #if APPLEMIDI_USE_EVENTS
@@ -1016,6 +1016,19 @@ void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 		mResetCallback();
 }
 
+/*! \brief .
+*/
+template<class UdpClass>
+void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, DataByte* data, unsigned short size)
+{
+#if (APPLEMIDI_DEBUG)
+	Serial.print("> SysEx ()");
+#endif
+
+	if (mSysExCallback)
+		mSysExCallback(data, size);
+}
+
 //------------------------------------------------------------------------------
 
 /*! \brief Find a free session slot.
@@ -1668,6 +1681,20 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 	return;
 }
 
+template<class UdpClass>
+inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte* data, unsigned short length)
+{
+	for (int i = 0; i < MAX_SESSIONS; i++)
+	{
+		if (Sessions[i].ssrc != 0)
+		{
+			internalSend(Sessions[i], inType, data, length);
+		}
+	}
+
+	return;
+}
+
 /*! \brief Generate and send a MIDI message from the values given.
 \param inType    The message type (see type defines for reference)
 \param inData1   The first data byte.
@@ -1743,7 +1770,6 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	}
 	else if (inType >= TuneRequest && inType <= Reset)
 		internalSend(session, inType); // System Real-time and 1 byte.
-
 }
 
 template<class UdpClass>
@@ -1852,6 +1878,35 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 #if APPLEMIDI_USE_RUNNING_STATUS
 	if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
 #endif
+}
+
+template<class UdpClass>
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte* data, unsigned short length)
+{
+	_rtpMidi.ssrc = getSynchronizationSource();
+	_rtpMidi.sequenceNr++;
+	_rtpMidi.timestamp = _rtpMidiClock.Now();
+	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
+
+	uint8_t s = length + 2; // TODO arraycontinuetion
+	_contentUDP.write(&s, 1);
+
+	DataByte sysExStart = (DataByte)0xF0;
+	DataByte sysExEnd   = (DataByte)0xF7;
+
+	switch (inType)
+	{
+	case SysEx: 
+		_contentUDP.write(&sysExStart, 1);
+		_contentUDP.write(data, length);
+		_contentUDP.write(&sysExEnd, 1);
+		break;
+	default:
+		// Invalid 
+		break;
+	}
+
+	_rtpMidi.endWrite(_contentUDP);
 }
 
 template<class UdpClass>
@@ -2047,7 +2102,7 @@ inline void AppleMidi_Class<UdpClass>::pitchBend(double inPitchValue, Channel in
 	pitchBend(value, inChannel);
 }
 
-/*! \brief Generate and send a System Exclusive frame.
+/*! \brief Generate and send a System Ex frame.
 \param inLength  The size of the array to send
 \param inArray   The byte array containing the data to send
 \param inArrayContainsBoundaries When set to 'true', 0xF0 & 0xF7 bytes
@@ -2057,42 +2112,13 @@ default value for ArrayContainsBoundaries is set to 'false' for compatibility
 with previous versions of the library.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sysEx(unsigned int inLength, const byte* inArray, 	bool inArrayContainsBoundaries)
+inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, const byte* inArray, 	bool inArrayContainsBoundaries)
 {
-	// USE SEND!!!!!
-	_rtpMidi.ssrc = getSynchronizationSource();
-	_rtpMidi.sequenceNr++;
-	// _rtpMidi.timestamp = _rtpMidiClock.Now();
-//	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
-
-	uint8_t length = inLength + 1 + ((inArrayContainsBoundaries) ? 0 : 2);
-	_contentUDP.write(&length, 1);
-
-	uint8_t type = SystemExclusive;
-	_contentUDP.write(&type, 1);
-
-	if (!inArrayContainsBoundaries)
-	{
-		uint8_t octet = 0xF0;
-		_contentUDP.write(&octet, 1);
-	}
-
-	_contentUDP.write(inArray, inLength);
-
-	if (!inArrayContainsBoundaries)
-	{
-		uint8_t octet = 0xF7;
-		_contentUDP.write(&octet, 1);
-	}
-
-	_rtpMidi.endWrite(_contentUDP);
-
-	// Do not cancel Running Status for real-time messages as they can be
-	// interleaved within any message. Though, TuneRequest can be sent here,
-	// and as it is a System Common message, it must reset Running Status.
-#if APPLEMIDI_USE_RUNNING_STATUS
-	if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+#if (APPLEMIDI_DEBUG)
+	Serial.print("sysEx ");
 #endif
+
+	send(SysEx, inArray, inLength);
 }
 
 /*! \brief Send a Tune Request message.
@@ -2246,7 +2272,7 @@ template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveControl
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveProgramChange(void(*fptr)(byte channel, byte number))                 { mProgramChangeCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveAfterTouchChannel(void(*fptr)(byte channel, byte pressure))           { mAfterTouchChannelCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceivePitchBend(void(*fptr)(byte channel, int bend))                        { mPitchBendCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSystemExclusive(void(*fptr)(byte* array, byte size))                  { mSystemExclusiveCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSysEx(void(*fptr)(byte* array, unsigned short size))                  { mSysExCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTimeCodeQuarterFrame(void(*fptr)(byte data))                          { mTimeCodeQuarterFrameCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongPosition(void(*fptr)(unsigned short beats))                       { mSongPositionCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongSelect(void(*fptr)(byte songnumber))                              { mSongSelectCallback = fptr; }

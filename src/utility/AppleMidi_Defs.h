@@ -136,7 +136,7 @@ enum MidiType
     ProgramChange         = 0xC0,    ///< Program Change
     AfterTouchChannel     = 0xD0,    ///< Channel (monophonic) AfterTouch
     PitchBend             = 0xE0,    ///< Pitch Bend
-    SystemExclusive       = 0xF0,    ///< System Exclusive
+    SysEx                 = 0xF0,    ///< System Exclusive
     TimeCodeQuarterFrame  = 0xF1,    ///< System Common - MIDI Time Code Quarter Frame
     SongPosition          = 0xF2,    ///< System Common - Song Position Pointer
     SongSelect            = 0xF3,    ///< System Common - Song Select
@@ -263,7 +263,7 @@ struct Message
      */
     DataByte data2;
 
-    /*! System Exclusive dedicated byte array.
+    /*! System Ex dedicated byte array.
      \n Array length is stocked on 16 bits,
      in data1 (LSB) and data2 (MSB)
      */

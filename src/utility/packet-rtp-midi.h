@@ -1104,18 +1104,18 @@ class PacketRtpMidi {
 
 public:
 	PacketRtpMidi() {
-		#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("PacketRtpMidi verbose");
-		#endif
+#endif
 	}
 
 	static int dissect_rtp_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize) {
-		#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.print ("dissect_rtp_midi ");
 		Serial.print (dissector->_identifier);
 		Serial.print (", packetSize is ");
 		Serial.println (packetSize);
-		#endif
+#endif
 
 		int consumed = PacketRtp::dissect_rtp(dissector, appleMidi, packetBuffer, packetSize);
 
@@ -1140,10 +1140,10 @@ public:
 		/* ...followed by a length-field of at least 4 bits */
 		unsigned int cmd_len = flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
-		#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.print ("cmd_len is ");
 		Serial.println (cmd_len);
-		#endif
+#endif
 
 		/* see if we have small or large len-field */
 		if (flags & RTP_MIDI_CS_FLAG_B) {
@@ -1156,10 +1156,10 @@ public:
 
 		/* if we have a command-section -> dissect it */
 		if (cmd_len) {
-			#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.print ("dissect command section with packet size ");
 			Serial.println (packetSize);
-			#endif
+#endif
 
 			/* No commands decoded yet */
 			int cmd_count = 0;
@@ -1169,10 +1169,10 @@ public:
 
 			/* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
 			while (cmd_len) {
-				#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print ("cmd count is ");
 				Serial.println (cmd_count);
-				#endif
+#endif
 
 				/* for the first command we only have a delta-time if Z-Flag is set */
 				if ( (cmd_count) || (flags & RTP_MIDI_CS_FLAG_Z) ) {
@@ -1219,9 +1219,9 @@ public:
 
 		/* if we have a journal-section -> dissect it */
 		if ( flags & RTP_MIDI_CS_FLAG_J ) {
-			#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			Serial.println("journal section");
-			#endif
+#endif
 
 			/* lets get the main flags from the recovery journal header */
 			flags = packetBuffer[offset];
@@ -1254,24 +1254,24 @@ public:
 			if ( flags & RTP_MIDI_JS_FLAG_A	 ) {
 				/* iterate through all the channels specified in header */
 				for (int i = 0; i <= totchan; i++ ) {
-					#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 					Serial.print("Processing channel journal: ");
 					Serial.println(i);
-					#endif
+#endif
 
 					int consumed = decode_channel_journal(appleMidi, packetBuffer, offset);
 
-					#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 					Serial.print("Consumed by channel journal (");
 					Serial.print(i);
 					Serial.print("): ");
 					Serial.println(consumed);
-					#endif
+#endif
 
 					if ( -1 == consumed ) {
-						#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG
 						Serial.println("ReportedBoundsError 4");
-						#endif
+#endif
 
 						return offset;
 					}
@@ -1291,9 +1291,9 @@ public:
 	static int
 	decode_system_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
 	{
-		#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 		Serial.println("decode_system_journal");
-		#endif
+#endif
 		unsigned int start_offset = offset;
 		int				consumed     = 0;
 		int				ext_consumed = 0;
@@ -1376,9 +1376,9 @@ public:
 
 			/* Do we have a program change chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_P ) {
-				#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 					Serial.println("cj_flag_p: 3");
-				#endif
+#endif
 
 				offset	 += 3;
 				consumed += 3;
@@ -1387,10 +1387,10 @@ public:
 			/* Do we have a control chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_C ) {
 				ext_consumed = decode_cj_chapter_c(rtpMidi, packetBuffer, offset );
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_c: ");
 				Serial.println(ext_consumed);
-	#endif
+#endif
 
 				if ( ext_consumed < 0 ) {
 					return ext_consumed;
@@ -1403,10 +1403,10 @@ public:
 			/* Do we have a parameter changes? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_M ) {
 				ext_consumed = decode_cj_chapter_m(rtpMidi, packetBuffer, offset );
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_m: ");
 				Serial.println(ext_consumed);
-	#endif
+#endif
 
 				if ( ext_consumed < 0 ) {
 					//return ext_consumed;
@@ -1428,10 +1428,10 @@ public:
 			/* Do we have a note on/off chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_N ) {
 				ext_consumed = decode_cj_chapter_n(rtpMidi, packetBuffer, offset );
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_n: ");
 				Serial.println(ext_consumed);
-	#endif
+#endif
 
 				if ( ext_consumed < 0 ) {
 					//return ext_consumed;
@@ -1443,10 +1443,10 @@ public:
 			/* Do we have a note command extras chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_E ) {
 				ext_consumed = decode_cj_chapter_e(rtpMidi, packetBuffer, offset );
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_e: ");
 				Serial.println(ext_consumed);
-	#endif
+#endif
 
 				if ( ext_consumed < 0 ) {
 					//return ext_consumed;
@@ -1465,10 +1465,10 @@ public:
 			/* Do we have a poly aftertouch chapter? */
 			if ( chanflags & RTP_MIDI_CJ_FLAG_A ) {
 				ext_consumed = decode_cj_chapter_a(rtpMidi, packetBuffer, offset );
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 				Serial.print("cj_chapter_a: ");
 				Serial.println(ext_consumed);
-	#endif
+#endif
 
 				if ( ext_consumed < 0 ) {
 					//return ext_consumed;
@@ -1478,12 +1478,12 @@ public:
 
 			/* Make sanity check for consumed data vs. stated length of this channels journal */
 			if ( consumed != chanjourlen ) {
-	#ifdef APPLEMIDI_DEBUG_VERBOSE
+#ifdef APPLEMIDI_DEBUG_VERBOSE
 			   Serial.print("Calculated consumption for channel journal: ");
 			   Serial.print(consumed);
 			 Serial.print(" != Channel Journal Length: ");
 			   Serial.println(chanjourlen);
-	#endif
+#endif
 				return chanjourlen;
 			}
 
@@ -1627,8 +1627,8 @@ Serial.println(F("RealTime"));
 			/* external decoder informed us of error -> pass this through */
 			if (ext_consumed < 0) {
 #ifdef APPLEMIDI_DEBUG
-Serial.print("Midi Consumed < 0. ");
-Serial.println(ext_consumed);
+				Serial.print("Midi Consumed < 0. ");
+				Serial.println(ext_consumed);
 #endif
 				return ext_consumed;
 			}
@@ -2590,7 +2590,7 @@ Serial.println("decode_sysex_common_educational");
 	decode_sysex_start(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("decode_sysex_start");
+		Serial.println("decode_sysex_start");
 #endif
 
 		int		 consumed	= 0;

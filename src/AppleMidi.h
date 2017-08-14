@@ -63,6 +63,7 @@ public:
 	virtual void OnStop(void* sender) = 0;
 	virtual void OnActiveSensing(void* sender) = 0;
 	virtual void OnReset(void* sender) = 0;
+	virtual void OnSysEx(void* sender, DataByte* data, unsigned short size) = 0;
 };
 
 class IAppleMidi : public IRtpMidi
@@ -176,6 +177,7 @@ public:
 	inline void OnStop(void* sender);
 	inline void OnActiveSensing(void* sender);
 	inline void OnReset(void* sender);
+	inline void OnSysEx(void* sender, DataByte* data, unsigned short size);
 
 private:
 	inline void write(UdpClass&, AppleMIDI_InvitationRejected, IPAddress ip, uint16_t port);
@@ -195,7 +197,7 @@ public:
     inline void pitchBend(double inPitchValue, Channel inChannel);
     inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
     inline void afterTouch(DataByte inPressure, Channel inChannel);
-    inline void sysEx(unsigned int inLength, const byte* inArray, bool inArrayContainsBoundaries = true);
+    inline void sysEx(unsigned short inLength, const byte* inArray, bool inArrayContainsBoundaries = true);
     inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
     inline void timeCodeQuarterFrame(DataByte inData);
     inline void songPosition(unsigned short inBeats);
@@ -210,16 +212,18 @@ public:
     inline void tick();
 
 protected:
-    inline void send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
-    inline void send(MidiType inType, DataByte inData1, DataByte inData2);
+	inline void send(MidiType inType, DataByte inData1, DataByte inData2, Channel);
+	inline void send(MidiType inType, DataByte inData1, DataByte inData2);
     inline void send(MidiType inType, DataByte inData);
     inline void send(MidiType inType);
+	inline void send(MidiType inType, DataByte* inData, unsigned short);
 
 private:
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData);
-    inline void internalSend(Session_t&, MidiType inType);
+	inline void internalSend(Session_t&, MidiType inType);
+	inline void internalSend(Session_t&, MidiType inType, DataByte*, unsigned short);
 
 	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 
@@ -274,7 +278,7 @@ public:
     inline void OnReceiveProgramChange(void (*fptr)(byte channel, byte number));
     inline void OnReceiveAfterTouchChannel(void (*fptr)(byte channel, byte pressure));
     inline void OnReceivePitchBend(void (*fptr)(byte channel, int bend));
-    inline void OnReceiveSystemExclusive(void (*fptr)(byte * array, byte size));
+    inline void OnReceiveSysEx(void (*fptr)(byte * array, unsigned short size));
     inline void OnReceiveTimeCodeQuarterFrame(void (*fptr)(byte data));
     inline void OnReceiveSongPosition(void (*fptr)(unsigned short beats));
     inline void OnReceiveSongSelect(void (*fptr)(byte songnumber));
@@ -305,7 +309,7 @@ private:
     void (*mTuneRequestCallback)(void);
     void (*mTimeCodeQuarterFrameCallback)(byte data);
 
-    void (*mSystemExclusiveCallback)(byte * array, byte size);
+    void (*mSysExCallback)(byte * array, unsigned short size);
     void (*mClockCallback)(void);
     void (*mStartCallback)(void);
     void (*mContinueCallback)(void);
