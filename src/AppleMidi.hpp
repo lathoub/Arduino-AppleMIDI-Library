@@ -1019,7 +1019,7 @@ void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, DataByte* data, unsigned short size)
+void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, byte* data, unsigned short size)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> SysEx ()");
@@ -1682,7 +1682,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte* data, unsigned short length)
+inline void AppleMidi_Class<UdpClass>::send(MidiType inType, byte* data, unsigned short length)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1881,7 +1881,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte* data, unsigned short length)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, byte* data, unsigned short length)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;

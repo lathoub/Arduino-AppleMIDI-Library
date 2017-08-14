@@ -63,7 +63,7 @@ public:
 	virtual void OnStop(void* sender) = 0;
 	virtual void OnActiveSensing(void* sender) = 0;
 	virtual void OnReset(void* sender) = 0;
-	virtual void OnSysEx(void* sender, DataByte* data, unsigned short size) = 0;
+	virtual void OnSysEx(void* sender, byte* data, unsigned short size) = 0;
 };
 
 class IAppleMidi : public IRtpMidi
@@ -177,7 +177,7 @@ public:
 	inline void OnStop(void* sender);
 	inline void OnActiveSensing(void* sender);
 	inline void OnReset(void* sender);
-	inline void OnSysEx(void* sender, DataByte* data, unsigned short size);
+	inline void OnSysEx(void* sender, byte* data, unsigned short size);
 
 private:
 	inline void write(UdpClass&, AppleMIDI_InvitationRejected, IPAddress ip, uint16_t port);
@@ -223,7 +223,7 @@ private:
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData);
 	inline void internalSend(Session_t&, MidiType inType);
-	inline void internalSend(Session_t&, MidiType inType, DataByte*, unsigned short);
+	inline void internalSend(Session_t&, MidiType inType, byte*, unsigned short);
 
 	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 
