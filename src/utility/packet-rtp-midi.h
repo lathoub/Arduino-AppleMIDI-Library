@@ -1466,9 +1466,17 @@ Serial.println("aborted MIDI-command 2: control_change");
 			 * if so, the last status-byte is consumed
 			 * as it belongs to the message
 			 */
-			if ( octet == RTP_MIDI_STATUS_COMMON_SYSEX_END ) {
-			//	break;
-			} 
+			if (octet == RTP_MIDI_STATUS_COMMON_SYSEX_END) {
+				rtpMidi->OnSysEx(NULL, &packetBuffer[offset - 1], consumed + 1); // Complete message
+				break;
+			}
+			else if (octet == RTP_MIDI_STATUS_COMMON_SYSEX_START) {
+				rtpMidi->OnSysEx(NULL, &packetBuffer[offset - 1], consumed); // Start
+				break;
+			}
+			else if (octet == RTP_MIDI_STATUS_COMMON_UNDEFINED_F4) {
+				//	break;
+			}
 
 			/* Is this command through? */
 			if ( octet & RTP_MIDI_COMMAND_STATUS_FLAG ) {
@@ -1476,7 +1484,6 @@ Serial.println("aborted MIDI-command 2: control_change");
 			}
 		}
 
-		rtpMidi->OnSysEx(NULL, &packetBuffer[offset], consumed - 1); // -1 so ze dont incllude the last sysex end byte
 		return consumed;
 	}
 
@@ -1640,9 +1647,11 @@ Serial.println("aborted MIDI-command: decode_song_select");
 			 * as it belongs to the message
 			 */
 			if ( octet == RTP_MIDI_STATUS_COMMON_SYSEX_END ) {
-				//status_str = rtp_midi_common_status_sysex_segment_end;
+				rtpMidi->OnSysEx(NULL, &packetBuffer[offset], consumed); // End
+				break;
 			} else if ( octet == RTP_MIDI_STATUS_COMMON_SYSEX_START ) {
-				//status_str = rtp_midi_common_status_sysex_segment;
+				rtpMidi->OnSysEx(NULL, &packetBuffer[offset], consumed - 1); // Middle
+				break;
 			}
 
 			/* Is this command through? */
@@ -1650,8 +1659,6 @@ Serial.println("aborted MIDI-command: decode_song_select");
 				break;
 			}
 		}
-
-		//Serial.println("decode_sysex_end");
 
 		return consumed;
 	}

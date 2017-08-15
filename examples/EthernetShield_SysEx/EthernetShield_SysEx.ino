@@ -77,7 +77,7 @@ void loop()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void SendSysEx(const byte* data, unsigned short length)
+void SendSysEx(const byte* data, uint16_t length)
 {
   //  Serial.print (F("sending sysex data "));
   //  Serial.print (data, HEX);
@@ -110,7 +110,11 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 //
 // -----------------------------------------------------------------------------
 void OnAppleMidiSysEx(const byte* data, uint16_t length) {
-  Serial.print(F("SYSX: "));
+  Serial.print(F("SYSX: ("));
+  Serial.print(getSysExStatus(data, length));
+  Serial.print(F(", "));
+  Serial.print(length);
+  Serial.print(F(" bytes) "));
   for (int i = 0; i < length; i++)
   {
     Serial.print(data[i], HEX);
@@ -118,4 +122,17 @@ void OnAppleMidiSysEx(const byte* data, uint16_t length) {
   }
   Serial.println();
 }
+
+char getSysExStatus(const byte* data, uint16_t length)
+{
+  if (data[0] == 0xF0 && data[length - 1] == 0xF7)
+    return 'F'; // Full SysEx Command
+  else if (data[0] == 0xF0 && data[length - 1] != 0xF7)
+    return 'S'; // Start of SysEx-Segment
+  else if (data[0] != 0xF0 && data[length - 1] != 0xF7)
+    return 'M'; // Middle of SysEx-Segment
+  else
+    return 'E'; // End of SysEx-Segment
+}
+
 

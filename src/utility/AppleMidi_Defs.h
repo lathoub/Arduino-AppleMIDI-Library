@@ -340,12 +340,9 @@ typedef struct {
 
 typedef struct {
     uint32_t				ssrc; // the unique identifier
-//	char[50]				name;
 	unsigned short			seqNum;
 	SessionInitiator		initiator;
 	SessionSyncronization_t	syncronization;
-	//IPAddress				controlIP;
-	//uint16_t				controlPort;
 	IPAddress				contentIP;
 	uint16_t				contentPort;
 	SessionInvite_t			invite;
