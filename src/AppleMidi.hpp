@@ -1019,7 +1019,7 @@ void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, byte* data, uint16_t length)
+void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> SysEx ()");
@@ -1682,7 +1682,7 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, byte* data, unsigned short length)
+inline void AppleMidi_Class<UdpClass>::send(MidiType inType, const byte* data, uint16_t length)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1881,7 +1881,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, byte* data, unsigned short length)
+inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, const byte* data, uint16_t length)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
@@ -2116,13 +2116,13 @@ inline void AppleMidi_Class<UdpClass>::pitchBend(double inPitchValue, Channel in
 \param inArray   The byte array containing the data to send
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, byte* inArray)
+inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("sysEx ");
 #endif
 
-	send(SysEx, inArray, inLength);
+	send(SysEx, data, length);
 }
 
 /*! \brief Send a Tune Request message.
@@ -2276,7 +2276,7 @@ template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveControl
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveProgramChange(void(*fptr)(byte channel, byte number))                 { mProgramChangeCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveAfterTouchChannel(void(*fptr)(byte channel, byte pressure))           { mAfterTouchChannelCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceivePitchBend(void(*fptr)(byte channel, int bend))                        { mPitchBendCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSysEx(void(*fptr)(byte* array, unsigned short size))                  { mSysExCallback = fptr; }
+template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSysEx(void(*fptr)(const byte* array, uint16_t size))                  { mSysExCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTimeCodeQuarterFrame(void(*fptr)(byte data))                          { mTimeCodeQuarterFrameCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongPosition(void(*fptr)(unsigned short beats))                       { mSongPositionCallback = fptr; }
 template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongSelect(void(*fptr)(byte songnumber))                              { mSongSelectCallback = fptr; }
