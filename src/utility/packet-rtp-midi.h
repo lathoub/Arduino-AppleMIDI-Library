@@ -1179,9 +1179,9 @@ public:
 					/* Decode a delta-time - if 0 is returned something went wrong */
 					int consumed = decodetime(appleMidi, packetBuffer, offset, cmd_len);
 					if ( -1 == consumed ) {
-						#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG
 						Serial.print ("ReportedBoundsError 1");
-						#endif
+#endif
 
 						return offset;
 					}
@@ -1196,9 +1196,9 @@ public:
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
 					int consumed = decodemidi(appleMidi, packetBuffer, cmd_count, offset, cmd_len, &runningstatus, &rsoffset);
 					if (-1 == consumed) {
-						#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG
 						Serial.print ("ReportedBoundsError 2");
-						#endif
+#endif
 
 						return offset;
 					}
@@ -1239,9 +1239,9 @@ public:
 				int consumed = decode_system_journal(appleMidi, packetBuffer, offset);
 
 				if ( -1 == consumed ) {
-					#ifdef APPLEMIDI_DEBUG
+#ifdef APPLEMIDI_DEBUG
 					Serial.print ("ReportedBoundsError 3");
-					#endif
+#endif
 
 					return offset;
 				}
@@ -1527,26 +1527,26 @@ Serial.println(F("RealTime"));
 			switch (octet)
 			{
 			case RTP_MIDI_STATUS_COMMON_REALTIME_TIMING_CLOCK:
-				ext_consumed = decode_realtime_timing_clock(rtpMidi);
+				rtpMidi->OnClock(NULL);
 				break;
 			case RTP_MIDI_STATUS_COMMON_REALTIME_START:
-				ext_consumed = decode_realtime_start(rtpMidi);
+				rtpMidi->OnStart(NULL);
 				break;
 			case RTP_MIDI_STATUS_COMMON_REALTIME_CONTINUE:
-				ext_consumed = decode_realtime_continue(rtpMidi);
+				rtpMidi->OnContinue(NULL);
 				break;
 			case RTP_MIDI_STATUS_COMMON_REALTIME_STOP:
-				ext_consumed = decode_realtime_stop(rtpMidi);
+				rtpMidi->OnStop(NULL);
 				break;
 			case RTP_MIDI_STATUS_COMMON_REALTIME_ACTIVE_SENSING:
-				ext_consumed = decode_realtime_active_sensing(rtpMidi);
+				rtpMidi->OnActiveSensing(NULL);
 				break;
 			case RTP_MIDI_STATUS_COMMON_REALTIME_SYSTEM_RESET:
-				ext_consumed = decode_realtime_system_reset(rtpMidi);
+				rtpMidi->OnReset(NULL);
 				break;
 			}
 
-			return ext_consumed;
+			return 1;
 		}
 
 		/* see if this first octet is a status message */
@@ -1601,10 +1601,6 @@ Serial.println(F("RealTime"));
 			case RTP_MIDI_STATUS_CHANNEL_POLYPHONIC_KEY_PRESSURE:
 				ext_consumed = decode_poly_pressure(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
-
-			// If these below calls are uncommented, the ESP8266 crashes when the execution comes here
-			// even if the functions are NOT called. Works fine on ARDUINO
-
 			case RTP_MIDI_STATUS_CHANNEL_CONTROL_CHANGE:
 				ext_consumed = decode_control_change(rtpMidi, packetBuffer, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs);
 				break;
@@ -1649,12 +1645,6 @@ Serial.println(F("RealTime"));
 			break;
 		case RTP_MIDI_STATUS_COMMON_SONG_SELECT:
 			ext_consumed = decode_song_select(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
-			break;
-		case RTP_MIDI_STATUS_COMMON_UNDEFINED_F4:
-			ext_consumed = decode_undefined_f4(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
-			break;
-		case RTP_MIDI_STATUS_COMMON_UNDEFINED_F5:
-			ext_consumed = decode_undefined_f5(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
 			break;
 		case RTP_MIDI_STATUS_COMMON_TUNE_REQUEST:
 			ext_consumed = decode_tune_request(rtpMidi, packetBuffer, cmd_count, offset, cmd_len );
@@ -1754,8 +1744,6 @@ Serial.println("aborted MIDI-command: note_off");
 			return 1;
 		}
 
-		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
-
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
 			if ( using_rs ) {
@@ -1834,8 +1822,6 @@ Serial.println("!cmd_len");
 Serial.println("aborted MIDI-command: note_on");
 #endif
 		}
-
-		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
 
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
@@ -1916,8 +1902,6 @@ Serial.println("aborted MIDI-command: poly_pressure");
 			return 1;
 		}
 
-		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
-
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
 			if ( using_rs ) {
@@ -1997,11 +1981,6 @@ Serial.println("aborted MIDI-command: channel_pressure");
 		} else {
 		}
 
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, p=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, program );
-		//} else {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO, "%s (c=%d, p=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, program );
-		//}
 		if (rtpMidi->PassesFilter(NULL, type, channel))
 			rtpMidi->OnChannelPressure(NULL, channel, pressure);
 
@@ -2078,12 +2057,6 @@ Serial.println("aborted MIDI-command 2: pitch_bend_change");
 		} else {
 		}
 
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//} else {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO, "%s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//}
-
 		if (rtpMidi->PassesFilter(NULL, type, channel))
 			rtpMidi->OnPitchBendChange(NULL, channel, pitch);
 
@@ -2135,11 +2108,6 @@ Serial.println("aborted MIDI-command: program_change");
 		} else {
 		}
 
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, p=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, program );
-		//} else {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO, "%s (c=%d, p=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, program );
-		//}
 		if (rtpMidi->PassesFilter(NULL, type, channel))
 			rtpMidi->OnProgramChange(NULL, channel, program);
 
@@ -2185,8 +2153,6 @@ Serial.println("aborted MIDI-command: control_change");
 #endif
 			return cmd_len;
 		}
-
-		//note_str = val_to_str( note, rtp_midi_note_values, rtp_midi_unknown_value_dec );
 
 		/* broken: we have only one further octet */
 		if ( cmd_len < 2 ) {
@@ -2276,7 +2242,6 @@ Serial.println("decode_sysex_common_nrt_sd_packet");
 
 		return 1;
 	}
-
 
 	/*
 	* Here a Sysex-Common Non-Realtime General Information command is decoded.
@@ -2614,8 +2579,6 @@ Serial.println("decode_sysex_common_educational");
 				//status_str = rtp_midi_common_status_sysex_segment_complete;
 			} else if ( octet == RTP_MIDI_STATUS_COMMON_SYSEX_START ) {
 				//status_str = rtp_midi_common_status_sysex_segment_start;
-			} else if ( octet == RTP_MIDI_STATUS_COMMON_UNDEFINED_F4 ) {
-				//status_str = rtp_midi_common_status_sysex_cancel;
 			}
 
 			/* Is this command through? */
@@ -2670,14 +2633,6 @@ Serial.println("decode_sysex_common_educational");
 		/* set our pointers correct to move past already decoded data */
 		offset += ext_consumed;
 
-		//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset, 1, ENC_BIG_ENDIAN );
-
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s", status_str );
-		//} else {
-		//	col_append_str(pinfo->cinfo, COL_INFO, status_str );
-		//}
-
 	//	rtpMidi->OnSysEx(NULL, d, sizeof(d));
 
 		return consumed;
@@ -2693,17 +2648,8 @@ Serial.println("decode_sysex_common_educational");
 Serial.println("decode_mtc_quarter_frame");
 #endif
 
-		//const gchar	*status_str;
-		//proto_item	*command_item;
-		//proto_tree	*command_tree;
-
-		//status_str = val_to_str( RTP_MIDI_STATUS_COMMON_MTC_QUARTER_FRAME, rtp_midi_common_status, rtp_midi_unknown_value_hex );
-
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
-			//command_item = proto_tree_add_text( tree, tvb, offset - 1, 1, "TRUNCATED: %s ", status_str );
-			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command );
-			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset - 1, 1, ENC_BIG_ENDIAN );
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("no further data");
 #endif
@@ -2714,20 +2660,10 @@ Serial.println("no further data");
 
 		/* seems to be an aborted MIDI-command */
 		if ( value & RTP_MIDI_COMMAND_STATUS_FLAG ) {
-			//command_item = proto_tree_add_text( tree, tvb, offset - 1, 1, "ABORTED: %s", status_str );
-			//command_tree = proto_item_add_subtree( command_item, ett_rtp_midi_command );
-			//proto_tree_add_item( command_tree, hf_rtp_midi_common_status, tvb, offset - 1, 1, ENC_BIG_ENDIAN );
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 Serial.println("aborted MIDI-command: mtc_quarter_frame");
 #endif
 			return -1;
-		}
-
-
-		if ( cmd_count ) {
-			//col_append_fstr(pinfo->cinfo, COL_INFO, ", %s", status_str );
-		} else {
-			//col_append_str(pinfo->cinfo, COL_INFO, status_str );
 		}
 
 //		if (rtpMidi->PassesFilter(NULL, type, channel))
@@ -2785,12 +2721,6 @@ Serial.println("aborted MIDI-command 2: song_position_pointer");
 
 		unsigned short position = ( octet1 << 7 ) | octet2;
 
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//} else {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO, "%s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//}
-
 		rtpMidi->OnSongPosition(NULL, position);
 
 		return 2;
@@ -2824,39 +2754,7 @@ Serial.println("aborted MIDI-command: decode_song_select");
 			return -1;
 		}
 
-		//if ( cmd_count ) {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO,", %s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//} else {
-		//	col_append_fstr(pinfo->cinfo, COL_INFO, "%s (c=%d, pb=%d)", status_str, ( status & RTP_MIDI_CHANNEL_MASK ) + 1, pitch );
-		//}
-
 		rtpMidi->OnSongSelect(NULL, song_nr);
-
-		return 1;
-	}
-
-	/*
-	* Here the undefined common-command 0xf4 is decoded.
-	*/
-	static int
-	decode_undefined_f4(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_undefined_f4");
-#endif
-
-		return 1;
-	}
-
-	/*
-	* Here the undefined common-command 0xf5 is decoded.
-	*/
-	static int
-	decode_undefined_f5(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_undefined_f5");
-#endif
 
 		return 1;
 	}
@@ -2903,8 +2801,6 @@ Serial.println("aborted MIDI-command: decode_song_select");
 				//status_str = rtp_midi_common_status_sysex_segment_end;
 			} else if ( octet == RTP_MIDI_STATUS_COMMON_SYSEX_START ) {
 				//status_str = rtp_midi_common_status_sysex_segment;
-			} else if ( octet == RTP_MIDI_STATUS_COMMON_UNDEFINED_F4 ) {
-				//status_str = rtp_midi_common_status_sysex_cancel;
 			}
 
 			/* Is this command through? */
@@ -2913,112 +2809,11 @@ Serial.println("aborted MIDI-command: decode_song_select");
 			}
 		}
 
-		Serial.println("decode_sysex_end");
+		//Serial.println("decode_sysex_end");
 
 		return consumed;
 	}
 
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Timing Clock. Sent 24 times per quarter note when synchronization is required
-	*/
-	static int
-	decode_realtime_timing_clock(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_timing_clock");
-#endif
-
-		rtpMidi->OnClock(NULL);
-
-		return 1;
-	}
-
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Start. Start the current sequence playing. (This message will be followed with Timing Clocks).
-	*/
-	static int
-	decode_realtime_start(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_start");
-#endif
-
-		rtpMidi->OnStart(NULL);
-
-		return 1;
-	}
-
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Continue. Continue at the point the sequence was Stopped.
-	*/
-	static int
-	decode_realtime_continue(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_continue");
-#endif
-
-		rtpMidi->OnContinue(NULL);
-
-		return 1;
-	}
-
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Stop. Stop the current sequence.
-	*/
-	static int
-		decode_realtime_stop(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_stop");
-#endif
-
-		rtpMidi->OnStop(NULL);
-
-		return 1;
-	}
-
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Active Sensing. This message is intended to be sent repeatedly to tell the receiver 
-	* that a connection is alive. Use of this message is optional. When initially received, 
-	* the receiver will expect to receive another Active Sensing message each 300ms (max), 
-	* and if it does not then it will assume that the connection has been terminated.
-	* At termination, the receiver will turn off all voices and return to normal 
-	* (non- active sensing) operation. 
-	*/
-	static int
-	decode_realtime_active_sensing(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_active_sensing");
-#endif
-
-		rtpMidi->OnActiveSensing(NULL);
-
-		return 1;
-	}
-
-	/*
-	* (taken from https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-	* Reset. Reset all receivers in the system to power-up status. This should be used sparingly, 
-	* preferably under manual control. In particular, it should not be sent on power-up.
-	*/
-	static int
-	decode_realtime_system_reset(IAppleMidi* rtpMidi) {
-
-#ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("decode_realtime_system_reset");
-#endif
-
-		rtpMidi->OnReset(NULL);
-
-		return 1;
-	}
 
 
 

@@ -104,8 +104,6 @@ protected:
 
 	RtpMidi_Clock _rtpMidiClock;
 
-//	Accept	 _sessionAccept;
-
 	// SSRC, Synchronization source.
 	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
 	// carried in the RTP header so as not to be dependent upon the network address. All packets from a
