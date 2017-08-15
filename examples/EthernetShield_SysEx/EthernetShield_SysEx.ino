@@ -77,12 +77,12 @@ void loop()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void SendSysEx(byte* data, unsigned short length)
+void SendSysEx(const byte* data, unsigned short length)
 {
   //  Serial.print (F("sending sysex data "));
   //  Serial.print (data, HEX);
   //  Serial.println( length);
-  AppleMIDI.sysEx(length, data);
+  AppleMIDI.sysEx(data, length);
 }
 
 // ====================================================================================
@@ -109,7 +109,7 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiSysEx(byte* data, uint16_t length) {
+void OnAppleMidiSysEx(const byte* data, uint16_t length) {
   Serial.print(F("SYSX: "));
   for (int i = 0; i < length; i++)
   {
