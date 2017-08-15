@@ -136,8 +136,10 @@ enum MidiType
     ProgramChange         = 0xC0,    ///< Program Change
     AfterTouchChannel     = 0xD0,    ///< Channel (monophonic) AfterTouch
     PitchBend             = 0xE0,    ///< Pitch Bend
-    SysEx                 = 0xF0,    ///< System Exclusive
-    TimeCodeQuarterFrame  = 0xF1,    ///< System Common - MIDI Time Code Quarter Frame
+	SysEx                 = 0xF0,    ///< System Exclusive
+	SysExStart            = SysEx,   ///< System Exclusive Start
+	SysExEnd              = 0xF7,    ///< System Exclusive End
+	TimeCodeQuarterFrame  = 0xF1,    ///< System Common - MIDI Time Code Quarter Frame
     SongPosition          = 0xF2,    ///< System Common - Song Position Pointer
     SongSelect            = 0xF3,    ///< System Common - Song Select
     TuneRequest           = 0xF6,    ///< System Common - Tune Request
@@ -241,8 +243,7 @@ enum MidiControlChangeNumber
  */
 struct Message
 {
-
-    /*! The MIDI channel on which the message was recieved.
+    /*! The MIDI channel on which the message was received.
      \n Value goes from 1 to 16.
      */
     Channel channel;

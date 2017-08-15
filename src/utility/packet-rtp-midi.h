@@ -2597,6 +2597,8 @@ Serial.println("decode_sysex_common_educational");
 		int		 data_len;
 		int		 ext_consumed	= 0;
 
+		char d[] = {0xF0, 0x22, 0x23, 0x24, 0xF7};
+
 		/* we need to parse "away" data until the next command */
 		while ( cmd_len ) {
 
@@ -2676,11 +2678,9 @@ Serial.println("decode_sysex_common_educational");
 		//	col_append_str(pinfo->cinfo, COL_INFO, status_str );
 		//}
 
-		// TODO: what to do here???
-		Serial.println("decode_sysex_start");
+	//	rtpMidi->OnSysEx(NULL, d, sizeof(d));
 
 		return consumed;
-
 	}
 
 	/*
@@ -2912,6 +2912,8 @@ Serial.println("aborted MIDI-command: decode_song_select");
 				break;
 			}
 		}
+
+		Serial.println("decode_sysex_end");
 
 		return consumed;
 	}

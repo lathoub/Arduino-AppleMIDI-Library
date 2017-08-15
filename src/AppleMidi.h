@@ -197,7 +197,7 @@ public:
     inline void pitchBend(double inPitchValue, Channel inChannel);
     inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
     inline void afterTouch(DataByte inPressure, Channel inChannel);
-    inline void sysEx(unsigned short inLength, byte* inArray, bool inArrayContainsBoundaries = true);
+    inline void sysEx(unsigned short inLength, byte* inArray);
     inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
     inline void timeCodeQuarterFrame(DataByte inData);
     inline void songPosition(unsigned short inBeats);
@@ -309,7 +309,7 @@ private:
     void (*mTuneRequestCallback)(void);
     void (*mTimeCodeQuarterFrameCallback)(byte data);
 
-    void (*mSysExCallback)(byte * array, unsigned short size);
+    void (*mSysExCallback)(byte* array, unsigned short size);
     void (*mClockCallback)(void);
     void (*mStartCallback)(void);
     void (*mContinueCallback)(void);

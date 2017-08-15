@@ -1807,7 +1807,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	// interleaved within any message. Though, TuneRequest can be sent here,
 	// and as it is a System Common message, it must reset Running Status.
 #if APPLEMIDI_USE_RUNNING_STATUS
-	if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+	mRunningStatus_TX = InvalidType;
 #endif
 }
 
@@ -1841,7 +1841,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	// interleaved within any message. Though, TuneRequest can be sent here,
 	// and as it is a System Common message, it must reset Running Status.
 #if APPLEMIDI_USE_RUNNING_STATUS
-	if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+	mRunningStatus_TX = InvalidType;
 #endif
 }
 
@@ -1876,7 +1876,7 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	// interleaved within any message. Though, TuneRequest can be sent here,
 	// and as it is a System Common message, it must reset Running Status.
 #if APPLEMIDI_USE_RUNNING_STATUS
-	if (inType == TuneRequest) mRunningStatus_TX = InvalidType;
+	mRunningStatus_TX = InvalidType;
 #endif
 }
 
@@ -1888,18 +1888,20 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	_rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
-	uint8_t s = length + 2; // TODO arraycontinuetion
-	_contentUDP.write(&s, 1);
-
-	DataByte sysExStart = (DataByte)0xF0;
-	DataByte sysExEnd   = (DataByte)0xF7;
-
 	switch (inType)
 	{
 	case SysEx: 
-		_contentUDP.write(&sysExStart, 1);
-		_contentUDP.write(data, length);
-		_contentUDP.write(&sysExEnd, 1);
+		{	
+			uint8_t s = length + 2; // 2 extra bytes for start and end 
+			_contentUDP.write(&s, 1);
+
+			DataByte sysExStart = (DataByte)SysExStart;
+			DataByte sysExEnd = (DataByte)SysExEnd;
+		
+			_contentUDP.write(&sysExStart, 1);
+			_contentUDP.write(data, length);
+			_contentUDP.write(&sysExEnd, 1);
+		}
 		break;
 	default:
 		// Invalid 
@@ -1907,6 +1909,13 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 	}
 
 	_rtpMidi.endWrite(_contentUDP);
+
+	// Do not cancel Running Status for real-time messages as they can be
+	// interleaved within any message. Though, TuneRequest can be sent here,
+	// and as it is a System Common message, it must reset Running Status.
+#if APPLEMIDI_USE_RUNNING_STATUS
+	mRunningStatus_TX = InvalidType;
+#endif
 }
 
 template<class UdpClass>
@@ -2105,14 +2114,9 @@ inline void AppleMidi_Class<UdpClass>::pitchBend(double inPitchValue, Channel in
 /*! \brief Generate and send a System Ex frame.
 \param inLength  The size of the array to send
 \param inArray   The byte array containing the data to send
-\param inArrayContainsBoundaries When set to 'true', 0xF0 & 0xF7 bytes
-(start & stop SysEx) will NOT be sent
-(and therefore must be included in the array).
-default value for ArrayContainsBoundaries is set to 'false' for compatibility
-with previous versions of the library.
 */
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, byte* inArray, bool inArrayContainsBoundaries)
+inline void AppleMidi_Class<UdpClass>::sysEx(unsigned short inLength, byte* inArray)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("sysEx ");
