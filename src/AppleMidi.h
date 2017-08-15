@@ -122,6 +122,8 @@ protected:
 
 	char _sessionName[SESSION_NAME_MAX_LEN + 1];
 
+	byte _packetBuffer[PACKET_MAX_SIZE];
+
 	inline uint32_t	createInitiatorToken();
 
 public:

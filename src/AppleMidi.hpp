@@ -123,8 +123,6 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::run()
 {
-	byte _packetBuffer[PACKET_MAX_SIZE];
-
 	// Process one control packet, if available
 	int packetSize = _controlUDP.parsePacket();
 	if (packetSize) {
