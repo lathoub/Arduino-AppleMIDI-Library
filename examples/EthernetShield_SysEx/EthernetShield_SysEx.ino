@@ -64,25 +64,31 @@ void loop()
   AppleMIDI.run();
 
   // send a sysex msg every 5 seconds
-  if (isConnected && (millis() - t0) > 1000)
+  if (isConnected && ((millis() - t0) > 5000))
   {
     t0 = millis();
-    //   Serial.print(F(".");
 
-    byte data [] = { 0x41, 0x10, 0x42, 0x12, 0x13, 0x14 };
-    SendSysEx(data, sizeof(data));
+    sendSysEx();
   }
 }
 
 // -----------------------------------------------------------------------------
-//
+// rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void SendSysEx(const byte* data, uint16_t length)
-{
-  //  Serial.print (F("sending sysex data "));
-  //  Serial.print (data, HEX);
-  //  Serial.println( length);
-  AppleMIDI.sysEx(data, length);
+void sendSysEx() {
+  
+  byte data[300];
+
+  for (int i = 0; i < sizeof(data); i++)
+    data[i] = i % 100;
+
+  data[0] = 0xF0;
+  data[1] = 0x00;
+  data[2] = 0x20;
+  data[3] = 0x32;
+  data[sizeof(data) - 1] = 0xF7;
+
+  AppleMIDI.sysEx(data, sizeof(data));
 }
 
 // ====================================================================================

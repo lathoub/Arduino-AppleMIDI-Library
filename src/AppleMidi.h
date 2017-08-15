@@ -216,14 +216,14 @@ protected:
 	inline void send(MidiType inType, DataByte inData1, DataByte inData2);
     inline void send(MidiType inType, DataByte inData);
     inline void send(MidiType inType);
-	inline void send(MidiType inType, const byte* inData, uint16_t);
+	inline void sendSysEx(byte, const byte* inData, byte, uint16_t);
 
 private:
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData1, DataByte inData2);
     inline void internalSend(Session_t&, MidiType inType, DataByte inData);
 	inline void internalSend(Session_t&, MidiType inType);
-	inline void internalSend(Session_t&, MidiType inType, const byte*, uint16_t);
+	inline void internalSendSysEx(Session_t&, byte, const byte*, byte, uint16_t);
 
 	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 

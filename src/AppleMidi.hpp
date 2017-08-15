@@ -1680,13 +1680,13 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, const byte* data, uint16_t length)
+inline void AppleMidi_Class<UdpClass>::sendSysEx(byte s, const byte* data, byte e, uint16_t length)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
 		if (Sessions[i].ssrc != 0)
 		{
-			internalSend(Sessions[i], inType, data, length);
+			internalSendSysEx(Sessions[i], s, data, e, length);
 		}
 	}
 
@@ -1879,32 +1879,24 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 }
 
 template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, const byte* data, uint16_t length)
+inline void AppleMidi_Class<UdpClass>::internalSendSysEx(Session_t& session, byte s, const byte* data, byte e, uint16_t length)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
 	_rtpMidi.timestamp = _rtpMidiClock.Now();
 	_rtpMidi.beginWrite(_contentUDP, session.contentIP, session.contentPort);
 
-	switch (inType)
-	{
-	case SysEx: 
-		{	
-			uint8_t s = length + 2; // 2 extra bytes for start and end 
-			_contentUDP.write(&s, 1);
+	// always use long header
+	uint16_t ss = length + 2;
+	ss |= 1 << 15; // set B-Flag, long header!
 
-			DataByte sysExStart = (DataByte)SysExStart;
-			DataByte sysExEnd = (DataByte)SysExEnd;
+	ss = AppleMIDI_Util::toEndian(ss); // use correct endian
+
+	_contentUDP.write(reinterpret_cast<uint8_t*>(&ss), sizeof(ss)); // write the 2 bytes
 		
-			_contentUDP.write(&sysExStart, 1);
-			_contentUDP.write(data, length);
-			_contentUDP.write(&sysExEnd, 1);
-		}
-		break;
-	default:
-		// Invalid 
-		break;
-	}
+	_contentUDP.write(&s, 1);
+	_contentUDP.write(data, length); 
+	_contentUDP.write(&e, 1);
 
 	_rtpMidi.endWrite(_contentUDP);
 
@@ -2120,7 +2112,17 @@ inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
 	Serial.print("sysEx ");
 #endif
 
-	send(SysEx, data, length);
+	int maxSegmentSize = MIDI_SYSEX_ARRAY_SIZE - 2;
+	int nrOfSegments = ((length - 2) / maxSegmentSize) + 1;
+
+	for (int i = 0; i < nrOfSegments; i++)
+	{
+		byte s = (i == 0) ? 0xF0 : 0xF7;
+		byte e = (i == (nrOfSegments - 1)) ? 0xF7 : 0xF0;
+		int l = (i == (nrOfSegments - 1)) ? (length - ((nrOfSegments - 1) * maxSegmentSize) - 2) : maxSegmentSize;
+
+		sendSysEx(s, data + 1 + (i * maxSegmentSize), e, l); // Full SysEx Command
+	}
 }
 
 /*! \brief Send a Tune Request message.
