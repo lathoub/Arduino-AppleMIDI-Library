@@ -1019,14 +1019,14 @@ void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 /*! \brief .
 */
 template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, byte* data, unsigned short size)
+void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	Serial.print("> SysEx ()");
 #endif
 
 	if (mSysExCallback)
-		mSysExCallback(data, size);
+		mSysExCallback(data, length);
 }
 
 //------------------------------------------------------------------------------
