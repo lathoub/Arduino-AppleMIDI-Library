@@ -64,7 +64,7 @@ void loop()
   AppleMIDI.run();
 
   // send a sysex msg every 5 seconds
-  if (isConnected && (millis() - t0) > 5000)
+  if (isConnected && (millis() - t0) > 1000)
   {
     t0 = millis();
     //   Serial.print(F(".");
@@ -109,9 +109,13 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiSysEx(byte* data, unsigned short length) {
-  Serial.print(F("SysEx data: "));
-  Serial.print(length);
+void OnAppleMidiSysEx(byte* data, uint16_t length) {
+  Serial.print(F("SYSX: "));
+  for (int i = 0; i < length; i++)
+  {
+    Serial.print(data[i], HEX);
+    Serial.print(" ");
+  }
   Serial.println();
 }
 
