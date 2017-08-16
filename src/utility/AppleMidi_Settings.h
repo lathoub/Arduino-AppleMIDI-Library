@@ -76,7 +76,9 @@
 // a lot of traffic, but might induce MIDI Thru and treatment latency.
 #define APPLEMIDI_USE_1BYTE_PARSING          1
 
-#define MIDI_SYSEX_ARRAY_SIZE           255     // Maximum size is 65535 bytes.
+#define MIDI_SYSEX_ARRAY_SIZE           255
+
+#define MIDI_SYSEX_ARRAY_SIZE_CONTENT   (MIDI_SYSEX_ARRAY_SIZE - 2)
 
 // Max size of dissectable packet
 #define PACKET_MAX_SIZE 350

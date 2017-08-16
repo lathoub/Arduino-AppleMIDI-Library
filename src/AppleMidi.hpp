@@ -2112,16 +2112,26 @@ inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
 	Serial.print("sysEx ");
 #endif
 
-	int maxSegmentSize = MIDI_SYSEX_ARRAY_SIZE - 2;
-	int nrOfSegments = ((length - 2) / maxSegmentSize) + 1;
+	const uint16_t contentLength = length - 2; //  remove start and end byte (SysExStart and SysExEnd)
+
+	const int nrOfSegments = (contentLength % MIDI_SYSEX_ARRAY_SIZE_CONTENT == 0) ? contentLength / MIDI_SYSEX_ARRAY_SIZE_CONTENT : ((contentLength / MIDI_SYSEX_ARRAY_SIZE_CONTENT) + 1);
+	const int lastSegment  = nrOfSegments - 1;
+
+	byte s     = MidiType::SysExStart;
+	byte e     = MidiType::SysExStart;
+	uint16_t l = MIDI_SYSEX_ARRAY_SIZE_CONTENT;
 
 	for (int i = 0; i < nrOfSegments; i++)
 	{
-		byte s = (i == 0) ? 0xF0 : 0xF7;
-		byte e = (i == (nrOfSegments - 1)) ? 0xF7 : 0xF0;
-		int l = (i == (nrOfSegments - 1)) ? (length - ((nrOfSegments - 1) * maxSegmentSize) - 2) : maxSegmentSize;
+		if (i == lastSegment)
+		{
+			e = MidiType::SysExEnd;
+			l = contentLength - (lastSegment * MIDI_SYSEX_ARRAY_SIZE_CONTENT);
+		}
 
-		sendSysEx(s, data + 1 + (i * maxSegmentSize), e, l); // Full SysEx Command
+		sendSysEx(s, data + 1 + (i * MIDI_SYSEX_ARRAY_SIZE_CONTENT), e, l); // Full SysEx Command
+
+		s = MidiType::SysExEnd;
 	}
 }
 

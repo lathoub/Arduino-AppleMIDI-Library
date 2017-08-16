@@ -77,10 +77,10 @@ void loop()
 // -----------------------------------------------------------------------------
 void sendSysEx() {
   
-  byte data[300];
+  byte data[256];
 
   for (int i = 0; i < sizeof(data); i++)
-    data[i] = i % 100;
+    data[i] = i % 10;
 
   data[0] = 0xF0;
   data[1] = 0x00;
