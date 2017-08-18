@@ -38,6 +38,10 @@ More usages in the `examples` folder
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
+## Memory usage
+The code has been pseudo optimized to minimize the memory footprint.
+Internal buffers also use valuable memory space. The biggest buffer `PACKET_MAX_SIZE` is set to 350 by default in `AppleMidi_Settings.h`. Albeit this number is somewhat arbitratry (large enough to receive full SysEx messages), it can be reduced significantly if you do not have to receive large messages.
+ 
 ## Network Shields
 * Arduino Ethernet shield (arduino.cc, Wiznet W5100)
 * Arduino Wifi R3 shield (arduino.cc)
