@@ -61,7 +61,6 @@
 // Rtp UDP ports
 
 #define CONTROL_PORT     5004
-#define RTP_PORT         5005
 
 // -----------------------------------------------------------------------------
 // Misc. options
@@ -70,11 +69,6 @@
 // of the same type and channel.
 // Set to 0 if you have troubles controlling your hardware.
 #define APPLEMIDI_USE_RUNNING_STATUS         0
-
-// Setting this to 1 will make MIDI.read parse only one byte of data for each
-// call when data is available. This can speed up your application if receiving
-// a lot of traffic, but might induce MIDI Thru and treatment latency.
-#define APPLEMIDI_USE_1BYTE_PARSING          1
 
 #define MIDI_SYSEX_ARRAY_SIZE           255
 

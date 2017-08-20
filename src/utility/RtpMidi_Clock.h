@@ -18,7 +18,6 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define USEC_PER_SEC 1000000
 #define NSEC_PER_SEC 1000000000
 
-
 typedef struct RtpMidi_Clock {
 
 	uint32_t clockRate_;
@@ -46,6 +45,7 @@ typedef struct RtpMidi_Clock {
 		return CalculateCurrentTimeStamp();
 	}
 
+private:
 	uint32_t CalculateCurrentTimeStamp()
 	{
 		uint32_t lapse = CalculateTimeSpent();
@@ -71,7 +71,7 @@ typedef struct RtpMidi_Clock {
 		return lapse;
 	}
 
-	unsigned long Ticks() const
+	inline unsigned long Ticks() const
 	{
 		return millis();
 	}

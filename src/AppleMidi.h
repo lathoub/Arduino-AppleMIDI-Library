@@ -15,24 +15,15 @@
 
 #include "utility/RtpMidi.h"
 
-#include "utility/AppleMidi_Invitation.h"
-#include "utility/AppleMidi_InvitationAccepted.h"
-#include "utility/AppleMidi_InvitationRejected.h"
-#include "utility/AppleMidi_ReceiverFeedback.h"
-#include "utility/AppleMidi_Syncronization.h"
-#include "utility/AppleMidi_BitrateReceiveLimit.h"
-#include "utility/AppleMidi_EndSession.h"
-
 #include "utility/RtpMidi_Clock.h"
 
 #include "utility/dissector.h"
-#include "utility/PacketWriter.hpp"
 
 #if defined(ARDUINO)
 #if defined(ESP8266)
 #define MAX_SESSIONS 4 // arbitrary number (tested up to 4 clients)
 #else
-#define MAX_SESSIONS 1 // should be 1. Response times drop significantly when more sessions are active
+#define MAX_SESSIONS 2 // Arduino can open max 4 socket. Each session needs 2 UDP ports. (Each session takes 228 bytes)
 #endif
 #else
 #define MAX_SESSIONS 4 // arbitrary number
@@ -94,11 +85,11 @@ class AppleMidi_Class : public IAppleMidi
 {
 protected:
 	//
-	UdpClass _controlUDP;
-	UdpClass _contentUDP;
+	UdpClass _controlPort;
+	UdpClass _dataPort;
 
-	Dissector _controlDissector;
-	Dissector _contentDissector;
+	Dissector _controlPortDissector;
+	Dissector _dataPortDissector;
 
 	RtpMidi<UdpClass>	_rtpMidi;
 

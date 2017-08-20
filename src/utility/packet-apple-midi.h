@@ -14,14 +14,6 @@
 #include "AppleMidi_Defs.h"
 #include "dissector.h"
 
-#include "utility/AppleMidi_Invitation.h"
-#include "utility/AppleMidi_InvitationAccepted.h"
-#include "utility/AppleMidi_InvitationRejected.h"
-#include "utility/AppleMidi_ReceiverFeedback.h"
-#include "utility/AppleMidi_Syncronization.h"
-#include "utility/AppleMidi_BitrateReceiveLimit.h"
-#include "utility/AppleMidi_EndSession.h"
-
 #define NOT_ENOUGH_DATA 0
 
 BEGIN_APPLEMIDI_NAMESPACE
