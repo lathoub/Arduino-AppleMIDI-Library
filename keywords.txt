@@ -5,8 +5,8 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-
-
+AppleMidi	KEYWORD1
+AppleMidi.h	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
