@@ -8,18 +8,9 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned long t0 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
-
-// Code size:
-//
-// IDE 1.8.3
-//
-// Arduino Ethernet / Uno
-// Sketch uses 23976 bytes (74%) of program storage space. Maximum is 32256 bytes.
-// Global variables use 969 bytes (47%) of dynamic memory, leaving 1079 bytes for local variables. Maximum is 2048 bytes.
 
 // -----------------------------------------------------------------------------
 //
