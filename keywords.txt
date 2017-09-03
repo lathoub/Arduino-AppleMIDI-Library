@@ -22,10 +22,10 @@ noteOff	             KEYWORD2
 afterTouchPoly	     KEYWORD2
 controlChange	     KEYWORD2
 programChange	     KEYWORD2
-afterTouchChannel    KEYWORD2
+afterTouchChannel	KEYWORD2
 pitchBend	         KEYWORD2
 systemExclusive	     KEYWORD2
-timeCodeQuarterFrame KEYWORD2
+timeCodeQuarterFrame	KEYWORD2
 songPosition	     KEYWORD2
 songSelect	         KEYWORD2
 tuneRequest	         KEYWORD2
