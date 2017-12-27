@@ -10,7 +10,7 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 
 ## Installation
-From the Arduino IDE LIbrary Manager, search for AppleMIDI
+From the Arduino IDE Library Manager, search for AppleMIDI
 
 ## Basic Usage
 ```
