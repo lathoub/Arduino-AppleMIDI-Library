@@ -11,6 +11,7 @@ The goal of this library is to enable an Arduino (with an Ethernet shield) or ES
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
+<img src="https://user-images.githubusercontent.com/4082369/34467930-15f909ca-eefe-11e7-9bc0-614884b234f8.PNG">
 
 ## Basic Usage
 ```
