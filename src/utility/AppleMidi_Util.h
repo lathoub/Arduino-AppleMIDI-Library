@@ -22,17 +22,20 @@ class Debug
 {
 public:
 #if defined(DEBUG_BUILD)
+
+	#define DEBUGSTREAM Serial
+
 	static void Assert(bool result, const char* message)
 	{
-		if (!result) Serial.print(message);
+		if (!result) DEBUGSTREAM.print(message);
 	}
 	static void Write(const char* message)
 	{
-		Serial.print(message);
+		DEBUGSTREAM.print(message);
 	}
 	static void WriteLine(const char* message)
 	{
-		Serial.println(message);
+		DEBUGSTREAM.println(message);
 	}
 #else
 	static void Assert(bool, const char*) {}

@@ -62,13 +62,13 @@ public:
 	void addPacket(unsigned char* packetBuffer, size_t packetSize)
 	{
 		#ifdef APPLEMIDI_DEBUG_PARSING
-		Serial.print("Incoming buffer of " + String(packetSize, DEC) + " bytes: ");
+		DEBUGSTREAM.print("Incoming buffer of " + String(packetSize, DEC) + " bytes: ");
 		int idx = 0;
 		while (idx < packetSize) {
-			Serial.print(String(packetBuffer[idx], HEX) + " ");
+			DEBUGSTREAM.print(String(packetBuffer[idx], HEX) + " ");
 			idx++;
 		}
-		Serial.println();
+		DEBUGSTREAM.println();
 		#endif
 
 		int nelem = sizeof(_externalAppleMidiDissector) / sizeof(_externalAppleMidiDissector[0]);
@@ -81,7 +81,7 @@ public:
 		}
 
 		#ifdef APPLEMIDI_DEBUG_PARSING
-		Serial.println("No dissectors handled last message");
+		DEBUGSTREAM.println("No dissectors handled last message");
 		#endif
 	}
 };

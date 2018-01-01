@@ -25,7 +25,7 @@ public:
 	PacketAppleMidi()
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-		Serial.println("PacketAppleMidi verbose");
+		DEBUGSTREAM.println("PacketAppleMidi verbose");
 #endif
 	}
 
@@ -33,10 +33,10 @@ public:
 	{
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.print ("dissect_apple_midi ");
-Serial.print (dissector->_identifier);
-Serial.print (", packetSize is ");
-Serial.println (packetSize);
+DEBUGSTREAM.print ("dissect_apple_midi ");
+DEBUGSTREAM.print (dissector->_identifier);
+DEBUGSTREAM.print (", packetSize is ");
+DEBUGSTREAM.println (packetSize);
 #endif
 
 		size_t offset = 0;
@@ -44,8 +44,8 @@ Serial.println (packetSize);
 		if (packetSize < sizeof(amSignature))
 		{
 #ifdef APPLEMIDI_DEBUG
-Serial.print ("Not enough data ");
-Serial.println (packetSize);
+DEBUGSTREAM.print ("Not enough data ");
+DEBUGSTREAM.println (packetSize);
 #endif
 			return NOT_ENOUGH_DATA;
 		}
@@ -60,7 +60,7 @@ Serial.println (packetSize);
 			* Unknown or unsupported signature.
 			*/
 #ifdef APPLEMIDI_DEBUG
-Serial.println("Signature not supported.");
+DEBUGSTREAM.println("Signature not supported.");
 #endif
 			return sizeof(amSignature);
 		}
@@ -93,7 +93,7 @@ Serial.println("Signature not supported.");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for Invitation");
+DEBUGSTREAM.println("Not enough data for Invitation");
 #endif
 
 			return NOT_ENOUGH_DATA;
@@ -125,7 +125,7 @@ Serial.println("Not enough data for Invitation");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for AcceptInvitation");
+DEBUGSTREAM.println("Not enough data for AcceptInvitation");
 #endif
 
 			return NOT_ENOUGH_DATA;
@@ -156,7 +156,7 @@ Serial.println("Not enough data for AcceptInvitation");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for Syncronization");
+DEBUGSTREAM.println("Not enough data for Syncronization");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
@@ -179,7 +179,7 @@ Serial.println("Not enough data for Syncronization");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for ReceiverFeedback");
+DEBUGSTREAM.println("Not enough data for ReceiverFeedback");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
@@ -201,7 +201,7 @@ Serial.println("Not enough data for ReceiverFeedback");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for BitrateReceiveLimit");
+DEBUGSTREAM.println("Not enough data for BitrateReceiveLimit");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
@@ -225,13 +225,13 @@ Serial.println("Not enough data for BitrateReceiveLimit");
 			}
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
-Serial.println("Not enough data for EndSession");
+DEBUGSTREAM.println("Not enough data for EndSession");
 #endif
 			return NOT_ENOUGH_DATA;
 		}
 
 #ifdef APPLEMIDI_DEBUG
-		Serial.println("dissect_apple_midi. Signature OK, command unknown Not valid, skipping");
+		DEBUGSTREAM.println("dissect_apple_midi. Signature OK, command unknown Not valid, skipping");
 #endif
 
 		return offset;

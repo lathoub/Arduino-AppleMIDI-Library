@@ -76,11 +76,11 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 #if (APPLEMIDI_DEBUG)
 	if (strlen(sessionName) > SESSION_NAME_MAX_LEN)
 	{
-		Serial.print("SessionName exceeds ");
-		Serial.print(sessionName);
-		Serial.print(" exceeds ");
-		Serial.print(SESSION_NAME_MAX_LEN);
-		Serial.println(" chars. Name will be clipped.");
+		DEBUGSTREAM.print(F("SessionName exceeds "));
+		DEBUGSTREAM.print(sessionName);
+		DEBUGSTREAM.print(" exceeds ");
+		DEBUGSTREAM.print(SESSION_NAME_MAX_LEN);
+		DEBUGSTREAM.println(F(" chars. Name will be clipped."));
 	}
 #endif
 
@@ -106,10 +106,10 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 	_rtpMidi.sequenceNr = 1;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("Starting Session ");
-	Serial.print(_sessionName);
-	Serial.print(" on port ");
-	Serial.println(Port);
+	DEBUGSTREAM.print(F("Starting Session "));
+	DEBUGSTREAM.print(_sessionName);
+	DEBUGSTREAM.print(F(" on port "));
+	DEBUGSTREAM.println(Port);
 #endif
 
 	return true;
@@ -158,8 +158,8 @@ inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
 		_ssrc = random(1, LONG_MAX);
 
 #if (APPLEMIDI_DEBUG)
-		Serial.print("Lazy init of SSRC. Value is 0x");
-		Serial.println(_ssrc, HEX);
+		DEBUGSTREAM.print(F("Lazy init of SSRC. Value is 0x"));
+		DEBUGSTREAM.println(_ssrc, HEX);
 #endif
 	}
 	return _ssrc;
@@ -173,7 +173,7 @@ inline void AppleMidi_Class<UdpClass>::invite(IPAddress ip, uint16_t port)
 	CreateRemoteSession(ip, port);
 
 #if (APPLEMIDI_DEBUG)
-	Serial.println("Queued invite");
+	DEBUGSTREAM.println(F("Queued invite"));
 #endif
 }
 
@@ -198,13 +198,13 @@ inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndS
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> End Session for ssrc 0x");
-	Serial.print(sessionEnd.ssrc, HEX);
+	DEBUGSTREAM.print(F("> End Session for ssrc 0x"));
+	DEBUGSTREAM.print(sessionEnd.ssrc, HEX);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print(", initiatorToken = 0x");
-	Serial.print(sessionEnd.initiatorToken, HEX);
+	DEBUGSTREAM.print(F(", initiatorToken = 0x"));
+	DEBUGSTREAM.print(sessionEnd.initiatorToken, HEX);
 #endif
-	Serial.println();
+	DEBUGSTREAM.println();
 #endif
 
 	DeleteSession(sessionEnd.ssrc);
@@ -222,8 +222,8 @@ inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMID
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Receiver Feedback: seq = ");
-	Serial.println(receiverFeedback.sequenceNr);
+	DEBUGSTREAM.print(F("> Receiver Feedback: seq = "));
+	DEBUGSTREAM.println(receiverFeedback.sequenceNr);
 #endif
 }
 
@@ -246,14 +246,14 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> (OnControlInvitationAccepted) Control InvitationAccepted: peer = \"");
-	Serial.print(invitationAccepted.sessionName);
-	Serial.print("\"");
-	Serial.print(" ,ssrc 0x");
-	Serial.print(invitationAccepted.ssrc, HEX);
-	Serial.print(" ,initiatorToken = 0x");
-	Serial.print(invitationAccepted.initiatorToken, HEX);
-	Serial.println();
+	DEBUGSTREAM.print(F("> (OnControlInvitationAccepted) Control InvitationAccepted: peer = \""));
+	DEBUGSTREAM.print(invitationAccepted.sessionName);
+	DEBUGSTREAM.print("\"");
+	DEBUGSTREAM.print(F(" ,ssrc 0x"));
+	DEBUGSTREAM.print(invitationAccepted.ssrc, HEX);
+	DEBUGSTREAM.print(F(" ,initiatorToken = 0x"));
+	DEBUGSTREAM.print(invitationAccepted.initiatorToken, HEX);
+	DEBUGSTREAM.println();
 #endif
 
 	CompleteLocalSessionControl(invitationAccepted);
@@ -265,16 +265,16 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Content InvitationAccepted: peer = \"");
-	Serial.print(invitationAccepted.sessionName);
-	Serial.print("\"");
-	Serial.print(" ,ssrc 0x");
-	Serial.print(invitationAccepted.ssrc, HEX);
+	DEBUGSTREAM.print(F("> Content InvitationAccepted: peer = \""));
+	DEBUGSTREAM.print(invitationAccepted.sessionName);
+	DEBUGSTREAM.print("\"");
+	DEBUGSTREAM.print(F(" ,ssrc 0x"));
+	DEBUGSTREAM.print(invitationAccepted.ssrc, HEX);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print(" ,initiatorToken = 0x");
-	Serial.print(invitationAccepted.initiatorToken, HEX);
+	DEBUGSTREAM.print(F(" ,initiatorToken = 0x"));
+	DEBUGSTREAM.print(invitationAccepted.initiatorToken, HEX);
 #endif
-	Serial.println();
+	DEBUGSTREAM.println();
 #endif
 
 	CompleteLocalSessionContent(invitationAccepted);
@@ -288,14 +288,14 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> (OnControlInvitation) Control Invitation: peer = \"");
-	Serial.print(invitation.sessionName);
-	Serial.print("\"");
-	Serial.print(" ,ssrc 0x");
-	Serial.print(invitation.ssrc, HEX);
-	Serial.print(" ,initiatorToken = 0x");
-	Serial.print(invitation.initiatorToken, HEX);
-	Serial.println();
+	DEBUGSTREAM.print(F("> (OnControlInvitation) Control Invitation: peer = \""));
+	DEBUGSTREAM.print(invitation.sessionName);
+	DEBUGSTREAM.print("\"");
+	DEBUGSTREAM.print(F(" ,ssrc 0x"));
+	DEBUGSTREAM.print(invitation.ssrc, HEX);
+	DEBUGSTREAM.print(F(" ,initiatorToken = 0x"));
+	DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+	DEBUGSTREAM.println();
 #endif
 
 	// Do we know this ssrc already?
@@ -304,7 +304,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	if (index < 0)
 	{
 		#if (APPLEMIDI_DEBUG)
-		Serial.println("Invition received for a new session.");
+		DEBUGSTREAM.println(F("Invition received for a new session."));
 		#endif
 
 		// No, not existing; must be a new initiator
@@ -313,7 +313,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 		if (index < 0)
 		{
 			#if (APPLEMIDI_DEBUG)
-			Serial.println("Session invitation rejected.");
+			DEBUGSTREAM.println(F("Session invitation rejected."));
 			#endif
 
 			// no free slots, we cant accept invite
@@ -327,7 +327,7 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 		}
 	} else {
 		#if (APPLEMIDI_DEBUG)
-		Serial.println("Session exists");
+		DEBUGSTREAM.println(F("Session exists"));
 		#endif
 	}
 
@@ -336,18 +336,18 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 	write(_controlPort, acceptInvitation, _controlPort.remoteIP(), _controlPort.remotePort());
 
 	#if (APPLEMIDI_DEBUG)
-		Serial.print("< (OnControlInvitation) Control InvitationAccepted: peer = \"");
-		Serial.print(getSessionName());
-		Serial.print("\"");
-		Serial.print(" ,ssrc 0x");
-		Serial.print(getSynchronizationSource(), HEX);
-		Serial.print(" ,initiatorToken = 0x");
-		Serial.print(invitation.initiatorToken, HEX);
+		DEBUGSTREAM.print(F("< (OnControlInvitation) Control InvitationAccepted: peer = \""));
+		DEBUGSTREAM.print(getSessionName());
+		DEBUGSTREAM.print("\"");
+		DEBUGSTREAM.print(" ,ssrc 0x");
+		DEBUGSTREAM.print(getSynchronizationSource(), HEX);
+		DEBUGSTREAM.print(" ,initiatorToken = 0x");
+		DEBUGSTREAM.print(invitation.initiatorToken, HEX);
 	#if (APPLEMIDI_DEBUG_VERBOSE)
-		Serial.print(" ,in slot = ");
-		Serial.print(index);
+		DEBUGSTREAM.print(" ,in slot = ");
+		DEBUGSTREAM.print(index);
 	#endif
-		Serial.println();
+		DEBUGSTREAM.println();
 	#endif
 }
 
@@ -359,16 +359,16 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Content Invitation: peer = \"");
-	Serial.print(invitation.sessionName);
-	Serial.print("\"");
-	Serial.print(" ,ssrc 0x");
-	Serial.print(invitation.ssrc, HEX);
+	DEBUGSTREAM.print(F("> Content Invitation: peer = \""));
+	DEBUGSTREAM.print(invitation.sessionName);
+	DEBUGSTREAM.print("\"");
+	DEBUGSTREAM.print(" ,ssrc 0x");
+	DEBUGSTREAM.print(invitation.ssrc, HEX);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print(" ,initiatorToken = 0x");
-	Serial.print(invitation.initiatorToken, HEX);
+	DEBUGSTREAM.print(F(" ,initiatorToken = 0x"));
+	DEBUGSTREAM.print(invitation.initiatorToken, HEX);
 #endif
-	Serial.println();
+	DEBUGSTREAM.println();
 #endif
 
 	// Find the slot, it should be there because created by control session
@@ -376,9 +376,9 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	if (i < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.print("Error - control session does not exists for ");
-		Serial.print(invitation.ssrc, HEX);
-		Serial.print(". Rejecting invitation.");
+		DEBUGSTREAM.print(F("Error - control session does not exists for "));
+		DEBUGSTREAM.print(invitation.ssrc, HEX);
+		DEBUGSTREAM.print(F(". Rejecting invitation."));
 #endif
 		AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
 		write(_dataPort, invitationRejected, _dataPort.remoteIP(), _dataPort.remotePort());
@@ -394,18 +394,18 @@ void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invi
 	write(_controlPort, rateLimit, _controlPort.remoteIP(), _controlPort.remotePort());
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("< Content InvitationAccepted: peer = \"");
-	Serial.print(getSessionName());
-	Serial.print("\"");
-	Serial.print(" ,ssrc 0x");
-	Serial.print(getSynchronizationSource(), HEX);
+	DEBUGSTREAM.print(F("< Content InvitationAccepted: peer = \""));
+	DEBUGSTREAM.print(getSessionName());
+	DEBUGSTREAM.print("\"");
+	DEBUGSTREAM.print(" ,ssrc 0x");
+	DEBUGSTREAM.print(getSynchronizationSource(), HEX);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	Serial.print(" ,initiatorToken = 0x");
-	Serial.print(invitation.initiatorToken, HEX);
-	Serial.print(" ,in slot = ");
-	Serial.print(i);
+	DEBUGSTREAM.print(F(" ,initiatorToken = 0x"));
+	DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+	DEBUGSTREAM.print(" ,in slot = ");
+	DEBUGSTREAM.print(i);
 #endif
-	Serial.println();
+	DEBUGSTREAM.println();
 #endif
 
 	Sessions[i].contentIP = _dataPort.remoteIP();
@@ -450,19 +450,19 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Syncronization for ssrc 0x");
-	Serial.print(synchronization.ssrc, HEX);
-	Serial.print(", count = ");
-	Serial.print(synchronization.count);
+	DEBUGSTREAM.print(F("> Syncronization for ssrc 0x"));
+	DEBUGSTREAM.print(synchronization.ssrc, HEX);
+	DEBUGSTREAM.print(", count = ");
+	DEBUGSTREAM.print(synchronization.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	//Serial.print  (" Timestamps = ");
-	//Serial.print  (synchronization.timestamps[0], HEX);
-	//Serial.print  (" ");
-	//Serial.print  (synchronization.timestamps[1], HEX);
-	//Serial.print  (" ");
-	//Serial.print  (synchronization.timestamps[2], HEX);
+	//DEBUGSTREAM.print  (" Timestamps = ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[0], HEX);
+	//DEBUGSTREAM.print  (" ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[1], HEX);
+	//DEBUGSTREAM.print  (" ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[2], HEX);
 #endif
-	Serial.println("");
+	DEBUGSTREAM.println("");
 #endif
 
 	// If we don't know this session, ignore it.
@@ -471,7 +471,7 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 	if (index < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.println("hmmm - Syncronization for a session that has never started.");
+		DEBUGSTREAM.println(F("hmmm - Syncronization for a session that has never started."));
 #endif
 		return;
 	}
@@ -514,19 +514,19 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 	write(_dataPort, synchronizationResponse, _dataPort.remoteIP(), _dataPort.remotePort());
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("< Syncronization for ssrc 0x");
-	Serial.print(getSynchronizationSource(), HEX);
-	Serial.print(", count = ");
-	Serial.print(synchronizationResponse.count);
+	DEBUGSTREAM.print(F("< Syncronization for ssrc 0x"));
+	DEBUGSTREAM.print(getSynchronizationSource(), HEX);
+	DEBUGSTREAM.print(", count = ");
+	DEBUGSTREAM.print(synchronizationResponse.count);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-	//Serial.print  (" Timestamps = ");
-	//Serial.print  (synchronization.timestamps[0], HEX);
-	//Serial.print  (" ");
-	//Serial.print  (synchronization.timestamps[1], HEX);
-	//Serial.print  (" ");
-	//Serial.print  (synchronization.timestamps[2], HEX);
+	//DEBUGSTREAM.print  (" Timestamps = ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[0], HEX);
+	//DEBUGSTREAM.print  (" ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[1], HEX);
+	//DEBUGSTREAM.print  (" ");
+	//DEBUGSTREAM.print  (synchronization.timestamps[2], HEX);
 #endif
-	Serial.println("");
+	DEBUGSTREAM.println("");
 #endif
 
 }
@@ -541,8 +541,8 @@ void AppleMidi_Class<UdpClass>::OnBitrateReceiveLimit(void* sender, AppleMIDI_Bi
 	//Dissector* dissector = (Dissector*) sender;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> BitrateReceiveLimit: Limit = ");
-	Serial.println(bitrateReceiveLimit.bitratelimit);
+	DEBUGSTREAM.print(F("> BitrateReceiveLimit: Limit = "));
+	DEBUGSTREAM.println(bitrateReceiveLimit.bitratelimit);
 #endif
 
 }
@@ -588,13 +588,13 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnNoteOn(void* sender, DataByte channel, DataByte note, DataByte velocity)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Note On (c=");
-	Serial.print(channel);
-	Serial.print(", n=");
-	Serial.print(note);
-	Serial.print(", v=");
-	Serial.print(velocity);
-	Serial.println(")");
+	DEBUGSTREAM.print(F("> Note On (c="));
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", n=");
+	DEBUGSTREAM.print(note);
+	DEBUGSTREAM.print(", v=");
+	DEBUGSTREAM.print(velocity);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mNoteOnCallback)
@@ -607,13 +607,13 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnNoteOff(void* sender, DataByte channel, DataByte note, DataByte velocity)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Note Off (c=");
-	Serial.print(channel);
-	Serial.print(", n=");
-	Serial.print(note);
-	Serial.print(", v=");
-	Serial.print(velocity);
-	Serial.println(")");
+	DEBUGSTREAM.print("> Note Off (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", n=");
+	DEBUGSTREAM.print(note);
+	DEBUGSTREAM.print(", v=");
+	DEBUGSTREAM.print(velocity);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mNoteOffCallback)
@@ -626,13 +626,13 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnPolyPressure(void* sender, DataByte channel, DataByte note, DataByte pressure)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Poly Pressure (c=");
-	Serial.print(channel);
-	Serial.print(", n=");
-	Serial.print(note);
-	Serial.print(", p=");
-	Serial.print(pressure);
-	Serial.println(")");
+	DEBUGSTREAM.print("> Poly Pressure (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", n=");
+	DEBUGSTREAM.print(note);
+	DEBUGSTREAM.print(", p=");
+	DEBUGSTREAM.print(pressure);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mAfterTouchPolyCallback)
@@ -645,11 +645,11 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnChannelPressure(void* sender, DataByte channel, DataByte pressure)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Channel Pressure (c=");
-	Serial.print(channel);
-	Serial.print(", p=");
-	Serial.print(pressure);
-	Serial.println(")");
+	DEBUGSTREAM.print("> Channel Pressure (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", p=");
+	DEBUGSTREAM.print(pressure);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mAfterTouchChannelCallback)
@@ -662,11 +662,11 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnPitchBendChange(void* sender, DataByte channel, int pitch)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Pitch Bend (c=");
-	Serial.print(channel);
-	Serial.print(", p=");
-	Serial.print(pitch);
-	Serial.println(")");
+	DEBUGSTREAM.print("> Pitch Bend (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", p=");
+	DEBUGSTREAM.print(pitch);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mPitchBendCallback)
@@ -679,16 +679,16 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnProgramChange(void* sender, DataByte channel, DataByte program)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Program Change (c=");
-	Serial.print(channel);
-	Serial.print(", p=");
-	Serial.print(program);
-	Serial.print(") ");
+	DEBUGSTREAM.print("> Program Change (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", p=");
+	DEBUGSTREAM.print(program);
+	DEBUGSTREAM.print(") ");
 
 	switch (program)
 	{
 	default:
-		Serial.println("Other");
+		DEBUGSTREAM.println("Other");
 		break;
 	}
 
@@ -704,168 +704,168 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnControlChange(void* sender, DataByte channel, DataByte controller, DataByte value)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Control Change (c=");
-	Serial.print(channel);
-	Serial.print(", e=");
-	Serial.print(controller);
-	Serial.print(", v=");
-	Serial.print(value);
-	Serial.print(") ");
+	DEBUGSTREAM.print("> Control Change (c=");
+	DEBUGSTREAM.print(channel);
+	DEBUGSTREAM.print(", e=");
+	DEBUGSTREAM.print(controller);
+	DEBUGSTREAM.print(", v=");
+	DEBUGSTREAM.print(value);
+	DEBUGSTREAM.print(") ");
 
 	switch (controller)
 	{
 	case BankSelect:
-		Serial.println("BankSelect");
+		DEBUGSTREAM.println("BankSelect");
 		break;
 	case ModulationWheel:
-		Serial.println("ModulationWheel");
+		DEBUGSTREAM.println("ModulationWheel");
 		break;
 	case BreathController:
-		Serial.println("BreathController");
+		DEBUGSTREAM.println("BreathController");
 		break;
 	case FootController:
-		Serial.println("FootController");
+		DEBUGSTREAM.println("FootController");
 		break;
 	case PortamentoTime:
-		Serial.println("PortamentoTime");
+		DEBUGSTREAM.println("PortamentoTime");
 		break;
 	case DataEntry:
-		Serial.println("DataEntry");
+		DEBUGSTREAM.println("DataEntry");
 		break;
 	case ChannelVolume:
-		Serial.println("ChannelVolume");
+		DEBUGSTREAM.println("ChannelVolume");
 		break;
 	case Balance:
-		Serial.println("Balance");
+		DEBUGSTREAM.println("Balance");
 		break;
 	case Pan:
-		Serial.println("Pan");
+		DEBUGSTREAM.println("Pan");
 		break;
 	case ExpressionController:
-		Serial.println("ExpressionController");
+		DEBUGSTREAM.println("ExpressionController");
 		break;
 	case EffectControl1:
-		Serial.println("EffectControl1");
+		DEBUGSTREAM.println("EffectControl1");
 		break;
 	case EffectControl2:
-		Serial.println("EffectControl2");
+		DEBUGSTREAM.println("EffectControl2");
 		break;
 	case GeneralPurposeController1:
-		Serial.println("GeneralPurposeController1");
+		DEBUGSTREAM.println("GeneralPurposeController1");
 		break;
 	case GeneralPurposeController2:
-		Serial.println("GeneralPurposeController2");
+		DEBUGSTREAM.println("GeneralPurposeController2");
 		break;
 	case GeneralPurposeController3:
-		Serial.println("GeneralPurposeController3");
+		DEBUGSTREAM.println("GeneralPurposeController3");
 		break;
 	case GeneralPurposeController4:
-		Serial.println("GeneralPurposeController4");
+		DEBUGSTREAM.println("GeneralPurposeController4");
 		break;
 	case Sustain:
-		Serial.println("Sustain");
+		DEBUGSTREAM.println("Sustain");
 		break;
 	case Portamento:
-		Serial.println("Portamento");
+		DEBUGSTREAM.println("Portamento");
 		break;
 	case Sostenuto:
-		Serial.println("Sostenuto");
+		DEBUGSTREAM.println("Sostenuto");
 		break;
 	case SoftPedal:
-		Serial.println("SoftPedal");
+		DEBUGSTREAM.println("SoftPedal");
 		break;
 	case Legato:
-		Serial.println("Legato");
+		DEBUGSTREAM.println("Legato");
 		break;
 	case Hold:
-		Serial.println("Hold");
+		DEBUGSTREAM.println("Hold");
 		break;
 	case SoundController1:
-		Serial.println("SoundController1");
+		DEBUGSTREAM.println("SoundController1");
 		break;
 	case SoundController2:
-		Serial.println("SoundController2");
+		DEBUGSTREAM.println("SoundController2");
 		break;
 	case SoundController3:
-		Serial.println("SoundController3");
+		DEBUGSTREAM.println("SoundController3");
 		break;
 	case SoundController4:
-		Serial.println("SoundController4");
+		DEBUGSTREAM.println("SoundController4");
 		break;
 	case SoundController5:
-		Serial.println("SoundController5");
+		DEBUGSTREAM.println("SoundController5");
 		break;
 	case SoundController6:
-		Serial.println("SoundController6");
+		DEBUGSTREAM.println("SoundController6");
 		break;
 	case SoundController7:
-		Serial.println("SoundController7");
+		DEBUGSTREAM.println("SoundController7");
 		break;
 	case SoundController8:
-		Serial.println("SoundController8");
+		DEBUGSTREAM.println("SoundController8");
 		break;
 	case SoundController9:
-		Serial.println("SoundController9");
+		DEBUGSTREAM.println("SoundController9");
 		break;
 	case SoundController10:
-		Serial.println("SoundController10");
+		DEBUGSTREAM.println("SoundController10");
 		break;
 	case GeneralPurposeController5:
-		Serial.println("GeneralPurposeController5");
+		DEBUGSTREAM.println("GeneralPurposeController5");
 		break;
 	case GeneralPurposeController6:
-		Serial.println("GeneralPurposeController6");
+		DEBUGSTREAM.println("GeneralPurposeController6");
 		break;
 	case GeneralPurposeController7:
-		Serial.println("GeneralPurposeController7");
+		DEBUGSTREAM.println("GeneralPurposeController7");
 		break;
 	case GeneralPurposeController8:
-		Serial.println("GeneralPurposeController8");
+		DEBUGSTREAM.println("GeneralPurposeController8");
 		break;
 	case PortamentoControl:
-		Serial.println("PortamentoControl");
+		DEBUGSTREAM.println("PortamentoControl");
 		break;
 	case Effects1:
-		Serial.println("Effects1");
+		DEBUGSTREAM.println("Effects1");
 		break;
 	case Effects2:
-		Serial.println("Effects2");
+		DEBUGSTREAM.println("Effects2");
 		break;
 	case Effects3:
-		Serial.println("Effects3");
+		DEBUGSTREAM.println("Effects3");
 		break;
 	case Effects4:
-		Serial.println("Effects4");
+		DEBUGSTREAM.println("Effects4");
 		break;
 	case Effects5:
-		Serial.println("Effects5");
+		DEBUGSTREAM.println("Effects5");
 		break;
 	case AllSoundOff:
-		Serial.println("AllSoundOff");
+		DEBUGSTREAM.println("AllSoundOff");
 		break;
 	case ResetAllControllers:
-		Serial.println("ResetAllControllers");
+		DEBUGSTREAM.println("ResetAllControllers");
 		break;
 	case LocalControl:
-		Serial.println("LocalControl");
+		DEBUGSTREAM.println("LocalControl");
 		break;
 	case AllNotesOff:
-		Serial.println("AllNotesOff");
+		DEBUGSTREAM.println("AllNotesOff");
 		break;
 	case OmniModeOff:
-		Serial.println("OmniModeOff");
+		DEBUGSTREAM.println("OmniModeOff");
 		break;
 	case OmniModeOn:
-		Serial.println("OmniModeOn");
+		DEBUGSTREAM.println("OmniModeOn");
 		break;
 	case MonoModeOn:
-		Serial.println("MonoModeOn");
+		DEBUGSTREAM.println("MonoModeOn");
 		break;
 	case PolyModeOn:
-		Serial.println("PolyModeOn");
+		DEBUGSTREAM.println("PolyModeOn");
 		break;
 	default:
-		Serial.println("Other");
+		DEBUGSTREAM.println("Other");
 		break;
 	}
 #endif
@@ -880,9 +880,9 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnSongSelect(void* sender, DataByte songNr)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> SongSelect (s=");
-	Serial.print(songNr);
-	Serial.println(")");
+	DEBUGSTREAM.print("> SongSelect (s=");
+	DEBUGSTREAM.print(songNr);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mSongSelectCallback)
@@ -895,9 +895,9 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnSongPosition(void* sender, unsigned short value)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> SongPosition (c=");
-	Serial.print(value);
-	Serial.println(")");
+	DEBUGSTREAM.print("> SongPosition (c=");
+	DEBUGSTREAM.print(value);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mSongPositionCallback)
@@ -910,9 +910,9 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnTimeCodeQuarterFrame(void* sender, DataByte value)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> TimeCodeQuarterFrame (c=");
-	Serial.print(value);
-	Serial.println(")");
+	DEBUGSTREAM.print("> TimeCodeQuarterFrame (c=");
+	DEBUGSTREAM.print(value);
+	DEBUGSTREAM.println(")");
 #endif
 
 	if (mTimeCodeQuarterFrameCallback)
@@ -925,7 +925,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnTuneRequest(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> TuneRequest ()");
+	DEBUGSTREAM.print("> TuneRequest ()");
 #endif
 
 	if (mTuneRequestCallback)
@@ -939,7 +939,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnClock(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Clock ()");
+	DEBUGSTREAM.print("> Clock ()");
 #endif
 
 	if (mClockCallback)
@@ -952,7 +952,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnStart(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Start ()");
+	DEBUGSTREAM.print("> Start ()");
 #endif
 
 	if (mStartCallback)
@@ -965,7 +965,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnContinue(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Continue ()");
+	DEBUGSTREAM.print("> Continue ()");
 #endif
 
 	if (mContinueCallback)
@@ -978,7 +978,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnStop(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Stop ()");
+	DEBUGSTREAM.print("> Stop ()");
 #endif
 
 	if (mStopCallback)
@@ -991,7 +991,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnActiveSensing(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> ActiveSensing ()");
+	DEBUGSTREAM.print("> ActiveSensing ()");
 #endif
 
 	if (mActiveSensingCallback)
@@ -1004,7 +1004,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> Reset ()");
+	DEBUGSTREAM.print("> Reset ()");
 #endif
 
 	if (mResetCallback)
@@ -1017,7 +1017,7 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("> SysEx ()");
+	DEBUGSTREAM.print("> SysEx ()");
 #endif
 
 	if (mSysExCallback)
@@ -1069,7 +1069,7 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionControl(AppleMIDI_Invitation
 	if (i < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.println("hmm, initiatorToken not found");
+		DEBUGSTREAM.println("hmm, initiatorToken not found");
 #endif
 		return;
 	}
@@ -1078,7 +1078,7 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionControl(AppleMIDI_Invitation
 	if (Sessions[i].invite.status != WaitingForControlInvitationAccepted)
 	{
 #if (APPLEMIDI_DEBUG) // issue warning
-		Serial.println("status not what expected");
+		DEBUGSTREAM.println("status not what expected");
 #endif
 	}
 
@@ -1099,7 +1099,7 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_Invitation
 	if (i < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.println("hmm, initiatorToken not found");
+		DEBUGSTREAM.println("hmm, initiatorToken not found");
 #endif
 		return;
 	}
@@ -1108,7 +1108,7 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_Invitation
 	if (Sessions[i].invite.status != WaitingForContentInvitationAccepted)
 	{
 #if (APPLEMIDI_DEBUG) // issue warning
-		Serial.println("status not what expected");
+		DEBUGSTREAM.println("status not what expected");
 #endif
 	}
 
@@ -1127,10 +1127,10 @@ template<class UdpClass>
 void AppleMidi_Class<UdpClass>::CreateLocalSession(const int i, const uint32_t ssrc)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print  ("New Local Session in slot ");
-	Serial.print  (i);
-	Serial.print  (" with SSRC 0x");
-	Serial.println(ssrc, HEX);
+	DEBUGSTREAM.print  ("New Local Session in slot ");
+	DEBUGSTREAM.print  (i);
+	DEBUGSTREAM.print  (" with SSRC 0x");
+	DEBUGSTREAM.println(ssrc, HEX);
 #endif
 
 	Sessions[i].ssrc = ssrc;
@@ -1152,14 +1152,14 @@ void AppleMidi_Class<UdpClass>::CreateRemoteSession(IPAddress ip, uint16_t port)
 	if (i < 0)
 	{
 #if (APPLEMIDI_DEBUG)
-		Serial.println("Invite: No free slot availble, invitation cancelled.");
+		DEBUGSTREAM.println("Invite: No free slot availble, invitation cancelled.");
 #endif
 		return;
 	}
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("New Remote Session in slot ");
-	Serial.println(i);
+	DEBUGSTREAM.print("New Remote Session in slot ");
+	DEBUGSTREAM.println(i);
 #endif
 
 	Sessions[i].ssrc = -1;
@@ -1205,8 +1205,8 @@ void AppleMidi_Class<UdpClass>::DeleteSession(int slot)
 	Sessions[slot].syncronization.enabled = false;
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("Freeing Session slot ");
-	Serial.println(slot);
+	DEBUGSTREAM.print("Freeing Session slot ");
+	DEBUGSTREAM.println(slot);
 #endif
 }
 
@@ -1235,10 +1235,10 @@ void AppleMidi_Class<UdpClass>::DumpSession()
 #if (APPLEMIDI_DEBUG)
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
-		Serial.print("Slot ");
-		Serial.print(i);
-		Serial.print(" ssrc = 0x");
-		Serial.println(Sessions[i].ssrc, HEX);
+		DEBUGSTREAM.print("Slot ");
+		DEBUGSTREAM.print(i);
+		DEBUGSTREAM.print(" ssrc = 0x");
+		DEBUGSTREAM.println(Sessions[i].ssrc, HEX);
 	}
 #endif
 }
@@ -1280,16 +1280,16 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			session->invite.status = WaitingForControlInvitationAccepted;
 
 #if (APPLEMIDI_DEBUG)
-			Serial.print("< (ManageInvites) Control Invitation: peer = \"");
-			Serial.print(invitation.sessionName);
-			Serial.print("\"");
-			Serial.print(" ,ssrc 0x");
-			Serial.print(invitation.ssrc, HEX);
-			Serial.print(" ,Attempt = ");
-			Serial.print(session->invite.attempts);
-			Serial.print(" ,initiatorToken = 0x");
-			Serial.print(invitation.initiatorToken, HEX);
-			Serial.println();
+			DEBUGSTREAM.print("< (ManageInvites) Control Invitation: peer = \"");
+			DEBUGSTREAM.print(invitation.sessionName);
+			DEBUGSTREAM.print("\"");
+			DEBUGSTREAM.print(" ,ssrc 0x");
+			DEBUGSTREAM.print(invitation.ssrc, HEX);
+			DEBUGSTREAM.print(" ,Attempt = ");
+			DEBUGSTREAM.print(session->invite.attempts);
+			DEBUGSTREAM.print(" ,initiatorToken = 0x");
+			DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+			DEBUGSTREAM.println();
 #endif
 		}
 		else if (session->invite.status == WaitingForControlInvitationAccepted)
@@ -1316,16 +1316,16 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 				session->invite.attempts++;
 
 #if (APPLEMIDI_DEBUG)
-				Serial.print("< (ManageInvites2) Control Invitation: peer = \"");
-				Serial.print(invitation.sessionName);
-				Serial.print("\"");
-				Serial.print(" ,ssrc 0x");
-				Serial.print(invitation.ssrc, HEX);
-				Serial.print(" ,Attempt = ");
-				Serial.print(session->invite.attempts);
-				Serial.print(" ,initiatorToken = 0x");
-				Serial.print(invitation.initiatorToken, HEX);
-				Serial.println();
+				DEBUGSTREAM.print("< (ManageInvites2) Control Invitation: peer = \"");
+				DEBUGSTREAM.print(invitation.sessionName);
+				DEBUGSTREAM.print("\"");
+				DEBUGSTREAM.print(" ,ssrc 0x");
+				DEBUGSTREAM.print(invitation.ssrc, HEX);
+				DEBUGSTREAM.print(" ,Attempt = ");
+				DEBUGSTREAM.print(session->invite.attempts);
+				DEBUGSTREAM.print(" ,initiatorToken = 0x");
+				DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+				DEBUGSTREAM.println();
 #endif
 			}
 		}
@@ -1342,16 +1342,16 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 			session->invite.status = WaitingForContentInvitationAccepted;
 
 #if (APPLEMIDI_DEBUG)
-			Serial.print("< Content Invitation: peer = \"");
-			Serial.print(invitation.sessionName);
-			Serial.print("\"");
-			Serial.print(" ,ssrc 0x");
-			Serial.print(invitation.ssrc, HEX);
-			Serial.print(" ,Attempt = ");
-			Serial.print(session->invite.attempts);
-			Serial.print(" ,initiatorToken = 0x");
-			Serial.print(invitation.initiatorToken, HEX);
-			Serial.println();
+			DEBUGSTREAM.print("< Content Invitation: peer = \"");
+			DEBUGSTREAM.print(invitation.sessionName);
+			DEBUGSTREAM.print("\"");
+			DEBUGSTREAM.print(" ,ssrc 0x");
+			DEBUGSTREAM.print(invitation.ssrc, HEX);
+			DEBUGSTREAM.print(" ,Attempt = ");
+			DEBUGSTREAM.print(session->invite.attempts);
+			DEBUGSTREAM.print(" ,initiatorToken = 0x");
+			DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+			DEBUGSTREAM.println();
 #endif
 		}
 		else if (session->invite.status == WaitingForContentInvitationAccepted)
@@ -1377,16 +1377,16 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 				session->invite.attempts++;
 
 #if (APPLEMIDI_DEBUG)
-				Serial.print("< Content Invitation: peer = \"");
-				Serial.print(invitation.sessionName);
-				Serial.print("\"");
-				Serial.print(" ,ssrc 0x");
-				Serial.print(invitation.ssrc, HEX);
-				Serial.print(" ,Attempt = ");
-				Serial.print(session->invite.attempts);
-				Serial.print(" ,initiatorToken = 0x");
-				Serial.print(invitation.initiatorToken, HEX);
-				Serial.println();
+				DEBUGSTREAM.print("< Content Invitation: peer = \"");
+				DEBUGSTREAM.print(invitation.sessionName);
+				DEBUGSTREAM.print("\"");
+				DEBUGSTREAM.print(" ,ssrc 0x");
+				DEBUGSTREAM.print(invitation.ssrc, HEX);
+				DEBUGSTREAM.print(" ,Attempt = ");
+				DEBUGSTREAM.print(session->invite.attempts);
+				DEBUGSTREAM.print(" ,initiatorToken = 0x");
+				DEBUGSTREAM.print(invitation.initiatorToken, HEX);
+				DEBUGSTREAM.println();
 #endif
 			}
 		}
@@ -1444,23 +1444,23 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 					write(_dataPort, synchronizationResponse, Sessions[i].contentIP, Sessions[i].contentPort);
 
 #if (APPLEMIDI_DEBUG)
-					Serial.print("< Syncronization for ssrc 0x");
-					Serial.print(synchronizationResponse.ssrc, HEX);
-					Serial.print(", count = ");
-					Serial.print(synchronizationResponse.count);
-					Serial.print(", to = ");
-					Serial.print(Sessions[i].contentIP);
-					Serial.print(" ");
-					Serial.print(Sessions[i].contentPort);
+					DEBUGSTREAM.print("< Syncronization for ssrc 0x");
+					DEBUGSTREAM.print(synchronizationResponse.ssrc, HEX);
+					DEBUGSTREAM.print(", count = ");
+					DEBUGSTREAM.print(synchronizationResponse.count);
+					DEBUGSTREAM.print(", to = ");
+					DEBUGSTREAM.print(Sessions[i].contentIP);
+					DEBUGSTREAM.print(" ");
+					DEBUGSTREAM.print(Sessions[i].contentPort);
 #if (APPLEMIDI_DEBUG_VERBOSE)
-					//Serial.print  (" Timestamps = ");
-					//Serial.print  (synchronizationResponse.timestamps[0], HEX);
-					//Serial.print  (" ");
-					//Serial.print  (synchronizationResponse.timestamps[1], HEX);
-					//Serial.print  (" ");
-					//Serial.print  (synchronizationResponse.timestamps[2], HEX);
+					//DEBUGSTREAM.print  (" Timestamps = ");
+					//DEBUGSTREAM.print  (synchronizationResponse.timestamps[0], HEX);
+					//DEBUGSTREAM.print  (" ");
+					//DEBUGSTREAM.print  (synchronizationResponse.timestamps[1], HEX);
+					//DEBUGSTREAM.print  (" ");
+					//DEBUGSTREAM.print  (synchronizationResponse.timestamps[2], HEX);
 #endif
-					Serial.println("");
+					DEBUGSTREAM.println("");
 #endif
 				}
 			}
@@ -1530,13 +1530,13 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncroniza
 	Debug::Assert(success, "udp.beginPacket failed");
 
 #if (APPLEMIDI_DEBUG)
-	Serial.print("Syncronization timestamps: 0x");
-	Serial.print((uint32_t)sy.timestamps[0], HEX);
-	Serial.print(", 0x");
-	Serial.print((uint32_t)sy.timestamps[1], HEX);
-	Serial.print(", 0x");
-	Serial.print((uint32_t)sy.timestamps[2], HEX);
-	Serial.println("");
+	DEBUGSTREAM.print("Syncronization timestamps: 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[0], HEX);
+	DEBUGSTREAM.print(", 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[1], HEX);
+	DEBUGSTREAM.print(", 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[2], HEX);
+	DEBUGSTREAM.println("");
 #endif
 
 	sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
@@ -1915,13 +1915,13 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel  inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("< Note On (c=");
-	Serial.print(inChannel);
-	Serial.print(", n=");
-	Serial.print(inNoteNumber);
-	Serial.print(", v=");
-	Serial.print(inVelocity);
-	Serial.println(")");
+	DEBUGSTREAM.print("< Note On (c=");
+	DEBUGSTREAM.print(inChannel);
+	DEBUGSTREAM.print(", n=");
+	DEBUGSTREAM.print(inNoteNumber);
+	DEBUGSTREAM.print(", v=");
+	DEBUGSTREAM.print(inVelocity);
+	DEBUGSTREAM.println(")");
 #endif
 
 #if APPLEMIDI_USE_EVENTS
@@ -1952,13 +1952,13 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("< Note Off (c=");
-	Serial.print(inChannel);
-	Serial.print(", n=");
-	Serial.print(inNoteNumber);
-	Serial.print(", v=");
-	Serial.print(inVelocity);
-	Serial.println(")");
+	DEBUGSTREAM.print("< Note Off (c=");
+	DEBUGSTREAM.print(inChannel);
+	DEBUGSTREAM.print(", n=");
+	DEBUGSTREAM.print(inNoteNumber);
+	DEBUGSTREAM.print(", v=");
+	DEBUGSTREAM.print(inVelocity);
+	DEBUGSTREAM.println(")");
 #endif
 
 #if APPLEMIDI_USE_EVENTS
@@ -1982,10 +1982,10 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::programChange(DataByte inProgramNumber, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("sendProgramChange ProgramNumber:");
-	Serial.print(inProgramNumber);
-	Serial.print(" Channel:");
-	Serial.println(inChannel);
+	DEBUGSTREAM.print("sendProgramChange ProgramNumber:");
+	DEBUGSTREAM.print(inProgramNumber);
+	DEBUGSTREAM.print(" Channel:");
+	DEBUGSTREAM.println(inChannel);
 #endif
 
 	send(ProgramChange, inProgramNumber, 0, inChannel);
@@ -2001,12 +2001,12 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("sendControlChange Number:");
-	Serial.print(inControlNumber);
-	Serial.print(" Value:");
-	Serial.print(inControlValue);
-	Serial.print(" Channel:");
-	Serial.println(inChannel);
+	DEBUGSTREAM.print("sendControlChange Number:");
+	DEBUGSTREAM.print(inControlNumber);
+	DEBUGSTREAM.print(" Value:");
+	DEBUGSTREAM.print(inControlValue);
+	DEBUGSTREAM.print(" Channel:");
+	DEBUGSTREAM.println(inChannel);
 #endif
 
 	send(ControlChange, inControlNumber, inControlValue, inChannel);
@@ -2021,12 +2021,12 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("sendPolyPressure Note:");
-	Serial.print(inNoteNumber);
-	Serial.print(" Pressure:");
-	Serial.print(inPressure);
-	Serial.print(" Channel:");
-	Serial.println(inChannel);
+	DEBUGSTREAM.print("sendPolyPressure Note:");
+	DEBUGSTREAM.print(inNoteNumber);
+	DEBUGSTREAM.print(" Pressure:");
+	DEBUGSTREAM.print(inPressure);
+	DEBUGSTREAM.print(" Channel:");
+	DEBUGSTREAM.println(inChannel);
 #endif
 
 	send(AfterTouchPoly, inNoteNumber, inPressure, inChannel);
@@ -2040,11 +2040,11 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::afterTouch(DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("sendafterTouch ");
-	Serial.print(" Pressure:");
-	Serial.print(inPressure);
-	Serial.print(" Channel:");
-	Serial.println(inChannel);
+	DEBUGSTREAM.print("sendafterTouch ");
+	DEBUGSTREAM.print(" Pressure:");
+	DEBUGSTREAM.print(inPressure);
+	DEBUGSTREAM.print(" Channel:");
+	DEBUGSTREAM.println(inChannel);
 #endif
 
 	send(AfterTouchChannel, inPressure, 0, inChannel);
@@ -2060,11 +2060,11 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::pitchBend(int inPitchValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("pitchBend ");
-	Serial.print(" Pitch:");
-	Serial.print(inPitchValue);
-	Serial.print(" Channel:");
-	Serial.println(inChannel);
+	DEBUGSTREAM.print("pitchBend ");
+	DEBUGSTREAM.print(" Pitch:");
+	DEBUGSTREAM.print(inPitchValue);
+	DEBUGSTREAM.print(" Channel:");
+	DEBUGSTREAM.println(inChannel);
 #endif
 
 	const unsigned int bend = inPitchValue - MIDI_PITCHBEND_MIN;
@@ -2093,7 +2093,7 @@ template<class UdpClass>
 inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
-	Serial.print("sysEx ");
+	DEBUGSTREAM.print("sysEx ");
 #endif
 
 	const uint16_t contentLength = length - 2; //  remove start and end byte (SysExStart and SysExEnd)
