@@ -6,4 +6,4 @@ install:
     - python -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
 
 script:
-- platformio ci examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino --board=uno
+- platformio ci --lib="." --board=uno
