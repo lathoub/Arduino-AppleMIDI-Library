@@ -1,7 +1,7 @@
 # AppleMIDI for Arduino
 [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library) [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![GitHub version](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library.svg)](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library)
 
-The goal of this library is to enable an Arduino (with an Ethernet shield) or ESP8266 to particpate in an AppleMIDI session.
+Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ...) to particpate in an AppleMIDI session.
 
 ## Features
 * Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen on Windows
