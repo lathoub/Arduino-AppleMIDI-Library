@@ -601,7 +601,7 @@ public:
 	decode_channel_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	   uint32_t				chanflags;
 	   uint16_t				chanjourlen;
-	   int				consumed = 0;
+	   uint16_t				consumed = 0;
 	   int				ext_consumed = 0;
 
 	   /* first we need to get the flags & length of this channel-journal */
