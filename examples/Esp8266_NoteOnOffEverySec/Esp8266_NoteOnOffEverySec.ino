@@ -13,6 +13,12 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
 
+// Forward declaration
+void OnAppleMidiConnected(uint32_t ssrc, char* name);
+void OnAppleMidiDisconnected(uint32_t ssrc);
+void OnAppleMidiNoteOn(byte channel, byte note, byte velocity);
+void OnAppleMidiNoteOff(byte channel, byte note, byte velocity);
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
