@@ -7,11 +7,5 @@ cache:
 install:
 - pip install -U platformio
 
-env:
-- BOARD=uno
-
 script:
-- set -eo pipefail;
-  for e in examples/*; do
-    platformio ci --board=$BOARD --lib=. $e/*;
-  done
+- platformio ci --board=uno --lib=. $examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
