@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <limits.h>
+#include <stdint.h>
 
 BEGIN_APPLEMIDI_NAMESPACE
 

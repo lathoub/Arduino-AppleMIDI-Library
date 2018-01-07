@@ -155,7 +155,7 @@ inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
 		randomSeed(seed);
 
 		// not full range of UINT32_MAX (unsigned!), but (signed) long should suffice
-		_ssrc = random(1, LONG_MAX);
+		_ssrc = random(1, INT32_MAX);
 
 #if (APPLEMIDI_DEBUG)
 		DEBUGSTREAM.print(F("Lazy init of SSRC. Value is 0x"));
