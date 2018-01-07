@@ -8,4 +8,4 @@ install:
 - pip install -U platformio
 
 script:
-- platformio ci --board=uno --lib=. $examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
+- platformio ci --board=uno --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
