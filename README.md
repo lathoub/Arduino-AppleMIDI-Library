@@ -1,11 +1,11 @@
 # AppleMIDI for Arduino
 [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library)[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![GitHub version](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library.svg)](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library)
 
-Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ...) to particpate in an AppleMIDI session.
+Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
 
 ## Features
-* Tested with AppleMIDI on Mac OS and using rtpMIDI from Tobias Erichsen on Windows
-* Send and receive MIDI commands
+* Tested with AppleMIDI on Mac OS (High Sierra) and using rtpMIDI from Tobias Erichsen on Windows 10
+* Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 
@@ -37,8 +37,9 @@ void loop()
 More usages in the `examples` folder
 
 ## Hardware
-* Arduino/Genuino (Mega, Uno and Arduino Ethernet)
-* ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev) and ESP32
+* Arduino/Genuino (Mega, Uno, Arduino Ethernet, ...)
+* ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
+* ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
