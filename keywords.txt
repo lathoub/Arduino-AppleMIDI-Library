@@ -5,8 +5,10 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-AppleMidi	KEYWORD1
+AppleMIDI	KEYWORD1
 AppleMidi.h	KEYWORD1
+AppleMidiInterface	KEYWORD1
+DefaultSettings	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -45,11 +47,13 @@ tick	         KEYWORD2
 # Instances (KEYWORD3)
 #######################################
 
-AppleMIDI	KEYWORD3
-
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-CONTROL_PORT	LITERAL1
+# Namespace, considering it as a literal
+applemidi	LITERAL1
 
+CONTROL_PORT	LITERAL1
+APPLEMIDI_CREATE_INSTANCE	LITERAL1
+APPLEMIDI_CREATE_DEFAULT_INSTANCE	LITERAL1
