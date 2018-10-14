@@ -81,4 +81,18 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+struct DefaultSettings
+{
+    /*! NoteOn with 0 velocity should be handled as NoteOf.\n
+     Set to true  to get NoteOff events when receiving null-velocity NoteOn messages.\n
+     Set to false to get NoteOn  events when receiving null-velocity NoteOn messages.
+     */
+    static const bool HandleNullVelocityNoteOnAsNoteOff = true;
+    
+    /*! Maximum size of SysEx receivable. Decrease to save RAM if you don't expect
+     to receive SysEx, or adjust accordingly.
+     */
+    static const unsigned SysExMaxSize = 128;
+};
+
 END_APPLEMIDI_NAMESPACE

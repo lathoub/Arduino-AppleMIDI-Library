@@ -76,12 +76,12 @@ public:
 	virtual void OnContentInvitation(void* sender, AppleMIDI_Invitation&) = 0;
 };
 
-/*! \brief The main class for AppleMidi_Class handling.\n
+/*! \brief The main class for AppleMidiInterface handling.\n
 	See member descriptions to know how to use it,
 	or check out the examples supplied with the library.
  */
-template<class UdpClass>
-class AppleMidi_Class : public IAppleMidi
+template<class UdpClass, class Settings = DefaultSettings>
+class AppleMidiInterface : public IAppleMidi
 {
 protected:
 	//
@@ -119,8 +119,8 @@ protected:
 
 public:
 	// Constructor and Destructor
-	inline  AppleMidi_Class();
-	inline ~AppleMidi_Class();
+	inline  AppleMidiInterface();
+	inline ~AppleMidiInterface();
 
 	int Port;
 

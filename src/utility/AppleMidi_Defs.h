@@ -496,12 +496,18 @@ typedef uint64_t MIDITimeStamp;
 /*! \brief Create an instance of the library
  */
 #define APPLEMIDI_CREATE_INSTANCE(Type, Name)                            \
-    APPLEMIDI_NAMESPACE::AppleMidi_Class<Type> Name;
+    APPLEMIDI_NAMESPACE::AppleMidiInterface<Type> Name;
 
 
 /*! \brief Create an instance of the library with EnternetUDP.
 */
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE()                                      \
     APPLEMIDI_CREATE_INSTANCE(EthernetUDP, AppleMIDI);
+
+/*! \brief Create a custom instance
+ */
+#define APPLEMIDI_CREATE_CUSTOM_INSTANCE(Type, Name, Settings)           \
+    APPLEMIDI_NAMESPACE::AppleMidiInterface<Type, Settings> Name;
+
 
 END_APPLEMIDI_NAMESPACE

@@ -11,8 +11,8 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 /*! \brief Default constructor for MIDI_Class. */
-template<class UdpClass>
-inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
+template<class UdpClass, class Settings>
+inline AppleMidiInterface<UdpClass, Settings>::AppleMidiInterface()
 {
 #if APPLEMIDI_USE_CALLBACKS
 	// Initialise callbacks to NULL pointer
@@ -57,8 +57,8 @@ inline AppleMidi_Class<UdpClass>::AppleMidi_Class()
 
  This is not really useful for the Arduino, as it is never called...
  */
-template<class UdpClass>
-inline AppleMidi_Class<UdpClass>::~AppleMidi_Class()
+template<class UdpClass, class Settings>
+inline AppleMidiInterface<UdpClass, Settings>::~AppleMidiInterface()
 {
 }
 
@@ -70,8 +70,8 @@ All parameters are set to their default values:
 - Input channel set to 1 if no value is specified
 - Full thru mirroring
 */
-template<class UdpClass>
-inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t port)
+template<class UdpClass, class Settings>
+inline bool AppleMidiInterface<UdpClass, Settings>::begin(const char* sessionName, uint16_t port)
 {
 #if (APPLEMIDI_DEBUG)
 	if (strlen(sessionName) > SESSION_NAME_MAX_LEN)
@@ -117,8 +117,8 @@ inline bool AppleMidi_Class<UdpClass>::begin(const char* sessionName, uint16_t p
 
 /*! \brief Evaluates incoming Rtp messages.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::run()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::run()
 {
 	// Process one control packet, if available
 	int packetSize = _controlPort.parsePacket();
@@ -143,8 +143,8 @@ inline void AppleMidi_Class<UdpClass>::run()
 
 /*! \brief Get Synchronization Source, initiatize the SSRC on first time usage (lazy init).
 */
-template<class UdpClass>
-inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
+template<class UdpClass, class Settings>
+inline uint32_t AppleMidiInterface<UdpClass, Settings>::getSynchronizationSource()
 {
 	if (0 == _ssrc) // _ssrc initialized to 0 in constructor
 	{
@@ -167,8 +167,8 @@ inline uint32_t AppleMidi_Class<UdpClass>::getSynchronizationSource()
 
 /*! \brief The Arduino initiates the session.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::invite(IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::invite(IPAddress ip, uint16_t port)
 {
 	CreateRemoteSession(ip, port);
 
@@ -179,8 +179,8 @@ inline void AppleMidi_Class<UdpClass>::invite(IPAddress ip, uint16_t port)
 
 /*! \brief The Arduino is being invited to a session.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::OnInvitation(void* sender, AppleMIDI_Invitation& invitation)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::OnInvitation(void* sender, AppleMIDI_Invitation& invitation)
 {
 	Dissector* dissector = (Dissector*) sender;
 
@@ -192,8 +192,8 @@ inline void AppleMidi_Class<UdpClass>::OnInvitation(void* sender, AppleMIDI_Invi
 
 /*! \brief The session has been ended by the remote source.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndSession& sessionEnd)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::OnEndSession(void* sender, AppleMIDI_EndSession& sessionEnd)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -216,8 +216,8 @@ inline void AppleMidi_Class<UdpClass>::OnEndSession(void* sender, AppleMIDI_EndS
 /* \brief With the receiver feedback packet, the recipient can tell the sender up to what sequence
 * number in the RTP-stream the packets have been received; this can be used to shorten the
 * recovery-journal-section in the RTP-session */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback& receiverFeedback)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback& receiverFeedback)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -229,8 +229,8 @@ inline void AppleMidi_Class<UdpClass>::OnReceiverFeedback(void* sender, AppleMID
 
 /*! \brief The invitation that we have sent, has been accepted.
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 	Dissector* dissector = (Dissector*) sender;
 
@@ -242,8 +242,8 @@ void AppleMidi_Class<UdpClass>::OnInvitationAccepted(void* sender, AppleMIDI_Inv
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print(F("> (OnControlInvitationAccepted) Control InvitationAccepted: peer = \""));
@@ -261,8 +261,8 @@ void AppleMidi_Class<UdpClass>::OnControlInvitationAccepted(void* sender, AppleM
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print(F("> Content InvitationAccepted: peer = \""));
@@ -282,8 +282,8 @@ void AppleMidi_Class<UdpClass>::OnContentInvitationAccepted(void* sender, AppleM
 
 /*! \brief Part 1 of being invited into a session, the Control Invitation.
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invitation& invitation)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnControlInvitation(void* sender, AppleMIDI_Invitation& invitation)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -353,8 +353,8 @@ void AppleMidi_Class<UdpClass>::OnControlInvitation(void* sender, AppleMIDI_Invi
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnContentInvitation(void* sender, AppleMIDI_Invitation& invitation)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnContentInvitation(void* sender, AppleMIDI_Invitation& invitation)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -444,8 +444,8 @@ state in order to re-establish communication automatically as soon as the distan
 network. Some implementations (especially on personal computers) display also an alert message and offer to the
 user to choose between a new connection attempt or closing the session.
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncronization& synchronization)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnSyncronization(void* sender, AppleMIDI_Syncronization& synchronization)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -535,8 +535,8 @@ void AppleMidi_Class<UdpClass>::OnSyncronization(void* sender, AppleMIDI_Syncron
 the transmission to a certain bitrate. This is important if the peer is a gateway
 to a hardware-device that only supports a certain speed. Like the MIDI 1.0 DIN-cable
 MIDI-implementation which is limited to 31250. */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit& bitrateReceiveLimit)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit& bitrateReceiveLimit)
 {
 	//Dissector* dissector = (Dissector*) sender;
 
@@ -551,8 +551,8 @@ void AppleMidi_Class<UdpClass>::OnBitrateReceiveLimit(void* sender, AppleMIDI_Bi
 
 /*! \brief .
 */
-template<class UdpClass>
-bool AppleMidi_Class<UdpClass>::PassesFilter(void* sender, DataByte type, DataByte channel)
+template<class UdpClass, class Settings>
+bool AppleMidiInterface<UdpClass, Settings>::PassesFilter(void* sender, DataByte type, DataByte channel)
 {
 	// This method handles recognition of channel
 	// (to know if the message is destinated to the Arduino)
@@ -584,8 +584,8 @@ bool AppleMidi_Class<UdpClass>::PassesFilter(void* sender, DataByte type, DataBy
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnNoteOn(void* sender, DataByte channel, DataByte note, DataByte velocity)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnNoteOn(void* sender, DataByte channel, DataByte note, DataByte velocity)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print(F("> Note On (c="));
@@ -603,8 +603,8 @@ void AppleMidi_Class<UdpClass>::OnNoteOn(void* sender, DataByte channel, DataByt
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnNoteOff(void* sender, DataByte channel, DataByte note, DataByte velocity)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnNoteOff(void* sender, DataByte channel, DataByte note, DataByte velocity)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Note Off (c=");
@@ -622,8 +622,8 @@ void AppleMidi_Class<UdpClass>::OnNoteOff(void* sender, DataByte channel, DataBy
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnPolyPressure(void* sender, DataByte channel, DataByte note, DataByte pressure)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnPolyPressure(void* sender, DataByte channel, DataByte note, DataByte pressure)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Poly Pressure (c=");
@@ -641,8 +641,8 @@ void AppleMidi_Class<UdpClass>::OnPolyPressure(void* sender, DataByte channel, D
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnChannelPressure(void* sender, DataByte channel, DataByte pressure)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnChannelPressure(void* sender, DataByte channel, DataByte pressure)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Channel Pressure (c=");
@@ -658,8 +658,8 @@ void AppleMidi_Class<UdpClass>::OnChannelPressure(void* sender, DataByte channel
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnPitchBendChange(void* sender, DataByte channel, int pitch)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnPitchBendChange(void* sender, DataByte channel, int pitch)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Pitch Bend (c=");
@@ -675,8 +675,8 @@ void AppleMidi_Class<UdpClass>::OnPitchBendChange(void* sender, DataByte channel
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnProgramChange(void* sender, DataByte channel, DataByte program)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnProgramChange(void* sender, DataByte channel, DataByte program)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Program Change (c=");
@@ -700,8 +700,8 @@ void AppleMidi_Class<UdpClass>::OnProgramChange(void* sender, DataByte channel, 
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnControlChange(void* sender, DataByte channel, DataByte controller, DataByte value)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnControlChange(void* sender, DataByte channel, DataByte controller, DataByte value)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Control Change (c=");
@@ -876,8 +876,8 @@ void AppleMidi_Class<UdpClass>::OnControlChange(void* sender, DataByte channel, 
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSongSelect(void* sender, DataByte songNr)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnSongSelect(void* sender, DataByte songNr)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> SongSelect (s=");
@@ -891,8 +891,8 @@ void AppleMidi_Class<UdpClass>::OnSongSelect(void* sender, DataByte songNr)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSongPosition(void* sender, unsigned short value)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnSongPosition(void* sender, unsigned short value)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> SongPosition (c=");
@@ -906,8 +906,8 @@ void AppleMidi_Class<UdpClass>::OnSongPosition(void* sender, unsigned short valu
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnTimeCodeQuarterFrame(void* sender, DataByte value)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnTimeCodeQuarterFrame(void* sender, DataByte value)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> TimeCodeQuarterFrame (c=");
@@ -921,8 +921,8 @@ void AppleMidi_Class<UdpClass>::OnTimeCodeQuarterFrame(void* sender, DataByte va
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnTuneRequest(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnTuneRequest(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> TuneRequest ()");
@@ -935,8 +935,8 @@ void AppleMidi_Class<UdpClass>::OnTuneRequest(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnClock(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnClock(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Clock ()");
@@ -948,8 +948,8 @@ void AppleMidi_Class<UdpClass>::OnClock(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnStart(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnStart(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Start ()");
@@ -961,8 +961,8 @@ void AppleMidi_Class<UdpClass>::OnStart(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnContinue(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnContinue(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Continue ()");
@@ -974,8 +974,8 @@ void AppleMidi_Class<UdpClass>::OnContinue(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnStop(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnStop(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Stop ()");
@@ -987,8 +987,8 @@ void AppleMidi_Class<UdpClass>::OnStop(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnActiveSensing(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnActiveSensing(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> ActiveSensing ()");
@@ -1000,8 +1000,8 @@ void AppleMidi_Class<UdpClass>::OnActiveSensing(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnReset(void* sender)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnReset(void* sender)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Reset ()");
@@ -1013,8 +1013,8 @@ void AppleMidi_Class<UdpClass>::OnReset(void* sender)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, const byte* data, uint16_t length)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::OnSysEx(void* sender, const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> SysEx ()");
@@ -1028,8 +1028,8 @@ void AppleMidi_Class<UdpClass>::OnSysEx(void* sender, const byte* data, uint16_t
 
 /*! \brief Find a free session slot.
  */
-template<class UdpClass>
-int AppleMidi_Class<UdpClass>::GetFreeSessionSlot()
+template<class UdpClass, class Settings>
+int AppleMidiInterface<UdpClass, Settings>::GetFreeSessionSlot()
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 		if (0 == Sessions[i].ssrc)
@@ -1039,8 +1039,8 @@ int AppleMidi_Class<UdpClass>::GetFreeSessionSlot()
 
 /*! \brief Find the slot of a session, based on the ssrc.
 */
-template<class UdpClass>
-int AppleMidi_Class<UdpClass>::GetSessionSlotUsingSSrc(const uint32_t ssrc)
+template<class UdpClass, class Settings>
+int AppleMidiInterface<UdpClass, Settings>::GetSessionSlotUsingSSrc(const uint32_t ssrc)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 		if (ssrc == Sessions[i].ssrc)
@@ -1050,8 +1050,8 @@ int AppleMidi_Class<UdpClass>::GetSessionSlotUsingSSrc(const uint32_t ssrc)
 
 /*! \brief Find the slot of a session, based on the ssrc.
 */
-template<class UdpClass>
-int AppleMidi_Class<UdpClass>::GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken)
+template<class UdpClass, class Settings>
+int AppleMidiInterface<UdpClass, Settings>::GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 		if (initiatorToken == Sessions[i].invite.initiatorToken)
@@ -1061,8 +1061,8 @@ int AppleMidi_Class<UdpClass>::GetSessionSlotUsingInitiatorToken(const uint32_t 
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 	// Find slot, based on initiator token
 	int i = GetSessionSlotUsingInitiatorToken(invitationAccepted.initiatorToken);
@@ -1091,8 +1091,8 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionControl(AppleMIDI_Invitation
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted)
 {
 	// Find slot, based on initiator token
 	int i = GetSessionSlotUsingInitiatorToken(invitationAccepted.initiatorToken);
@@ -1123,8 +1123,8 @@ void AppleMidi_Class<UdpClass>::CompleteLocalSessionContent(AppleMIDI_Invitation
 
 /*! \brief Initialize session at slot 'index'.
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateLocalSession(const int i, const uint32_t ssrc)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::CreateLocalSession(const int i, const uint32_t ssrc)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print  ("New Local Session in slot ");
@@ -1145,8 +1145,8 @@ void AppleMidi_Class<UdpClass>::CreateLocalSession(const int i, const uint32_t s
 
 /*! \brief Initialize session at slot 'index'.
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::CreateRemoteSession(IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::CreateRemoteSession(IPAddress ip, uint16_t port)
 {
 	int i = GetFreeSessionSlot();
 	if (i < 0)
@@ -1181,8 +1181,8 @@ void AppleMidi_Class<UdpClass>::CreateRemoteSession(IPAddress ip, uint16_t port)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::DeleteSession(const uint32_t ssrc)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::DeleteSession(const uint32_t ssrc)
 {
 	// Find the slot first
 	int slot = GetSessionSlotUsingSSrc(ssrc);
@@ -1194,8 +1194,8 @@ void AppleMidi_Class<UdpClass>::DeleteSession(const uint32_t ssrc)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::DeleteSession(int slot)
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::DeleteSession(int slot)
 {
 	// Then zero-ize it
 	Sessions[slot].ssrc = 0;
@@ -1212,8 +1212,8 @@ void AppleMidi_Class<UdpClass>::DeleteSession(int slot)
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::DeleteSessions()
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::DeleteSessions()
 {
 	for (int slot = 0; slot < MAX_SESSIONS; slot++)
 	{
@@ -1229,8 +1229,8 @@ void AppleMidi_Class<UdpClass>::DeleteSessions()
 
 /*! \brief .
 */
-template<class UdpClass>
-void AppleMidi_Class<UdpClass>::DumpSession()
+template<class UdpClass, class Settings>
+void AppleMidiInterface<UdpClass, Settings>::DumpSession()
 {
 #if (APPLEMIDI_DEBUG)
 	for (int i = 0; i < MAX_SESSIONS; i++)
@@ -1245,8 +1245,8 @@ void AppleMidi_Class<UdpClass>::DumpSession()
 
 /*! \brief .
 */
-template<class UdpClass>
-inline uint32_t AppleMidi_Class<UdpClass>::createInitiatorToken()
+template<class UdpClass, class Settings>
+inline uint32_t AppleMidiInterface<UdpClass, Settings>::createInitiatorToken()
 {
 	static int counter = 0;
 	return 0x12345000 + ++counter;
@@ -1254,8 +1254,8 @@ inline uint32_t AppleMidi_Class<UdpClass>::createInitiatorToken()
 
 /*! \brief .
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::ManageInvites()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::ManageInvites()
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1395,8 +1395,8 @@ inline void AppleMidi_Class<UdpClass>::ManageInvites()
 
 /*! \brief The initiator of the session polls if remote station is still alive.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::ManageTiming()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::ManageTiming()
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1485,8 +1485,8 @@ inline void AppleMidi_Class<UdpClass>::ManageTiming()
 //
 // -----------------------------------------------------------------------------
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationRejected ir, IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationRejected ir, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1504,8 +1504,8 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 	udp.flush();
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_InvitationAccepted ia, IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationAccepted ia, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1523,8 +1523,8 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 	udp.flush();
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncronization sy, IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Syncronization sy, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1553,8 +1553,8 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Syncroniza
 	udp.flush();
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation in, IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Invitation in, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1572,8 +1572,8 @@ inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_Invitation
 	udp.flush();
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit in, IPAddress ip, uint16_t port)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit in, IPAddress ip, uint16_t port)
 {
 	int success = udp.beginPacket(ip, port);
 	Debug::Assert(success, "udp.beginPacket failed");
@@ -1607,8 +1607,8 @@ set this one to 0).
 This is an internal method, use it only if you need to send raw data
 from your code, at your own risks.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::send(MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1621,8 +1621,8 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, D
 	return;
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, DataByte inData2)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::send(MidiType inType, DataByte inData1, DataByte inData2)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1635,8 +1635,8 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData1, D
 	return;
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::send(MidiType inType, DataByte inData)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1649,8 +1649,8 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType, DataByte inData)
 	return;
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::send(MidiType inType)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1663,8 +1663,8 @@ inline void AppleMidi_Class<UdpClass>::send(MidiType inType)
 	return;
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sendSysEx(byte s, const byte* data, byte e, uint16_t length)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::sendSysEx(byte s, const byte* data, byte e, uint16_t length)
 {
 	for (int i = 0; i < MAX_SESSIONS; i++)
 	{
@@ -1688,8 +1688,8 @@ set this one to 0).
 This is an internal method, use it only if you need to send raw data
 from your code, at your own risks.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2, Channel inChannel)
 {
 	// Then test if channel is valid
 	if (inChannel >= MIDI_CHANNEL_OFF ||
@@ -1754,8 +1754,8 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 		internalSend(session, inType); // System Real-time and 1 byte.
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::internalSend(Session_t& session, MidiType inType)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
@@ -1793,8 +1793,8 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 #endif
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::internalSend(Session_t& session, MidiType inType, DataByte inData)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
@@ -1827,8 +1827,8 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 #endif
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::internalSend(Session_t& session, MidiType inType, DataByte inData1, DataByte inData2)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
@@ -1862,8 +1862,8 @@ inline void AppleMidi_Class<UdpClass>::internalSend(Session_t& session, MidiType
 #endif
 }
 
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::internalSendSysEx(Session_t& session, byte s, const byte* data, byte e, uint16_t length)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::internalSendSysEx(Session_t& session, byte s, const byte* data, byte e, uint16_t length)
 {
 	_rtpMidi.ssrc = getSynchronizationSource();
 	_rtpMidi.sequenceNr++;
@@ -1892,8 +1892,8 @@ inline void AppleMidi_Class<UdpClass>::internalSendSysEx(Session_t& session, byt
 #endif
 }
 
-template<class UdpClass>
-inline StatusByte AppleMidi_Class<UdpClass>::getStatus(MidiType inType, Channel inChannel) const
+template<class UdpClass, class Settings>
+inline StatusByte AppleMidiInterface<UdpClass, Settings>::getStatus(MidiType inType, Channel inChannel) const
 {
 	return ((byte) inType | ((inChannel - 1) & 0x0F));
 }
@@ -1911,8 +1911,8 @@ is considered as a NoteOff.
 Take a look at the values, names and frequencies of notes here:
 http://www.phys.unsw.edu.au/jw/notes.html
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel  inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel  inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("< Note On (c=");
@@ -1948,8 +1948,8 @@ sending only NoteOn data. This method will always send a real NoteOff message.
 Take a look at the values, names and frequencies of notes here:
 http://www.phys.unsw.edu.au/jw/notes.html
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("< Note Off (c=");
@@ -1978,8 +1978,8 @@ inline void AppleMidi_Class<UdpClass>::noteOff(DataByte inNoteNumber, DataByte i
 \param inProgramNumber The Program to select (0 to 127).
 \param inChannel       The channel on which the message will be sent (1 to 16).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::programChange(DataByte inProgramNumber, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::programChange(DataByte inProgramNumber, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendProgramChange ProgramNumber:");
@@ -1997,8 +1997,8 @@ inline void AppleMidi_Class<UdpClass>::programChange(DataByte inProgramNumber, C
 \param inChannel       The channel on which the message will be sent (1 to 16).
 @see MidiControlChangeNumber
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendControlChange Number:");
@@ -2017,8 +2017,8 @@ inline void AppleMidi_Class<UdpClass>::controlChange(DataByte inControlNumber, D
 \param inPressure    The amount of AfterTouch to apply (0 to 127).
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendPolyPressure Note:");
@@ -2036,8 +2036,8 @@ inline void AppleMidi_Class<UdpClass>::polyPressure(DataByte inNoteNumber, DataB
 \param inPressure    The amount of AfterTouch to apply to all notes.
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::afterTouch(DataByte inPressure, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::afterTouch(DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendafterTouch ");
@@ -2056,8 +2056,8 @@ between MIDI_PITCHBEND_MIN and MIDI_PITCHBEND_MAX,
 center value is 0.
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::pitchBend(int inPitchValue, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::pitchBend(int inPitchValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("pitchBend ");
@@ -2078,8 +2078,8 @@ between -1.0f (maximum downwards bend)
 and +1.0f (max upwards bend), center value is 0.0f.
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::pitchBend(double inPitchValue, Channel inChannel)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::pitchBend(double inPitchValue, Channel inChannel)
 {
 	const int value = inPitchValue * MIDI_PITCHBEND_MAX;
 	pitchBend(value, inChannel);
@@ -2089,8 +2089,8 @@ inline void AppleMidi_Class<UdpClass>::pitchBend(double inPitchValue, Channel in
 \param inLength  The size of the array to send
 \param inArray   The byte array containing the data to send
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::sysEx(const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sysEx ");
@@ -2124,8 +2124,8 @@ inline void AppleMidi_Class<UdpClass>::sysEx(const byte* data, uint16_t length)
 When a MIDI unit receives this message,
 it should tune its oscillators (if equipped with any).
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::tuneRequest()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::tuneRequest()
 {
 	send(TuneRequest);
 }
@@ -2154,32 +2154,32 @@ on the MIDI bus.
 
 (http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec/sense.htm)
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::activeSensing()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::activeSensing()
 {
 	send(ActiveSensing);
 }
 
 /*! \brief
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::start()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::start()
 {
 	send(Start);
 }
 
 /*! \brief
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::_continue()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::_continue()
 {
 	send(Continue);
 }
 
 /*! \brief
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::stop()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::stop()
 {
 	send(Stop);
 }
@@ -2190,8 +2190,8 @@ inline void AppleMidi_Class<UdpClass>::stop()
 \param inValuesNibble    MTC data
 See MIDI Specification for more information.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble)
 {
 	const byte data = (((inTypeNibble & 0x07) << 4) | (inValuesNibble & 0x0F));
 	timeCodeQuarterFrame(data);
@@ -2203,8 +2203,8 @@ See MIDI Specification for more information.
 \param inData  if you want to encode directly the nibbles in your program,
 you can send the byte here.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::timeCodeQuarterFrame(DataByte inData)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::timeCodeQuarterFrame(DataByte inData)
 {
 	send(TimeCodeQuarterFrame, inData);
 }
@@ -2212,8 +2212,8 @@ inline void AppleMidi_Class<UdpClass>::timeCodeQuarterFrame(DataByte inData)
 /*! \brief Send a Song Position Pointer message.
 \param inBeats    The number of beats since the start of the song.
 */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::songPosition(unsigned short inBeats)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::songPosition(unsigned short inBeats)
 {
 	byte octet1 = inBeats & 0x7F;
 	byte octet2 = (inBeats >> 7) & 0x7F;
@@ -2222,8 +2222,8 @@ inline void AppleMidi_Class<UdpClass>::songPosition(unsigned short inBeats)
 }
 
 /*! \brief Send a Song Select message */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::songSelect(DataByte inSongNumber)
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::songSelect(DataByte inSongNumber)
 {
 	byte octet = inSongNumber & 0x7F;
 
@@ -2232,22 +2232,22 @@ inline void AppleMidi_Class<UdpClass>::songSelect(DataByte inSongNumber)
 
 
 /*! \brief Send a Song Select message */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::reset()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::reset()
 {
 	send(Reset);
 }
 
 /*! \brief Send a Song Select message */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::clock()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::clock()
 {
 	send(Clock);
 }
 
 /*! \brief Send a Song Select message */
-template<class UdpClass>
-inline void AppleMidi_Class<UdpClass>::tick()
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::tick()
 {
 	send(Tick);
 }
@@ -2260,27 +2260,27 @@ inline void AppleMidi_Class<UdpClass>::tick()
 
 #if APPLEMIDI_USE_CALLBACKS
 
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnConnected(void(*fptr)(uint32_t, char*))    { mConnectedCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnDisconnected(void(*fptr)(uint32_t))      { mDisconnectedCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnConnected(void(*fptr)(uint32_t, char*))    { mConnectedCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnDisconnected(void(*fptr)(uint32_t))      { mDisconnectedCallback = fptr; }
 
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveNoteOff(void(*fptr)(byte channel, byte note, byte velocity))          { mNoteOffCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveNoteOn(void(*fptr)(byte channel, byte note, byte velocity))           { mNoteOnCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveAfterTouchPoly(void(*fptr)(byte channel, byte note, byte pressure))   { mAfterTouchPolyCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveControlChange(void(*fptr)(byte channel, byte number, byte value))     { mControlChangeCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveProgramChange(void(*fptr)(byte channel, byte number))                 { mProgramChangeCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveAfterTouchChannel(void(*fptr)(byte channel, byte pressure))           { mAfterTouchChannelCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceivePitchBend(void(*fptr)(byte channel, int bend))                        { mPitchBendCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSysEx(void(*fptr)(const byte* array, uint16_t size))                  { mSysExCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTimeCodeQuarterFrame(void(*fptr)(byte data))                          { mTimeCodeQuarterFrameCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongPosition(void(*fptr)(unsigned short beats))                       { mSongPositionCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveSongSelect(void(*fptr)(byte songnumber))                              { mSongSelectCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveTuneRequest(void(*fptr)(void))                                        { mTuneRequestCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveClock(void(*fptr)(void))                                              { mClockCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveStart(void(*fptr)(void))                                              { mStartCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveContinue(void(*fptr)(void))                                           { mContinueCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveStop(void(*fptr)(void))                                               { mStopCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveActiveSensing(void(*fptr)(void))                                      { mActiveSensingCallback = fptr; }
-template<class UdpClass> inline void AppleMidi_Class<UdpClass>::OnReceiveReset(void(*fptr)(void))                                              { mResetCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveNoteOff(void(*fptr)(byte channel, byte note, byte velocity))          { mNoteOffCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveNoteOn(void(*fptr)(byte channel, byte note, byte velocity))           { mNoteOnCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveAfterTouchPoly(void(*fptr)(byte channel, byte note, byte pressure))   { mAfterTouchPolyCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveControlChange(void(*fptr)(byte channel, byte number, byte value))     { mControlChangeCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveProgramChange(void(*fptr)(byte channel, byte number))                 { mProgramChangeCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveAfterTouchChannel(void(*fptr)(byte channel, byte pressure))           { mAfterTouchChannelCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceivePitchBend(void(*fptr)(byte channel, int bend))                        { mPitchBendCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveSysEx(void(*fptr)(const byte* array, uint16_t size))                  { mSysExCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveTimeCodeQuarterFrame(void(*fptr)(byte data))                          { mTimeCodeQuarterFrameCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveSongPosition(void(*fptr)(unsigned short beats))                       { mSongPositionCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveSongSelect(void(*fptr)(byte songnumber))                              { mSongSelectCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveTuneRequest(void(*fptr)(void))                                        { mTuneRequestCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveClock(void(*fptr)(void))                                              { mClockCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveStart(void(*fptr)(void))                                              { mStartCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveContinue(void(*fptr)(void))                                           { mContinueCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveStop(void(*fptr)(void))                                               { mStopCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveActiveSensing(void(*fptr)(void))                                      { mActiveSensingCallback = fptr; }
+template<class UdpClass, class Settings> inline void AppleMidiInterface<UdpClass, Settings>::OnReceiveReset(void(*fptr)(void))                                              { mResetCallback = fptr; }
 
 #endif
 
