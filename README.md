@@ -4,7 +4,7 @@
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
 
 ## Features
-* Tested with AppleMIDI on Mac OS (High Sierra) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Tested with AppleMIDI on Mac OS (10.13 High Sierra & 10.14 Mojave) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
