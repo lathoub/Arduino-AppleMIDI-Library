@@ -370,7 +370,7 @@ public:
 		DEBUGSTREAM.println (packetSize);
 #endif
 
-		int consumed = PacketRtp::dissect_rtp(dissector, appleMidi, packetBuffer, packetSize);
+		int consumed = PacketRtp::dissect_rtp(dissector, nullptr, packetBuffer, packetSize);
 
 		if (consumed <= 0) {
 			#ifdef APPLEMIDI_DEBUG_VERBOSE

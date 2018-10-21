@@ -76,7 +76,7 @@ struct _rtp_info {
 class PacketRtp {
 public:
 
-	static int dissect_rtp(Dissector* dissector, IRtpMidi* rtpMidi, unsigned char* packetBuffer, size_t packetSize) {
+	static int dissect_rtp(Dissector* dissector, IRtpMidi*, unsigned char* packetBuffer, size_t packetSize) {
 		#ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.println("start: dissect_rtp");
 		#endif
@@ -122,6 +122,7 @@ public:
 			DEBUGSTREAM.print  ("unsupported version ");
 			DEBUGSTREAM.println(version);
 			#endif
+            
 			return 0;
 		}
 
