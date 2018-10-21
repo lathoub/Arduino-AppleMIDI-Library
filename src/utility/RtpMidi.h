@@ -2,9 +2,7 @@
  *  @file		RtpMidi.h
  *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
- *	Version		0.0
  *  @author		lathoub, hackmancoltaire
- *	@date		01/04/13
  *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
