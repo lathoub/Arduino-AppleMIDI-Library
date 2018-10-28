@@ -8,6 +8,7 @@
 #include "AppleMidi_Settings.h"
 
 #include "packet-rtp.h"
+#include "Midi_Defs.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -155,6 +156,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 /*
 * MIDI Status Bytes (Channel Voice Messages)
 */
+
 #define RTP_MIDI_STATUS_CHANNEL_NOTE_OFF 0x08 /* 0x8n n->channel */
 #define RTP_MIDI_STATUS_CHANNEL_NOTE_ON 0x09 /* 0x9n n->channel */
 #define RTP_MIDI_STATUS_CHANNEL_POLYPHONIC_KEY_PRESSURE 0x0a /* 0xan n->channel */
@@ -163,9 +165,11 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define RTP_MIDI_STATUS_CHANNEL_CHANNEL_PRESSURE 0x0d /* 0xdn n->channel */
 #define RTP_MIDI_STATUS_CHANNEL_PITCH_BEND_CHANGE 0x0e /* 0xen n->channel */
 
+
 /*
 * MIDI-Channels
 */
+/*
 #define RTP_MIDI_CHANNEL_1 0x00
 #define RTP_MIDI_CHANNEL_2 0x01
 #define RTP_MIDI_CHANNEL_3 0x02
@@ -183,7 +187,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define RTP_MIDI_CHANNEL_15 0x0e
 #define RTP_MIDI_CHANNEL_16 0x0f
 #define RTP_MIDI_CHANNEL_MASK 0x0f
-
+*/
 
 /*
 * MIDI Status Bytes (System Exclusive Messages, System Common Messages, System Realtime Messages )
@@ -964,7 +968,7 @@ DEBUGSTREAM.println("decode_note_off");
 		//status_str = val_to_str( status >> 4, rtp_midi_channel_status, rtp_midi_unknown_value_hex );
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1042,7 +1046,7 @@ DEBUGSTREAM.println("decode_note_on");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1119,7 +1123,7 @@ DEBUGSTREAM.println("decode_poly_pressure");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1192,7 +1196,7 @@ DEBUGSTREAM.println("decode_channel_pressure");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1240,7 +1244,7 @@ DEBUGSTREAM.println("decode_pitch_bend_change");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1316,7 +1320,7 @@ DEBUGSTREAM.println("decode_program_change");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
@@ -1365,7 +1369,7 @@ DEBUGSTREAM.println("decode_control_change");
 #endif
 
 		uint8_t type    = (status >> 4);
-		uint8_t channel = (status & RTP_MIDI_CHANNEL_MASK) + 1;
+		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
 		if ( !cmd_len ) {
