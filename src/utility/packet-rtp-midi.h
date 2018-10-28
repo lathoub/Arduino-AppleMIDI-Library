@@ -1029,8 +1029,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_off");
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnNoteOff(NULL, channel, note, velocity);
+        rtpMidi->OnNoteOff(NULL, channel, note, velocity);
 
 		return 2;
 	}
@@ -1102,14 +1101,12 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_on");
 			return 0;
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel)) {
-			/* special case velocity=0 for Note-On means Note-Off (to preserve running-status!) */
-			if (velocity == 0) {
-				rtpMidi->OnNoteOff(NULL, channel, note, velocity);
-			} else {
-				rtpMidi->OnNoteOn(NULL, channel, note, velocity);
-			}
-		}
+        /* special case velocity=0 for Note-On means Note-Off (to preserve running-status!) */
+        if (velocity == 0) {
+            rtpMidi->OnNoteOff(NULL, channel, note, velocity);
+        } else {
+            rtpMidi->OnNoteOn(NULL, channel, note, velocity);
+        }
 
 		return 2;
 	}
@@ -1182,8 +1179,7 @@ DEBUGSTREAM.println("aborted MIDI-command: poly_pressure");
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnPolyPressure(NULL, channel, note, pressure);
+        rtpMidi->OnPolyPressure(NULL, channel, note, pressure);
 
 		return 2;
 	}
@@ -1227,13 +1223,11 @@ DEBUGSTREAM.println("aborted MIDI-command: channel_pressure");
 			return 1;
 		}
 
-
 		if ( using_rs ) {
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnChannelPressure(NULL, channel, pressure);
+        rtpMidi->OnChannelPressure(NULL, channel, pressure);
 
 		return 1;
 	}
@@ -1308,8 +1302,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: pitch_bend_change");
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnPitchBendChange(NULL, channel, pitch);
+        rtpMidi->OnPitchBendChange(NULL, channel, pitch);
 
 		return 2;
 
@@ -1359,9 +1352,7 @@ DEBUGSTREAM.println("aborted MIDI-command: program_change");
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnProgramChange(NULL, channel, program);
-
+        rtpMidi->OnProgramChange(NULL, channel, program);
 
 		return 1;
 	}
@@ -1434,8 +1425,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: control_change");
 		} else {
 		}
 
-		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnControlChange(NULL, channel, controller, value);
+        rtpMidi->OnControlChange(NULL, channel, controller, value);
 
 		return 2;
 
@@ -1513,8 +1503,7 @@ DEBUGSTREAM.println("aborted MIDI-command: mtc_quarter_frame");
 			return -1;
 		}
 
-//		if (rtpMidi->PassesFilter(NULL, type, channel))
-			rtpMidi->OnTimeCodeQuarterFrame(NULL, value);
+        rtpMidi->OnTimeCodeQuarterFrame(NULL, value);
 
 		return 1;
 	}

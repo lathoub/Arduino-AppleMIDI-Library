@@ -27,52 +27,10 @@
 #define MAX_SESSIONS 4 // arbitrary number
 #endif
 
+#include "IRtpMidi.h"
+#include "IAppleMidi.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
-
-class IRtpMidi
-{
-public:
-	virtual bool PassesFilter(void* sender, DataByte, DataByte) = 0;
-
-	virtual void OnNoteOn(void* sender, DataByte, DataByte, DataByte) = 0;
-	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte) = 0;
-	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte) = 0;
-	virtual void OnChannelPressure(void* sender, DataByte, DataByte) = 0;
-	virtual void OnPitchBendChange(void* sender, DataByte, int) = 0;
-	virtual void OnProgramChange(void* sender, DataByte, DataByte) = 0;
-	virtual void OnControlChange(void* sender, DataByte, DataByte, DataByte) = 0;
-	virtual void OnTimeCodeQuarterFrame(void* sender, DataByte) = 0;
-	virtual void OnSongSelect(void* sender, DataByte) = 0;
-	virtual void OnSongPosition(void* sender, unsigned short) = 0;
-	virtual void OnTuneRequest(void* sender) = 0;
-	virtual void OnClock(void* sender) = 0;
-	virtual void OnStart(void* sender) = 0;
-	virtual void OnContinue(void* sender) = 0;
-	virtual void OnStop(void* sender) = 0;
-	virtual void OnActiveSensing(void* sender) = 0;
-	virtual void OnReset(void* sender) = 0;
-	virtual void OnSysEx(void* sender, const byte* data, uint16_t size) = 0;
-};
-
-class IAppleMidi : public IRtpMidi
-{
-public:
-	virtual void invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
-
-	virtual void OnInvitation(void* sender, AppleMIDI_Invitation&) = 0;
-	virtual void OnEndSession(void* sender, AppleMIDI_EndSession&) = 0;
-	virtual void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&) = 0;
-
-	virtual void OnInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
-	virtual void OnControlInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
-	virtual void OnContentInvitationAccepted(void* sender, AppleMIDI_InvitationAccepted&) = 0;
-
-	virtual void OnSyncronization(void* sender, AppleMIDI_Syncronization&) = 0;
-	virtual void OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit&) = 0;
-	virtual void OnControlInvitation(void* sender, AppleMIDI_Invitation&) = 0;
-	virtual void OnContentInvitation(void* sender, AppleMIDI_Invitation&) = 0;
-};
 
 /*! \brief The main class for AppleMidiInterface handling.\n
 	See member descriptions to know how to use it,
@@ -133,6 +91,7 @@ public:
 
 	inline void invite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
+    // Callbacks
 	inline void OnInvitation(void* sender, AppleMIDI_Invitation&);
 	inline void OnEndSession(void* sender, AppleMIDI_EndSession&);
 	inline void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&);
@@ -145,10 +104,33 @@ public:
 	inline void OnBitrateReceiveLimit(void* sender, AppleMIDI_BitrateReceiveLimit&);
 	inline void OnControlInvitation(void* sender, AppleMIDI_Invitation&);
 	inline void OnContentInvitation(void* sender, AppleMIDI_Invitation&);
+    
+    // Session mamangement
+    inline int  GetFreeSessionSlot();
+    inline int  GetSessionSlotUsingSSrc(const uint32_t ssrc);
+    inline int  GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken);
+    inline void CreateLocalSession(const int slot, const uint32_t ssrc);
+    inline void CreateRemoteSession(IPAddress ip, uint16_t port);
+    inline void CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted);
+    inline void CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted);
+    inline void DeleteSession(const uint32_t ssrc);
+    inline void DeleteSession(int slot);
+    inline void DeleteSessions();
+    
+    inline void DumpSession();
+    
+    inline void ManageInvites();
+    inline void ManageTiming();
 
+private:
+    inline void write(UdpClass&, AppleMIDI_InvitationRejected,  IPAddress ip, uint16_t port);
+    inline void write(UdpClass&, AppleMIDI_InvitationAccepted,  IPAddress ip, uint16_t port);
+    inline void write(UdpClass&, AppleMIDI_Syncronization,      IPAddress ip, uint16_t port);
+    inline void write(UdpClass&, AppleMIDI_Invitation,          IPAddress ip, uint16_t port);
+    inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit, IPAddress ip, uint16_t port);
+
+public:
 	// IRtpMidi
-	inline bool PassesFilter (void* sender, DataByte, DataByte);
-
 	inline void OnNoteOn (void* sender, DataByte, DataByte, DataByte);
 	inline void OnNoteOff(void* sender, DataByte, DataByte, DataByte);
 	inline void OnPolyPressure(void* sender, DataByte, DataByte, DataByte);
@@ -167,13 +149,6 @@ public:
 	inline void OnActiveSensing(void* sender);
 	inline void OnReset(void* sender);
 	inline void OnSysEx(void* sender, const byte* data, uint16_t size);
-
-private:
-	inline void write(UdpClass&, AppleMIDI_InvitationRejected, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_InvitationAccepted, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_Syncronization, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_Invitation, IPAddress ip, uint16_t port);
-	inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit, IPAddress ip, uint16_t port);
 
 #if APPLEMIDI_BUILD_OUTPUT
 
@@ -218,28 +193,10 @@ private:
 
 #endif // APPLEMIDI_BUILD_OUTPUT
 
-public:
-	inline int	GetFreeSessionSlot();
-	inline int	GetSessionSlotUsingSSrc(const uint32_t ssrc);
-	inline int	GetSessionSlotUsingInitiatorToken(const uint32_t initiatorToken);
-	inline void	CreateLocalSession(const int slot, const uint32_t ssrc);
-	inline void	CreateRemoteSession(IPAddress ip, uint16_t port);
-	inline void	CompleteLocalSessionControl(AppleMIDI_InvitationAccepted& invitationAccepted);
-	inline void	CompleteLocalSessionContent(AppleMIDI_InvitationAccepted& invitationAccepted);
-	inline void	DeleteSession(const uint32_t ssrc);
-	inline void	DeleteSession(int slot);
-	inline void	DeleteSessions();
-
-	inline void	DumpSession();
-
-	inline void ManageInvites();
-	inline void ManageTiming();
-
 #if APPLEMIDI_BUILD_INPUT
 
 private:
     StatusByte mRunningStatus_RX;
-    Channel    _inputChannel;
 
     // -------------------------------------------------------------------------
     // Input Callbacks
@@ -310,3 +267,5 @@ END_APPLEMIDI_NAMESPACE
 #include "utility/packet-apple-midi.h"
 
 #include "AppleMidi.hpp"
+#include "Midi.hpp"
+#include "AppleMidiInterface.hpp"
