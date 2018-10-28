@@ -216,16 +216,6 @@ private:
 
 	StatusByte getStatus(MidiType inType, Channel inChannel) const;
 
-#if APPLEMIDI_USE_EVENTS
-public:
- //   void xxx(void (*fptr)(byte channel, byte note, byte velocity));
-private:
-    void (*mNoteOnSendingEvent)(byte channel, byte note, byte velocity);
-    void (*mNoteOnSendEvent)(byte channel, byte note, byte velocity);
-    void (*mNoteOffSendingEvent)(byte channel, byte note, byte velocity);
-    void (*mNoteOffSendEvent)(byte channel, byte note, byte velocity);
-#endif
-
 #endif // APPLEMIDI_BUILD_OUTPUT
 
 public:

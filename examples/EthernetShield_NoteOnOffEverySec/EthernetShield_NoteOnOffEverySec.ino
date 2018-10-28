@@ -15,11 +15,11 @@ APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
 
 // Code size:
 //
-// IDE 1.8.3
+// IDE 1.8.7
 //
-// Arduino Ethernet / Uno
-// Sketch uses 23976 bytes (74%) of program storage space. Maximum is 32256 bytes.
-// Global variables use 969 bytes (47%) of dynamic memory, leaving 1079 bytes for local variables. Maximum is 2048 bytes.
+// Arduino Ethernet
+// Sketch uses 24808 bytes (76%) of program storage space. Maximum is 32256 bytes.
+// Global variables use 1235 bytes (60%) of dynamic memory, leaving 813 bytes for local variables. Maximum is 2048 bytes.
 
 // -----------------------------------------------------------------------------
 //

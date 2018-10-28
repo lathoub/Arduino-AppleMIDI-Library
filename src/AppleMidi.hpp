@@ -37,13 +37,6 @@ inline AppleMidiInterface<UdpClass, Settings>::AppleMidiInterface()
 	mResetCallback			        = NULL;
 #endif
 
-#if APPLEMIDI_USE_EVENTS
-	mNoteOnSendingEvent				= NULL;
-	mNoteOnSendEvent				= NULL;
-	mNoteOffSendingEvent			= NULL;
-	mNoteOffSendEvent				= NULL;
-#endif
-
 	// initiative to 0, the actual SSRC will be generated lazily
 	_ssrc = 0;
 
@@ -1922,17 +1915,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::noteOn(DataByte inNoteNumber
 	DEBUGSTREAM.println(")");
 #endif
 
-#if APPLEMIDI_USE_EVENTS
-	if (mNoteOnSendingEvent != 0)
-		mNoteOnSendingEvent(inChannel, inNoteNumber, inVelocity);
-#endif
-
 	send(NoteOn, inNoteNumber, inVelocity, inChannel);
-
-#if APPLEMIDI_USE_EVENTS
-	if (mNoteOnSendEvent != 0)
-		mNoteOnSendEvent(inChannel, inNoteNumber, inVelocity);
-#endif
 }
 
 /*! \brief Send a Note Off message

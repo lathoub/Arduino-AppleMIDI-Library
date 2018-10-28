@@ -52,7 +52,6 @@
 #define APPLEMIDI_BUILD_OUTPUT     1
 
 #define APPLEMIDI_USE_CALLBACKS    1
-#define APPLEMIDI_USE_EVENTS       1
 
 // -----------------------------------------------------------------------------
 
@@ -81,6 +80,12 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 struct DefaultSettings
 {
+    /*! Running status enables short messages when sending multiple values
+     of the same type and channel.\n
+     Warning: does not work with some hardware, enable with caution.
+     */
+    static const bool UseRunningStatus = false;
+
     /*! NoteOn with 0 velocity should be handled as NoteOf.\n
      Set to true  to get NoteOff events when receiving null-velocity NoteOn messages.\n
      Set to false to get NoteOn  events when receiving null-velocity NoteOn messages.
