@@ -19,7 +19,7 @@ public:
 	virtual void OnChannelPressure(void* sender, DataByte, DataByte) = 0;
 	virtual void OnPitchBendChange(void* sender, DataByte, int) = 0;
 	virtual void OnProgramChange(void* sender, DataByte, DataByte) = 0;
-	virtual void OnControlChange(void* sender, DataByte, MidiControlChangeNumber, DataByte) = 0;
+	virtual void OnControlChange(void* sender, DataByte, DataByte, DataByte) = 0;
 	virtual void OnTimeCodeQuarterFrame(void* sender, DataByte) = 0;
 	virtual void OnSongSelect(void* sender, DataByte) = 0;
 	virtual void OnSongPosition(void* sender, unsigned short) = 0;
