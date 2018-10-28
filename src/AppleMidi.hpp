@@ -1942,17 +1942,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::noteOff(DataByte inNoteNumbe
 	DEBUGSTREAM.println(")");
 #endif
 
-#if APPLEMIDI_USE_EVENTS
-	if (mNoteOffSendingEvent != 0)
-		mNoteOffSendingEvent(inChannel, inNoteNumber, inVelocity);
-#endif
-
 	send(NoteOff, inNoteNumber, inVelocity, inChannel);
-
-#if APPLEMIDI_USE_EVENTS
-	if (mNoteOffSendEvent != 0)
-		mNoteOffSendEvent(inChannel, inNoteNumber, inVelocity);
-#endif
 }
 
 /*! \brief Send a Program Change message
