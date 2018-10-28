@@ -1,9 +1,6 @@
 /*!
- *  @file		AppleMIDI_Util.h
- *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *  @author		lathoub
- *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
 #pragma once

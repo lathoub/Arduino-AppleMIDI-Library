@@ -1,9 +1,6 @@
 /*!
- *  @file		IRtpMidi.h
- *  Project		Arduino AppleMIDI Library
  *	@brief		RtpMIDI Library for the Arduino
  *  @author		lathoub, hackmancoltaire
- *  License		Code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
  */
 
 #pragma once
@@ -15,6 +12,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 class IRtpMidi
 {
 public:
+    // callbacks from RTP
 	virtual void OnNoteOn(void* sender, DataByte, DataByte, DataByte) = 0;
 	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte) = 0;
 	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte) = 0;

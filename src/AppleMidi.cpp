@@ -1,9 +1,6 @@
 /*!
- *  @file		AppleMIDI.h
- *  Project		Arduino AppleMIDI Library
  *	@brief		AppleMIDI Library for the Arduino
  *  @author		lathoub
- *  License		CC BY-SA 4.0
  */
 
 // http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec.htm
