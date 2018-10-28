@@ -73,8 +73,6 @@ typedef byte MIDI_PRESSURE;
 // -----------------------------------------------------------------------------
 // Type definitions
 
-typedef uint8_t byte;
-
 typedef byte StatusByte;
 typedef byte DataByte;
 typedef byte Channel;
@@ -105,17 +103,6 @@ enum MidiType
     Stop                  = 0xFC,    ///< System Real Time - Stop
     ActiveSensing         = 0xFE,    ///< System Real Time - Active Sensing
     Reset                 = 0xFF,    ///< System Real Time - System Reset
-};
-
-// -----------------------------------------------------------------------------
-
-/*! Enumeration of Thru filter modes */
-enum MidiFilterMode
-{
-    Off                   = 0,  ///< Thru disabled (nothing passes through).
-    Full                  = 1,  ///< Fully enabled Thru (every incoming message is sent back).
-    SameChannel           = 2,  ///< Only the messages on the Input Channel will be sent back.
-    DifferentChannel      = 3,  ///< All the messages but the ones on the Input Channel will be sent back.
 };
 
 // -----------------------------------------------------------------------------
