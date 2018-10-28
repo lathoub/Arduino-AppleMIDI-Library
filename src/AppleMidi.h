@@ -134,7 +134,7 @@ public:
 	inline void OnChannelPressure(void* sender, DataByte, DataByte);
 	inline void OnPitchBendChange(void* sender, DataByte, int);
 	inline void OnProgramChange(void* sender, DataByte, DataByte);
-	inline void OnControlChange(void* sender, DataByte, DataByte, DataByte);
+	inline void OnControlChange(void* sender, DataByte, MidiControlChangeNumber, DataByte);
 	inline void OnTimeCodeQuarterFrame(void* sender, DataByte);
 	inline void OnSongSelect(void* sender, DataByte);
 	inline void OnSongPosition(void* sender, unsigned short);
@@ -153,7 +153,7 @@ public:
     inline void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
     inline void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
     inline void programChange(DataByte inProgramNumber, Channel inChannel);
-    inline void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
+    inline void controlChange(MidiControlChangeNumber inControlNumber, DataByte inControlValue, Channel inChannel);
     inline void pitchBend(int inPitchValue,    Channel inChannel);
     inline void pitchBend(double inPitchValue, Channel inChannel);
     inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);

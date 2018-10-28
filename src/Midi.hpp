@@ -124,7 +124,7 @@ void AppleMidiInterface<UdpClass, Settings>::OnProgramChange(void* sender, DataB
 /*! \brief .
 */
 template<class UdpClass, class Settings>
-void AppleMidiInterface<UdpClass, Settings>::OnControlChange(void* sender, DataByte channel, DataByte controller, DataByte value)
+void AppleMidiInterface<UdpClass, Settings>::OnControlChange(void* sender, DataByte channel, MidiControlChangeNumber controller, DataByte value)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("> Control Change (c=");
@@ -835,7 +835,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::programChange(DataByte inPro
 @see MidiControlChangeNumber
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::controlChange(MidiControlChangeNumber inControlNumber, DataByte inControlValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendControlChange Number:");
