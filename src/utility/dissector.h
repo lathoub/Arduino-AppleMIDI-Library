@@ -10,14 +10,14 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 class Dissector;
-class IAppleMidi;
+class IAppleMidiCallbacks;
 
-typedef int(*FPDISSECTOR_APPLEMIDI)(Dissector*, IAppleMidi*, unsigned char* packetBuffer, size_t packetSize);
+typedef int(*FPDISSECTOR_APPLEMIDI)(Dissector*, IAppleMidiCallbacks*, unsigned char* packetBuffer, size_t packetSize);
 
 class Dissector {
 private:
 
-	IAppleMidi* _appleMidi;
+	IAppleMidiCallbacks* _appleMidi;
 
 	FPDISSECTOR_APPLEMIDI _externalAppleMidiDissector[5];
 
@@ -37,7 +37,7 @@ public:
 	}
 
 	//
-	void init(int identifier, IAppleMidi* appleMidi)
+	void init(int identifier, IAppleMidiCallbacks* appleMidi)
 	{
 		_identifier = identifier;
 		_appleMidi = appleMidi;

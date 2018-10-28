@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include "utility/AppleMidi_Defs.h"
+#include "utility/Midi_Defs.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-class IRtpMidi
+class IMidiCallbacks
 {
 public:
-    // callbacks from RTP
 	virtual void OnNoteOn(void* sender, DataByte, DataByte, DataByte) = 0;
 	virtual void OnNoteOff(void* sender, DataByte, DataByte, DataByte) = 0;
 	virtual void OnPolyPressure(void* sender, DataByte, DataByte, DataByte) = 0;

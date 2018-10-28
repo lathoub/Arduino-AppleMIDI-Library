@@ -24,7 +24,7 @@ public:
 #endif
 	}
 
-	static int dissect_apple_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize)
+	static int dissect_apple_midi(Dissector* dissector, IAppleMidiCallbacks* appleMidi, unsigned char* packetBuffer, size_t packetSize)
 	{
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE

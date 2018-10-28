@@ -357,7 +357,7 @@ public:
 #endif
 	}
 
-	static int dissect_rtp_midi(Dissector* dissector, IAppleMidi* appleMidi, unsigned char* packetBuffer, size_t packetSize) {
+	static int dissect_rtp_midi(Dissector* dissector, IAppleMidiCallbacks* appleMidi, unsigned char* packetBuffer, size_t packetSize) {
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.print ("dissect_rtp_midi ");
 		DEBUGSTREAM.print (dissector->_identifier);
@@ -537,7 +537,7 @@ public:
 	* Here the system-journal is decoded.
 	*/
 	static int
-	decode_system_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
+	decode_system_journal(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.println("decode_system_journal");
@@ -593,7 +593,7 @@ public:
 	 * Here a channel-journal is decoded.
 	 */
 	static int
-	decode_channel_journal(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_channel_journal(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	   uint32_t				chanflags;
 	   uint16_t				chanjourlen;
 	   uint16_t				consumed = 0;
@@ -745,7 +745,7 @@ public:
 	* external decoders.
 	*/
 	static int
-	decodemidi(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
+	decodemidi(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte *runningstatus, unsigned int *rsoffset )
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println(F("decodemidi"));
@@ -925,7 +925,7 @@ DEBUGSTREAM.println(ext_consumed);
 	* This decodes the delta-time before a MIDI-command
 	*/
 	static int
-	decodetime(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int cmd_len)
+	decodetime(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int cmd_len)
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decodetime");
@@ -955,7 +955,7 @@ DEBUGSTREAM.println("decodetime");
 	* Here a Note-Off command is decoded.
 	*/
 	static int
-	decode_note_off(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_note_off(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_note_off");
@@ -1035,7 +1035,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_off");
 	* Here a Note-On command is decoded.
 	*/
 	static int
-	decode_note_on(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, uint8_t status, unsigned int rsoffset, bool using_rs )
+	decode_note_on(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, uint8_t status, unsigned int rsoffset, bool using_rs )
 	{
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_note_on");
@@ -1112,7 +1112,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_on");
 	* Here polyphonic aftertouch is decoded.
 	*/
 	static int
-	decode_poly_pressure(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_poly_pressure(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_poly_pressure");
@@ -1185,7 +1185,7 @@ DEBUGSTREAM.println("aborted MIDI-command: poly_pressure");
 	* Here channel aftertouch is decoded.
 	*/
 	static int
-	decode_channel_pressure(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_channel_pressure(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_channel_pressure");
@@ -1233,7 +1233,7 @@ DEBUGSTREAM.println("aborted MIDI-command: channel_pressure");
 	* Here pitch-bend is decoded.
 	*/
 	static int
-	decode_pitch_bend_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_pitch_bend_change(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_pitch_bend_change");
@@ -1309,7 +1309,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: pitch_bend_change");
 	* Here program_change is decoded.
 	*/
 	static int
-	decode_program_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_program_change(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG
 DEBUGSTREAM.println("decode_program_change");
@@ -1358,7 +1358,7 @@ DEBUGSTREAM.println("aborted MIDI-command: program_change");
 	* Here control change is decoded.
 	*/
 	static int
-	decode_control_change(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
+	decode_control_change(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len, byte status, unsigned int rsoffset, bool using_rs ) {
 
 #ifdef APPLEMIDI_DEBUG
 DEBUGSTREAM.println("decode_control_change");
@@ -1432,7 +1432,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: control_change");
 	* Here a Sysex-Start command is decoded.
 	*/
 	static unsigned int
-	decode_sysex_start(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_sysex_start(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.println("decode_sysex_start");
@@ -1476,7 +1476,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: control_change");
 	* Here the MIDI-Time-Code (MTC) Quarter Frame command is decoded.
 	*/
 	static int
-	decode_mtc_quarter_frame(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_mtc_quarter_frame(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_mtc_quarter_frame");
@@ -1509,7 +1509,7 @@ DEBUGSTREAM.println("aborted MIDI-command: mtc_quarter_frame");
 	* Here the Song Position Pointer command is decoded.
 	*/
 	static int
-	decode_song_position_pointer(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_song_position_pointer(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_song_position_pointer");
@@ -1563,7 +1563,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: song_position_pointer");
 	* Here a Song-Select command is decoded.
 	*/
 	static int
-	decode_song_select(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_song_select(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 DEBUGSTREAM.println("decode_song_select");
@@ -1596,7 +1596,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	* Here a Tune-Request command is decoded.
 	*/
 	static int
-	decode_tune_request(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len) {
+	decode_tune_request(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.println("decode_tune_request");
@@ -1611,7 +1611,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	* Here a Sysex-End command is decoded - in RTP-MIDI this has a special semantic, it either starts a segmented Sysex-frame or a Sysex-Cancel
 	*/
 	static int
-	decode_sysex_end(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
+	decode_sysex_end(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int cmd_count, unsigned int offset, unsigned int cmd_len ) {
 
 #ifdef APPLEMIDI_DEBUG_VERBOSE
 		DEBUGSTREAM.println("decode_sysex_end");
@@ -1655,7 +1655,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter Q of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_q(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
+	decode_sj_chapter_q(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset ) {
 		uint8_t				header;
 		unsigned int start_offset = offset;
 		int				len = 1;
@@ -1687,7 +1687,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter F of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_f(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_f(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint8_t				header;
 		unsigned int start_offset = offset;
 		int				len = 1;
@@ -1719,7 +1719,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter X of the channel-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_x(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int max_length) {
+	decode_sj_chapter_x(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset, unsigned int max_length) {
 		uint8_t				header;
 		uint8_t				octet;
 		unsigned int			consumed = 0;
@@ -1794,7 +1794,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
     * Here the chapter D of the channel-journal is decoded.
     */
    static int
-	decode_sj_chapter_d(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
       int				header;
       unsigned int start_offset = offset;
       int				ext_consumed;
@@ -1864,7 +1864,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	* Here the chapter D F4-field of the system-journal is decoded.
 	*/
 	static int
-	decode_sj_chapter_d_f4(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f4(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
       int start_offset = offset;
       uint16_t		 f4flags;
       uint16_t		 f4length;
@@ -1911,7 +1911,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
    }
 
 	static int
-	decode_sj_chapter_d_f5(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f5(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 	unsigned int start_offset = offset;
 	uint16_t		 f5flags;
 	uint16_t		 f5length;
@@ -1964,7 +1964,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter D F9-field of the system-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_d_f9(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_f9(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t		 f9flags;
 		uint8_t		 f9length;
@@ -2000,7 +2000,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter D FD-field of the system-journal is decoded.
 	 */
 	static int
-	decode_sj_chapter_d_fd(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_sj_chapter_d_fd(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t		 fdflags;
 		uint8_t		 fdlength;
@@ -2036,7 +2036,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter c of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_c(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_c(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 octet;
 		int				 count;
@@ -2063,7 +2063,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter m of the channel-journal is decoded, possibly the most complex part of the RTP-MIDI stuff ;-)
 	 */
 	static int
-	decode_cj_chapter_m(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_m(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		uint16_t				header;
 		uint8_t				logitemheader = 0;
 		int				length;
@@ -2178,7 +2178,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter n of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_n(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_n(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint16_t				 header;
 		//uint8_t				 note;
@@ -2234,7 +2234,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter e of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_e(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_e(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
 		int				 log_count;
@@ -2260,7 +2260,7 @@ DEBUGSTREAM.println("aborted MIDI-command: decode_song_select");
 	 * Here the chapter a of the channel-journal is decoded.
 	 */
 	static int
-	decode_cj_chapter_a(IAppleMidi* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
+	decode_cj_chapter_a(IAppleMidiCallbacks* rtpMidi, unsigned char* packetBuffer, unsigned int offset) {
 		unsigned int start_offset = offset;
 		uint8_t				 header;
 		int				 log_count;

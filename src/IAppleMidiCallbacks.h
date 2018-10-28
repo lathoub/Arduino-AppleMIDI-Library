@@ -5,15 +5,14 @@
 
 #pragma once
 
-#include "IRtpMidi.h"
+#include "IMidiCallbacks.h"
+#include "utility/AppleMidi_Defs.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-class IAppleMidi : public IRtpMidi
+class IAppleMidiCallbacks : public IMidiCallbacks
 {
 public:
-	virtual void invite(IPAddress ip, uint16_t port = CONTROL_PORT) = 0;
-
 	virtual void OnInvitation(void* sender, AppleMIDI_Invitation&) = 0;
 	virtual void OnEndSession(void* sender, AppleMIDI_EndSession&) = 0;
 	virtual void OnReceiverFeedback(void* sender, AppleMIDI_ReceiverFeedback&) = 0;

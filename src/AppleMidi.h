@@ -24,8 +24,7 @@
 #define MAX_SESSIONS 4 // arbitrary number
 #endif
 
-#include "IRtpMidi.h"
-#include "IAppleMidi.h"
+#include "IAppleMidiCallbacks.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -34,7 +33,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 	or check out the examples supplied with the library.
  */
 template<class UdpClass, class Settings = DefaultSettings>
-class AppleMidiInterface : public IAppleMidi
+class AppleMidiInterface : public IAppleMidiCallbacks
 {
 protected:
 	//
@@ -127,7 +126,7 @@ private:
     inline void write(UdpClass&, AppleMIDI_BitrateReceiveLimit, IPAddress ip, uint16_t port);
 
 public:
-	// IRtpMidi
+	// IMidiCallbacks
 	inline void OnNoteOn (void* sender, DataByte, DataByte, DataByte);
 	inline void OnNoteOff(void* sender, DataByte, DataByte, DataByte);
 	inline void OnPolyPressure(void* sender, DataByte, DataByte, DataByte);
