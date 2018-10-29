@@ -149,28 +149,52 @@ public:
 #if APPLEMIDI_BUILD_OUTPUT
 
 public:
-    inline void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
-    inline void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
-    inline void programChange(DataByte inProgramNumber, Channel inChannel);
-    inline void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
-    inline void pitchBend(int inPitchValue,    Channel inChannel);
-    inline void pitchBend(double inPitchValue, Channel inChannel);
-    inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
-    inline void afterTouch(DataByte inPressure, Channel inChannel);
-    inline void sysEx(const byte*, uint16_t inLength);
-    inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
-    inline void timeCodeQuarterFrame(DataByte inData);
-    inline void songPosition(unsigned short inBeats);
-    inline void songSelect(DataByte inSongNumber);
-    inline void tuneRequest();
-    inline void activeSensing();
-    inline void start();
-    inline void _continue();
-    inline void stop();
-    inline void reset();
-    inline void clock();
-    inline void tick();
+    inline void sendNoteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
+    inline void sendNoteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel);
+    inline void sendProgramChange(DataByte inProgramNumber, Channel inChannel);
+    inline void sendControlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel);
+    inline void sendPitchBend(int inPitchValue,    Channel inChannel);
+    inline void sendPitchBend(double inPitchValue, Channel inChannel);
+    inline void sendPolyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel);
+    inline void sendAfterTouch(DataByte inPressure, Channel inChannel);
+    inline void sendSysEx(const byte*, uint16_t inLength);
+    inline void sendTimeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble);
+    inline void sendTimeCodeQuarterFrame(DataByte inData);
+    inline void sendSongPosition(unsigned short inBeats);
+    inline void sendSongSelect(DataByte inSongNumber);
+    inline void sendTuneRequest();
+    inline void sendActiveSensing();
+    inline void sendStart();
+    inline void sendContinue();
+    inline void sendStop();
+    inline void sendReset();
+    inline void sendClock();
+    inline void sendTick();
 
+    // begin deprecated - because we are aligning with the FortySevenEffects/arduino_midi_library
+    inline void noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel) __attribute__ ((deprecated("use sendNoteOn"))) { sendNoteOn(inNoteNumber, inVelocity, inChannel); }
+    inline void noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel) __attribute__ ((deprecated("use sendNoteOff"))) { sendNoteOff(inNoteNumber, inVelocity, inChannel); }
+    inline void programChange(DataByte inProgramNumber, Channel inChannel) __attribute__ ((deprecated("use sendProgramChange"))) { sendProgramChange(inProgramNumber, inChannel); }
+    inline void controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel) __attribute__ ((deprecated("use sendControlChange"))) { sendControlChange(inControlNumber, inControlValue, inChannel); }
+    inline void pitchBend(int inPitchValue,    Channel inChannel) __attribute__ ((deprecated("use sendPitchBend"))) { sendPitchBend(inPitchValue, inChannel); }
+    inline void pitchBend(double inPitchValue, Channel inChannel) __attribute__ ((deprecated("use sendPitchBend"))) { sendPitchBend(inPitchValue, inChannel); }
+    inline void polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel) __attribute__ ((deprecated("use sendPolyPressure"))) { sendPolyPressure(inNoteNumber, inPressure, inChannel); }
+    inline void afterTouch(DataByte inPressure, Channel inChannel) __attribute__ ((deprecated("use sendAfterTouch"))) { sendAfterTouch(inPressure, inChannel); }
+    inline void sysEx(const byte* data, uint16_t inLength) __attribute__ ((deprecated("use sendSysEx"))) { sendSysEx(data, inLength); }
+    inline void timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble) __attribute__ ((deprecated("use sendTimeCodeQuarterFrame"))) { sendTimeCodeQuarterFrame(inTypeNibble, inValuesNibble); }
+    inline void timeCodeQuarterFrame(DataByte inData) __attribute__ ((deprecated("use sendTimeCodeQuarterFrame"))) { sendTimeCodeQuarterFrame(inData); }
+    inline void songPosition(unsigned short inBeats) __attribute__ ((deprecated("use sendSongPosition"))) { sendSongPosition(inBeats); }
+    inline void songSelect(DataByte inSongNumber) __attribute__ ((deprecated("use sendSongSelect"))) { sendSongSelect(inSongNumber); }
+    inline void tuneRequest() __attribute__ ((deprecated("use sendTuneRequest"))) { sendTuneRequest(); }
+    inline void activeSensing() __attribute__ ((deprecated("use sendActiveSensing"))) { sendActiveSensing(); }
+    inline void start() __attribute__ ((deprecated("use sendStart"))) { sendStart(); }
+    inline void _continue() __attribute__ ((deprecated("use sendContinue"))) { sendContinue(); }
+    inline void stop() __attribute__ ((deprecated("use sendStop"))) { sendStop(); }
+    inline void reset() __attribute__ ((deprecated("use sendReset"))) { sendReset(); }
+    inline void clock() __attribute__ ((deprecated("use sendClock"))) { sendClock(); }
+    inline void tick() __attribute__ ((deprecated("use sendTick"))) { sendTick(); }
+    // end deprecated - because we are aligning with the FortySevenEffects/arduino_midi_library
+    
 protected:
 	inline void send(MidiType inType, DataByte inData1, DataByte inData2, Channel);
 	inline void send(MidiType inType, DataByte inData1, DataByte inData2);

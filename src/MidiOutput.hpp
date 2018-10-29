@@ -318,16 +318,16 @@ inline StatusByte AppleMidiInterface<UdpClass, Settings>::getStatus(MidiType inT
 // -----------------------------------------------------------------------------
 
 /*! \brief Send a Note On message
-\param inNoteNumber  Pitch value in the MIDI format (0 to 127).
-\param inVelocity    Note attack velocity (0 to 127). A NoteOn with 0 velocity
-is considered as a NoteOff.
-\param inChannel     The channel on which the message will be sent (1 to 16).
-
-Take a look at the values, names and frequencies of notes here:
-http://www.phys.unsw.edu.au/jw/notes.html
-*/
+ \param inNoteNumber  Pitch value in the MIDI format (0 to 127).
+ \param inVelocity    Note attack velocity (0 to 127). A NoteOn with 0 velocity
+ is considered as a NoteOff.
+ \param inChannel     The channel on which the message will be sent (1 to 16).
+ 
+ Take a look at the values, names and frequencies of notes here:
+ http://www.phys.unsw.edu.au/jw/notes.html
+ */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::noteOn(DataByte inNoteNumber, DataByte inVelocity, Channel  inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendNoteOn(DataByte inNoteNumber, DataByte inVelocity, Channel  inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("< Note On (c=");
@@ -354,7 +354,7 @@ Take a look at the values, names and frequencies of notes here:
 http://www.phys.unsw.edu.au/jw/notes.html
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::noteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendNoteOff(DataByte inNoteNumber, DataByte inVelocity, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("< Note Off (c=");
@@ -374,7 +374,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::noteOff(DataByte inNoteNumbe
 \param inChannel       The channel on which the message will be sent (1 to 16).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::programChange(DataByte inProgramNumber, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendProgramChange(DataByte inProgramNumber, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendProgramChange ProgramNumber:");
@@ -393,7 +393,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::programChange(DataByte inPro
 @see MidiControlChangeNumber
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::controlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendControlChange(DataByte inControlNumber, DataByte inControlValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendControlChange Number:");
@@ -413,7 +413,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::controlChange(DataByte inCon
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::polyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendPolyPressure(DataByte inNoteNumber, DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendPolyPressure Note:");
@@ -432,7 +432,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::polyPressure(DataByte inNote
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::afterTouch(DataByte inPressure, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendAfterTouch(DataByte inPressure, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sendafterTouch ");
@@ -452,7 +452,7 @@ center value is 0.
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::pitchBend(int inPitchValue, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendPitchBend(int inPitchValue, Channel inChannel)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("pitchBend ");
@@ -474,7 +474,7 @@ and +1.0f (max upwards bend), center value is 0.0f.
 \param inChannel     The channel on which the message will be sent (1 to 16).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::pitchBend(double inPitchValue, Channel inChannel)
+inline void AppleMidiInterface<UdpClass, Settings>::sendPitchBend(double inPitchValue, Channel inChannel)
 {
 	const int value = inPitchValue * MIDI_PITCHBEND_MAX;
 	pitchBend(value, inChannel);
@@ -485,7 +485,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::pitchBend(double inPitchValu
 \param inArray   The byte array containing the data to send
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::sysEx(const byte* data, uint16_t length)
+inline void AppleMidiInterface<UdpClass, Settings>::sendSysEx(const byte* data, uint16_t length)
 {
 #if (APPLEMIDI_DEBUG)
 	DEBUGSTREAM.print("sysEx ");
@@ -520,7 +520,7 @@ When a MIDI unit receives this message,
 it should tune its oscillators (if equipped with any).
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::tuneRequest()
+inline void AppleMidiInterface<UdpClass, Settings>::sendTuneRequest()
 {
 	send(TuneRequest);
 }
@@ -550,7 +550,7 @@ on the MIDI bus.
 (http://www.blitter.com/~russtopia/MIDI/~jglatt/tech/midispec/sense.htm)
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::activeSensing()
+inline void AppleMidiInterface<UdpClass, Settings>::sendActiveSensing()
 {
 	send(ActiveSensing);
 }
@@ -558,7 +558,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::activeSensing()
 /*! \brief
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::start()
+inline void AppleMidiInterface<UdpClass, Settings>::sendStart()
 {
 	send(Start);
 }
@@ -566,7 +566,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::start()
 /*! \brief
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::_continue()
+inline void AppleMidiInterface<UdpClass, Settings>::sendContinue()
 {
 	send(Continue);
 }
@@ -574,7 +574,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::_continue()
 /*! \brief
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::stop()
+inline void AppleMidiInterface<UdpClass, Settings>::sendStop()
 {
 	send(Stop);
 }
@@ -586,7 +586,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::stop()
 See MIDI Specification for more information.
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::timeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble)
+inline void AppleMidiInterface<UdpClass, Settings>::sendTimeCodeQuarterFrame(DataByte inTypeNibble, DataByte inValuesNibble)
 {
 	const byte data = (((inTypeNibble & 0x07) << 4) | (inValuesNibble & 0x0F));
 	timeCodeQuarterFrame(data);
@@ -599,7 +599,7 @@ See MIDI Specification for more information.
 you can send the byte here.
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::timeCodeQuarterFrame(DataByte inData)
+inline void AppleMidiInterface<UdpClass, Settings>::sendTimeCodeQuarterFrame(DataByte inData)
 {
 	send(TimeCodeQuarterFrame, inData);
 }
@@ -608,7 +608,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::timeCodeQuarterFrame(DataByt
 \param inBeats    The number of beats since the start of the song.
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::songPosition(unsigned short inBeats)
+inline void AppleMidiInterface<UdpClass, Settings>::sendSongPosition(unsigned short inBeats)
 {
 	byte octet1 = inBeats & 0x7F;
 	byte octet2 = (inBeats >> 7) & 0x7F;
@@ -618,7 +618,7 @@ inline void AppleMidiInterface<UdpClass, Settings>::songPosition(unsigned short 
 
 /*! \brief Send a Song Select message */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::songSelect(DataByte inSongNumber)
+inline void AppleMidiInterface<UdpClass, Settings>::sendSongSelect(DataByte inSongNumber)
 {
 	byte octet = inSongNumber & 0x7F;
 
@@ -628,21 +628,21 @@ inline void AppleMidiInterface<UdpClass, Settings>::songSelect(DataByte inSongNu
 
 /*! \brief Send a Song Select message */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::reset()
+inline void AppleMidiInterface<UdpClass, Settings>::sendReset()
 {
 	send(Reset);
 }
 
 /*! \brief Send a Song Select message */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::clock()
+inline void AppleMidiInterface<UdpClass, Settings>::sendClock()
 {
 	send(Clock);
 }
 
 /*! \brief Send a Song Select message */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::tick()
+inline void AppleMidiInterface<UdpClass, Settings>::sendTick()
 {
 	send(Tick);
 }

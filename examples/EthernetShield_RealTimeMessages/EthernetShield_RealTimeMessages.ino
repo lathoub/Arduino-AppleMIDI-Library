@@ -161,7 +161,7 @@ static void OnAppleMidiContinue() {
 // -----------------------------------------------------------------------------
 static void OnAppleMidiActiveSensing() {
   Serial.println(F("ActiveSensing"));
-  AppleMIDI.activeSensing();
+  AppleMIDI.sendActiveSensing();
 }
 
 // -----------------------------------------------------------------------------

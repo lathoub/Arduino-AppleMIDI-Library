@@ -1,7 +1,7 @@
 #include <Ethernet.h>
 
 #include "MIDI.h" // dependency: https://github.com/FortySevenEffects/arduino_midi_library 
-#include "AppleMIDI.h"
+#include "AppleMidi.h"
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield

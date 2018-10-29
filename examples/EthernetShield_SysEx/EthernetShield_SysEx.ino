@@ -88,7 +88,7 @@ void sendSysEx() {
   data[3] = 0x32;
   data[sizeof(data) - 1] = 0xF7;
 
-  AppleMIDI.sysEx(data, sizeof(data));
+  AppleMIDI.sendSysEx(data, sizeof(data));
 }
 
 // ====================================================================================
