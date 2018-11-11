@@ -1,4 +1,5 @@
 # AppleMIDI (rtpMIDI) for Arduino
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c8be2ccc3f104e0588572a39f8106070)](https://app.codacy.com/app/lathoub/Arduino-AppleMIDI-Library?utm_source=github.com&utm_medium=referral&utm_content=lathoub/Arduino-AppleMIDI-Library&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library) [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![GitHub version](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library.svg)](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library)
 
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
