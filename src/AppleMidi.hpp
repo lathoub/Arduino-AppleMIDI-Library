@@ -57,7 +57,7 @@ inline bool AppleMidiInterface<UdpClass, Settings>::begin(const char* sessionNam
 /*! \brief Evaluates incoming Rtp messages.
 */
 template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::run()
+inline void AppleMidiInterface<UdpClass, Settings>::read()
 {
 	// Process one control packet, if available
 	int packetSize = _controlPort.parsePacket();

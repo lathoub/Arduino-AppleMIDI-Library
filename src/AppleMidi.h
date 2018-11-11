@@ -81,7 +81,8 @@ public:
 	inline uint32_t	getSynchronizationSource();
 	inline char*	getSessionName() { return _sessionName; }
 
-	inline void run();
+    inline void run() __attribute__ ((deprecated("use read()"))) { read(); };
+    inline void read();
 
 	// IAppleMidi
 
