@@ -61,7 +61,7 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  AppleMIDI.run();
+  AppleMIDI.read();
 
   // send a sysex msg every 5 seconds
   if (isConnected && ((millis() - t0) > 5000))

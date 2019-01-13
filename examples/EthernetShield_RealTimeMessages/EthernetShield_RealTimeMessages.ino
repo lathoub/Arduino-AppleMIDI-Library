@@ -71,7 +71,7 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  AppleMIDI.run();
+  AppleMIDI.read();
 }
 
 // ====================================================================================

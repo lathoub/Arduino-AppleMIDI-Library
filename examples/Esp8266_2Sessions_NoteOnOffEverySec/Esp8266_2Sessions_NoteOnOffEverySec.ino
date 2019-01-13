@@ -64,8 +64,8 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  appleMIDI1.run();
-  appleMIDI2.run();
+  appleMIDI1.read();
+  appleMIDI2.read();
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
