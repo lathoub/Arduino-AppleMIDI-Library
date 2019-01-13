@@ -47,7 +47,7 @@ More usages in the `examples` folder
 The code has been pseudo optimized to minimize the memory footprint.
 Internal buffers also use valuable memory space. The biggest buffer `PACKET_MAX_SIZE` is set to 350 by default in `AppleMidi_Settings.h`. Albeit this number is somewhat arbitratry (large enough to receive full SysEx messages), it can be reduced significantly if you do not have to receive large messages.
 
-On an Arduino, 2 sessions be active at once (W5100 can have max 4 sockets open at the same time). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes). 
+On an Arduino, 2 sessions can be active at once (W5100 can have max 4 sockets open at the same time, each session needs 2 UDP sockets). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes). 
  
 ## Network Shields
 * Arduino Ethernet shield (arduino.cc, Wiznet W5100)
