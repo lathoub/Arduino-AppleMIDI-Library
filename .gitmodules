@@ -1,3 +1,0 @@
-[submodule "src/interface"]
-	path = src/interface
-	url = https://github.com/lathoub/Arduino-AppleMIDI-Library
