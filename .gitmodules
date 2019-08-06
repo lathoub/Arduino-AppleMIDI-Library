@@ -1,0 +1,3 @@
+[submodule "src/interface"]
+	path = src/interface
+	url = https://github.com/lathoub/AbstractMIDIinterface
