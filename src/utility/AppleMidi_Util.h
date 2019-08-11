@@ -43,19 +43,14 @@ class AppleMIDI_Util {
 public:
 	static uint64_t readUInt64(unsigned char* buffer)
 	{
-		return	(uint32_t)buffer[0] << 56 |
-				(uint32_t)buffer[1] << 48 |
-				(uint32_t)buffer[2] << 40 |
-				(uint32_t)buffer[3] << 32 |
-				(uint32_t)buffer[4] << 24 |
-				(uint32_t)buffer[5] << 16 |
-				(uint32_t)buffer[6] << 8
-				(uint32_t)buffer[7];
-
-		//unsigned char tmpBuffer[sizeof(uint64_t)];
-		//for (int j = sizeof(uint64_t) - 1; j >= 0; j--)
-		//	tmpBuffer[j] = buffer[sizeof(uint64_t) - 1 - j];
-		//return *((uint64_t*)&tmpBuffer[0]);
+		return	(uint64_t)buffer[0] << 56 |
+				(uint64_t)buffer[1] << 48 |
+				(uint64_t)buffer[2] << 40 |
+				(uint64_t)buffer[3] << 32 |
+				(uint64_t)buffer[4] << 24 |
+				(uint64_t)buffer[5] << 16 |
+				(uint64_t)buffer[6] << 8  |
+				(uint64_t)buffer[7];
 	}
 
 	static uint32_t readUInt32(unsigned char* buffer)
@@ -64,37 +59,18 @@ public:
 				(uint32_t)buffer[1] << 16 |
 				(uint32_t)buffer[2] << 8  |
 				(uint32_t)buffer[3];
-
-		//unsigned char tmpBuffer[sizeof(uint32_t)];
-		//for (int j = sizeof(uint32_t) - 1; j >= 0; j--)
-		//	tmpBuffer[j] = buffer[sizeof(uint32_t) - 1 - j];
-		//return *((uint32_t*)&tmpBuffer[0]);
 	}
 
 	static uint16_t readUInt16(unsigned char* buffer)
 	{
 		return	(uint32_t)buffer[0] << 8 |
 				(uint32_t)buffer[1];
-
-		//unsigned char tmpBuffer[sizeof(uint16_t)];
-		//for (int j = sizeof(uint16_t) - 1; j >= 0; j--)
-		//	tmpBuffer[j] = buffer[sizeof(uint16_t) - 1 - j];
-		//return *((uint16_t*)&tmpBuffer[0]);
 	}
 
 	static uint8_t readUInt8(unsigned char* buffer)
 	{
 		return *((uint8_t*)&buffer[0]);
 	}
-
-	//static uint8_t* toBuffer(uint8_t number)
-	//{
-	//	uint8_t* buffer = (uint8_t*) malloc(4);
-
-	//	buffer[0] = (number >> 0) & 0xFF;
-
-	//	return buffer;
-	//}
 
 	static uint8_t toEndian(uint8_t number)
 	{
