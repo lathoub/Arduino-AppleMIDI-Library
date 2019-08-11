@@ -51,10 +51,18 @@ public:
 
 	static uint32_t readUInt32(unsigned char* buffer)
 	{
-		unsigned char tmpBuffer[sizeof(uint32_t)];
-		for (int j = sizeof(uint32_t) - 1; j >= 0; j--)
-			tmpBuffer[j] = buffer[sizeof(uint32_t) - 1 - j];
-		return *((uint32_t*)&tmpBuffer[0]);
+		return	(uint32_t)buffer[0] << 24 |
+				(uint32_t)buffer[1] << 16 |
+				(uint32_t)buffer[2] << 8 |
+				(uint32_t)buffer[3];
+
+
+
+
+		//unsigned char tmpBuffer[sizeof(uint32_t)];
+		//for (int j = sizeof(uint32_t) - 1; j >= 0; j--)
+		//	tmpBuffer[j] = buffer[sizeof(uint32_t) - 1 - j];
+		//return *((uint32_t*)&tmpBuffer[0]);
 	}
 
 	static uint16_t readUInt16(unsigned char* buffer)
