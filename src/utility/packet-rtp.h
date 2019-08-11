@@ -261,7 +261,7 @@ public:
 			#endif
 
 			// not supported
-			int padding_count = 0;
+//			int padding_count = 0;
 			int data_len = 0;
 
 			if (data_len > 0) {

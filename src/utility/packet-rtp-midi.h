@@ -967,7 +967,7 @@ DEBUGSTREAM.println("decode_note_off");
 
 		//status_str = val_to_str( status >> 4, rtp_midi_channel_status, rtp_midi_unknown_value_hex );
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
@@ -1045,7 +1045,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_off");
 DEBUGSTREAM.println("decode_note_on");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
@@ -1122,7 +1122,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: note_on");
 DEBUGSTREAM.println("decode_poly_pressure");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
@@ -1195,7 +1195,7 @@ DEBUGSTREAM.println("aborted MIDI-command: poly_pressure");
 DEBUGSTREAM.println("decode_channel_pressure");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
@@ -1319,7 +1319,7 @@ DEBUGSTREAM.println("aborted MIDI-command 2: pitch_bend_change");
 DEBUGSTREAM.println("decode_program_change");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
