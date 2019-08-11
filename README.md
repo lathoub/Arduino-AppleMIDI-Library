@@ -37,7 +37,7 @@ void loop()
 More usages in the `examples` folder
 
 ## Hardware
-* Arduino/Genuino (Mega, Uno, Arduino Ethernet, ...)
+* Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
 * Teensy 3.2
@@ -47,11 +47,14 @@ More usages in the `examples` folder
 The code has been pseudo optimized to minimize the memory footprint.
 Internal buffers also use valuable memory space. The biggest buffer `PACKET_MAX_SIZE` is set to 350 by default in `AppleMidi_Settings.h`. Albeit this number is somewhat arbitratry (large enough to receive full SysEx messages), it can be reduced significantly if you do not have to receive large messages.
 
-On an Arduino, 2 sessions can be active at once (W5100 can have max 4 sockets open at the same time, each session needs 2 UDP sockets). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes). 
+On an Arduino, 2 sessions can be active at once (W5100 can have max 4 sockets open at the same time, each session needs 2 UDP sockets). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes).
+
+Save memory (about 2000 bytes) when the device does not initiate sessions by `#undef APPLEMIDI_REMOTE_SESSIONS` in `AppleMidi_Settings.h`. See the `EthernetShield_NoteOnOffEverySec.ino` example
  
 ## Network Shields
-* Arduino Ethernet shield (arduino.cc, Wiznet W5100)
-* Arduino Wifi R3 shield (arduino.cc)
+* Arduino Ethernet shield (Wiznet W5100)
+* Arduino Wifi R3 shield
+* MKR ETH shield
 * Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
