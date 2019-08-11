@@ -1243,7 +1243,7 @@ DEBUGSTREAM.println("aborted MIDI-command: channel_pressure");
 DEBUGSTREAM.println("decode_pitch_bend_change");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */
@@ -1368,7 +1368,7 @@ DEBUGSTREAM.println("aborted MIDI-command: program_change");
 DEBUGSTREAM.println("decode_control_change");
 #endif
 
-		uint8_t type    = (status >> 4);
+//		uint8_t type    = (status >> 4);
 		uint8_t channel = (status & MIDI_CHANNEL_MASK) + 1;
 
 		/* broken: we have no further data */

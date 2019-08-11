@@ -227,7 +227,7 @@ public:
 			#endif
 			// not supported
 			/* Defined by profile field is 16 bits (2 octets) */
-			int hdr_extension_id = AppleMIDI_Util::readUInt32(packetBuffer + offset);
+//			int hdr_extension_id = AppleMIDI_Util::readUInt32(packetBuffer + offset);
 			offset += 2;
 
 			#ifdef APPLEMIDI_DEBUG_VERBOSE
