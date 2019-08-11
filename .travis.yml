@@ -17,7 +17,7 @@ install:
     # Libraries from PlatformIO Library Registry:
     #
     # https://platformio.org/lib/show/1/OneWire
-    - platformio lib -g install 872
+    - platformio lib -g install 872 870
 
 script:
 - platformio ci --board=esp32thing --lib=. examples/Esp32_NoteOnOffEverySec/Esp32_NoteOnOffEverySec.ino;
