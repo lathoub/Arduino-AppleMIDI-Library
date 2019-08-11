@@ -11,13 +11,8 @@ cache:
 
 install:
     - pip install -U platformio
-    - platformio update
 
-    #
-    # Libraries from PlatformIO Library Registry:
-    #
-    # https://platformio.org/lib/show/1/OneWire
-    - platformio lib -g install 872 
+
 
 script:
 - platformio ci --board=esp32thing --lib=. examples/Esp32_NoteOnOffEverySec/Esp32_NoteOnOffEverySec.ino;
