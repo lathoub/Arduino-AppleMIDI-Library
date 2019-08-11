@@ -17,7 +17,7 @@ install:
     # Libraries from PlatformIO Library Registry:
     #
     # https://platformio.org/lib/show/1/OneWire
-    - platformio lib -g install 872 870
+    - platformio lib -g install 872 
 
 script:
 - platformio ci --board=esp32thing --lib=. examples/Esp32_NoteOnOffEverySec/Esp32_NoteOnOffEverySec.ino;
@@ -29,4 +29,3 @@ script:
 - platformio ci --board=uno --lib=. examples/EthernetShield_RealTimeMessages/EthernetShield_RealTimeMessages.ino;
 - platformio ci --board=uno --lib=. examples/EthernetShield_ReceiveMTC/EthernetShield_ReceiveMTC.ino;
 - platformio ci --board=uno --lib=. examples/EthernetShield_SysEx/EthernetShield_SysEx.ino;
-- platformio ci --board=uno --lib=. examples/Wifi_NoteOnOffEverySec/Wifi_NoteOnOffEverySec.ino;
