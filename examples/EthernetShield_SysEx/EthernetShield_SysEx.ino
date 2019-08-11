@@ -79,7 +79,7 @@ void sendSysEx() {
   
   byte data[256];
 
-  for (int i = 0; i < sizeof(data); i++)
+  for (size_t i = 0; i < sizeof(data); i++)
     data[i] = i % 10;
 
   data[0] = 0xF0;
@@ -121,7 +121,7 @@ void OnAppleMidiSysEx(const byte* data, uint16_t length) {
   Serial.print(F(", "));
   Serial.print(length);
   Serial.print(F(" bytes) "));
-  for (int i = 0; i < length; i++)
+  for (uint16_t i = 0; i < length; i++)
   {
     Serial.print(data[i], HEX);
     Serial.print(" ");
