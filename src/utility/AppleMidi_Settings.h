@@ -51,7 +51,13 @@
 #define APPLEMIDI_USE_CALLBACKS    1
 
 // -----------------------------------------------------------------------------
+// If you the device is *not* initiating sessions, 
+// put this switch off (0). It saves computing cycles and memory (over 2000 bytes)
 
+#define APPLEMIDI_REMOTE_SESSIONS
+//#undef APPLEMIDI_REMOTE_SESSIONS
+
+// -----------------------------------------------------------------------------
 // Rtp UDP ports
 
 #define CONTROL_PORT     5004

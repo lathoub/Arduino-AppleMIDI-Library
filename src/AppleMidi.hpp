@@ -54,6 +54,111 @@ inline bool AppleMidiInterface<UdpClass, Settings>::begin(const char* sessionNam
 	return true;
 }
 
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationRejected ir, IPAddress ip, uint16_t port)
+{
+	int success = udp.beginPacket(ip, port);
+	Debug::Assert(success, "udp.beginPacket failed");
+
+	// To appropriate endian conversion
+	ir.version = AppleMIDI_Util::toEndian(ir.version);
+	ir.initiatorToken = AppleMIDI_Util::toEndian(ir.initiatorToken);
+	ir.ssrc = AppleMIDI_Util::toEndian(ir.ssrc);
+
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ir), sizeof(ir));
+	Debug::Assert(bytesWritten == sizeof(ir), "error writing ir");
+
+	success = udp.endPacket();
+	Debug::Assert(success, "udp.endPacket failed");
+	udp.flush();
+}
+
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationAccepted ia, IPAddress ip, uint16_t port)
+{
+	int success = udp.beginPacket(ip, port);
+	Debug::Assert(success, "udp.beginPacket failed");
+
+	// Set the correct endian
+	ia.version = AppleMIDI_Util::toEndian(ia.version);
+	ia.initiatorToken = AppleMIDI_Util::toEndian(ia.initiatorToken);
+	ia.ssrc = AppleMIDI_Util::toEndian(ia.ssrc);
+
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ia), ia.getLength());
+	Debug::Assert(bytesWritten == ia.getLength(), "error writing ia");
+
+	success = udp.endPacket();
+	Debug::Assert(success, "udp.endPacket failed");
+	udp.flush();
+}
+
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Syncronization sy, IPAddress ip, uint16_t port)
+{
+	int success = udp.beginPacket(ip, port);
+	Debug::Assert(success, "udp.beginPacket failed");
+
+#if (APPLEMIDI_DEBUG)
+	DEBUGSTREAM.print("Syncronization timestamps: 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[0], HEX);
+	DEBUGSTREAM.print(", 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[1], HEX);
+	DEBUGSTREAM.print(", 0x");
+	DEBUGSTREAM.print((uint32_t)sy.timestamps[2], HEX);
+	DEBUGSTREAM.println("");
+#endif
+
+	sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
+	sy.count = AppleMIDI_Util::toEndian(sy.count);
+	sy.timestamps[0] = AppleMIDI_Util::toEndian(sy.timestamps[0]);
+	sy.timestamps[1] = AppleMIDI_Util::toEndian(sy.timestamps[1]);
+	sy.timestamps[2] = AppleMIDI_Util::toEndian(sy.timestamps[2]);
+
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&sy), sizeof(sy));
+	Debug::Assert(bytesWritten == sizeof(sy), "error writing sy");
+
+	success = udp.endPacket();
+	Debug::Assert(success, "udp.endPacket failed");
+	udp.flush();
+}
+
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Invitation in, IPAddress ip, uint16_t port)
+{
+	int success = udp.beginPacket(ip, port);
+	Debug::Assert(success, "udp.beginPacket failed");
+
+	// To appropriate endian conversion
+	in.version = AppleMIDI_Util::toEndian(in.version);
+	in.initiatorToken = AppleMIDI_Util::toEndian(in.initiatorToken);
+	in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
+
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), in.getLength());
+	Debug::Assert(bytesWritten == in.getLength(), "error writing in");
+
+	success = udp.endPacket();
+	Debug::Assert(success, "udp.endPacket failed");
+	udp.flush();
+}
+
+template<class UdpClass, class Settings>
+inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit in, IPAddress ip, uint16_t port)
+{
+	int success = udp.beginPacket(ip, port);
+	Debug::Assert(success, "udp.beginPacket failed");
+
+	// To appropriate endian conversion
+	in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
+	in.bitratelimit = AppleMIDI_Util::toEndian(in.bitratelimit);
+
+	size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), sizeof(in));
+	Debug::Assert(bytesWritten == sizeof(in), "error writing in");
+
+	success = udp.endPacket();
+	Debug::Assert(success, "udp.endPacket failed");
+	udp.flush();
+}
+
 /*! \brief Evaluates incoming Rtp messages.
 */
 template<class UdpClass, class Settings>
@@ -73,11 +178,13 @@ inline void AppleMidiInterface<UdpClass, Settings>::read()
 		_dataPortDissector.addPacket(_packetBuffer, packetSize);
 	}
 
+#ifdef APPLEMIDI_REMOTE_SESSIONS
 	// resend invitations
 	ManageInvites();
 
 	// do syncronization here
 	ManageTiming();
+#endif
 }
 
 /*! \brief Get Synchronization Source, initiatize the SSRC on first time usage (lazy init).
@@ -355,116 +462,6 @@ void AppleMidiInterface<UdpClass, Settings>::OnContentInvitation(void* sender, A
 	if (mConnectedCallback != 0)
 		mConnectedCallback(invitation.ssrc, invitation.sessionName);
 }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-
-template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationRejected ir, IPAddress ip, uint16_t port)
-{
-    int success = udp.beginPacket(ip, port);
-    Debug::Assert(success, "udp.beginPacket failed");
-    
-    // To appropriate endian conversion
-    ir.version = AppleMIDI_Util::toEndian(ir.version);
-    ir.initiatorToken = AppleMIDI_Util::toEndian(ir.initiatorToken);
-    ir.ssrc = AppleMIDI_Util::toEndian(ir.ssrc);
-    
-    size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ir), sizeof(ir));
-    Debug::Assert(bytesWritten == sizeof(ir), "error writing ir");
-    
-    success = udp.endPacket();
-    Debug::Assert(success, "udp.endPacket failed");
-    udp.flush();
-}
-
-template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_InvitationAccepted ia, IPAddress ip, uint16_t port)
-{
-    int success = udp.beginPacket(ip, port);
-    Debug::Assert(success, "udp.beginPacket failed");
-    
-    // Set the correct endian
-    ia.version        = AppleMIDI_Util::toEndian(ia.version);
-    ia.initiatorToken = AppleMIDI_Util::toEndian(ia.initiatorToken);
-    ia.ssrc           = AppleMIDI_Util::toEndian(ia.ssrc);
-    
-    size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&ia), ia.getLength());
-    Debug::Assert(bytesWritten == ia.getLength(), "error writing ia");
-    
-    success = udp.endPacket();
-    Debug::Assert(success, "udp.endPacket failed");
-    udp.flush();
-}
-
-template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Syncronization sy, IPAddress ip, uint16_t port)
-{
-    int success = udp.beginPacket(ip, port);
-    Debug::Assert(success, "udp.beginPacket failed");
-    
-#if (APPLEMIDI_DEBUG)
-    DEBUGSTREAM.print("Syncronization timestamps: 0x");
-    DEBUGSTREAM.print((uint32_t)sy.timestamps[0], HEX);
-    DEBUGSTREAM.print(", 0x");
-    DEBUGSTREAM.print((uint32_t)sy.timestamps[1], HEX);
-    DEBUGSTREAM.print(", 0x");
-    DEBUGSTREAM.print((uint32_t)sy.timestamps[2], HEX);
-    DEBUGSTREAM.println("");
-#endif
-    
-    sy.ssrc = AppleMIDI_Util::toEndian(sy.ssrc);
-    sy.count = AppleMIDI_Util::toEndian(sy.count);
-    sy.timestamps[0] = AppleMIDI_Util::toEndian(sy.timestamps[0]);
-    sy.timestamps[1] = AppleMIDI_Util::toEndian(sy.timestamps[1]);
-    sy.timestamps[2] = AppleMIDI_Util::toEndian(sy.timestamps[2]);
-    
-    size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&sy), sizeof(sy));
-    Debug::Assert(bytesWritten == sizeof(sy), "error writing sy");
-    
-    success = udp.endPacket();
-    Debug::Assert(success, "udp.endPacket failed");
-    udp.flush();
-}
-
-template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_Invitation in, IPAddress ip, uint16_t port)
-{
-    int success = udp.beginPacket(ip, port);
-    Debug::Assert(success, "udp.beginPacket failed");
-    
-    // To appropriate endian conversion
-    in.version = AppleMIDI_Util::toEndian(in.version);
-    in.initiatorToken = AppleMIDI_Util::toEndian(in.initiatorToken);
-    in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
-    
-    size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), in.getLength());
-    Debug::Assert(bytesWritten == in.getLength(), "error writing in");
-    
-    success = udp.endPacket();
-    Debug::Assert(success, "udp.endPacket failed");
-    udp.flush();
-}
-
-template<class UdpClass, class Settings>
-inline void AppleMidiInterface<UdpClass, Settings>::write(UdpClass& udp, AppleMIDI_BitrateReceiveLimit in, IPAddress ip, uint16_t port)
-{
-    int success = udp.beginPacket(ip, port);
-    Debug::Assert(success, "udp.beginPacket failed");
-    
-    // To appropriate endian conversion
-    in.ssrc = AppleMIDI_Util::toEndian(in.ssrc);
-    in.bitratelimit = AppleMIDI_Util::toEndian(in.bitratelimit);
-    
-    size_t bytesWritten = udp.write(reinterpret_cast<uint8_t*>(&in), sizeof(in));
-    Debug::Assert(bytesWritten == sizeof(in), "error writing in");
-    
-    success = udp.endPacket();
-    Debug::Assert(success, "udp.endPacket failed");
-    udp.flush();
-}
-
 
 /*! \brief .
 

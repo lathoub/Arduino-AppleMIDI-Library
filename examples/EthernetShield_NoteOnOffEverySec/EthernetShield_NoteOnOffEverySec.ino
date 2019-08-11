@@ -15,11 +15,16 @@ APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
 
 // Code size:
 //
-// IDE 1.8.7
+// IDE 1.8.9
 //
 // Arduino Ethernet
-// Sketch uses 24808 bytes (76%) of program storage space. Maximum is 32256 bytes.
-// Global variables use 1235 bytes (60%) of dynamic memory, leaving 813 bytes for local variables. Maximum is 2048 bytes.
+// Sketch uses 24520 bytes (76%) of program storage space. Maximum is 32256 bytes.
+// Global variables use 1230 bytes (60%) of dynamic memory, leaving 813 bytes for local variables. Maximum is 2048 bytes.
+//
+// If the device does not initiate sessions, consider changing in AppleMidi_Settings and save about 2000 bytes
+//  #undef APPLEMIDI_REMOTE_SESSIONS
+// Sketch uses 22600 bytes (70%)
+
 
 // -----------------------------------------------------------------------------
 //
