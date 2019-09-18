@@ -1,6 +1,6 @@
 #include <Ethernet.h>
 
-#include "AppleMidi.h"
+#include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -60,11 +60,11 @@ void setup()
   // Create a session and wait for a remote host to connect to us
   AppleMIDI.begin("test");
 
-  AppleMIDI.OnConnected(OnAppleMidiConnected);
-  AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
+//  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
+//  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  AppleMIDI.OnReceiveNoteOn(OnAppleMidiNoteOn);
-  AppleMIDI.OnReceiveNoteOff(OnAppleMidiNoteOff);
+  AppleMIDI.setHandleNoteOn(OnAppleMidiNoteOn);
+  AppleMIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
   Serial.println(F("Sending NoteOn/Off of note 45, every second"));
 }

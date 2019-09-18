@@ -1,8 +1,3 @@
-/*!
- *  @brief      AppleMIDI Library for the Arduino - Namespace declaration
- *  @author		lathoub
- */
-
 #pragma once
 
 #define APPLEMIDI_NAMESPACE                  appleMidi
