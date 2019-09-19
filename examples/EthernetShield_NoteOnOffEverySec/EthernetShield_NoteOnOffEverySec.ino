@@ -58,13 +58,13 @@ void setup()
   Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
-  AppleMIDI.begin("test");
+  MIDI.begin("test");
 
-//  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-//  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
+  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  AppleMIDI.setHandleNoteOn(OnAppleMidiNoteOn);
-  AppleMIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+  MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
+  MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
   Serial.println(F("Sending NoteOn/Off of note 45, every second"));
 }
@@ -75,7 +75,7 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  AppleMIDI.read();
+  MIDI.read();
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
@@ -88,8 +88,8 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-    AppleMIDI.sendNoteOn(note, velocity, channel);
-    AppleMIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
   }
 }
 

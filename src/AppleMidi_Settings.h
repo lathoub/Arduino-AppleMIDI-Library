@@ -1,13 +1,11 @@
 #pragma once
 
-#pragma once
-
 #include "appleMidi_Defs.h"
 
 BEGIN_MIDI_NAMESPACE
 
 // Max size of dissectable packet
-#define PACKET_MAX_SIZE 350
+#define BUFFER_MAX_SIZE 256
 
 // Rtp UDP ports
 #define CONTROL_PORT 5004

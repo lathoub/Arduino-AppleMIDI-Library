@@ -5,13 +5,15 @@
 
 #include "AppleMidi.h"
 
-char ssid[] = "yourNetwork"; //  your network SSID (name)
-char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "The Mighty Network"; //  your network SSID (name)
+char pass[] = "0208196700";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_INSTANCE(WiFiUDP, AppleMIDI); // see definition in AppleMidi_Defs.h
+typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<WiFiUDP> __st;
+__st AppleMIDI;
+midi::MidiInterface<__st> MIDI((__st&)AppleMIDI);
 
 // -----------------------------------------------------------------------------
 //
@@ -51,11 +53,11 @@ void setup()
   // Create a session and wait for a remote host to connect to us
   AppleMIDI.begin("test");
 
-  AppleMIDI.OnConnected(OnAppleMidiConnected);
-  AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
+  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  AppleMIDI.OnReceiveNoteOn(OnAppleMidiNoteOn);
-  AppleMIDI.OnReceiveNoteOff(OnAppleMidiNoteOff);
+  MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
+  MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
   Serial.println(F("Sending NoteOn/Off of note 45, every second"));
 }
@@ -79,8 +81,8 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-    AppleMIDI.sendNoteOn(note, velocity, channel);
-    AppleMIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
   }
 }
 

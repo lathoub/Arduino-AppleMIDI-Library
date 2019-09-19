@@ -3,10 +3,14 @@
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 #include <MIDI.h>
+#include <midi_RingBuffer.h>
 using namespace MIDI_NAMESPACE;
 
-#include <AppleMidi_Defs.h>
-#include <AppleMidi_Settings.h>
+#include "AppleMidi_Defs.h"
+#include "AppleMidi_Settings.h"
+#include "AppleMidi_SessionManager.h"
+#include "AppleMidi_Parser.h"
+#include "rtpMidi_Parser.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -24,14 +28,22 @@ class AppleMidiTransport
 public:
 	AppleMidiTransport()
 	{
+		// attach the parsers
+		controlParsers[0] = &AppleMIDIParser<UdpClass>::Parser;
+
+		dataParsers[0] = &rtpMIDIParser<UdpClass>::Parser;
+		dataParsers[1] = &AppleMIDIParser<UdpClass>::Parser;
 	};
 
-public:
+protected:
 	inline void begin(Channel inChannel = 1)
 	{
+		Serial.println("AppleMIDI begin");
+
+		_controlPort.begin(_port);	// UDP socket for control messages
+		_dataPort.begin(_port + 1);	// UDP socket for data messages
 	}
 
-public:
 	inline bool beginTransmission()
 	{
 		return true;
@@ -47,47 +59,59 @@ public:
 
 	inline byte read()
 	{
-		// entry point for parsing content
-		run();
-
 		return 0x00;
 	};
 
 	inline unsigned available()
 	{
+		// entry point for parsing content
+		run();
+
 		return 0;
 	};
 
+	friend class MidiInterface<AppleMidiTransport<UdpClass>>;
+
 public:
-	inline void begin(const char* sessionName, const Channel inChannel = 1)
+	inline void begin(const char* sessionName, const uint16_t port = CONTROL_PORT)
 	{
-		begin(inChannel);
+		_sessionManager.setSessionName(sessionName);
+		_port = port;
 
-		strncpy(_sessionName, sessionName, SESSION_NAME_MAX_LEN);
-
-		// open UDP socket for control messages
-		_controlPort.begin(_port);
-		// open UDP socket for rtp messages
-		_dataPort.begin(_port + 1);
-
-		// TODO setup parsers
+		// The MIDI protocol will call the underlying begin, that
+		// will begin the sockets
 	}
 
 protected:
 	inline void run()
 	{
-		// Process one control packet, if available
-		int packetSize = _controlPort.parsePacket();
-		if (packetSize) {
-			packetSize = _controlPort.read(_packetBuffer, sizeof(_packetBuffer));
-			//_controlPortDissector.addPacket(_packetBuffer, packetSize);
+		byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+
+		auto packetSize = _controlPort.parsePacket();
+		if (packetSize > 0) {
+			while (packetSize > 0)
+			{
+				auto bytesRead = _controlPort.read(packetBuffer, sizeof(packetBuffer));
+				_controlBuffer.write(packetBuffer, bytesRead);
+
+				packetSize -= bytesRead;
+			}
+
+			controlParsers[0](_controlBuffer, this, amPortType::Control);
 		}
 
-		// Process one control packet, if available
 		packetSize = _dataPort.parsePacket();
-		if (packetSize) {
-			packetSize = _dataPort.read(_packetBuffer, sizeof(_packetBuffer));
-			//_dataPortDissector.addPacket(_packetBuffer, packetSize);
+		if (packetSize > 0) {
+			while (packetSize > 0)
+			{
+				auto bytesRead = _dataPort.read(packetBuffer, sizeof(packetBuffer));
+				_dataBuffer.write(packetBuffer, bytesRead);
+
+				packetSize -= bytesRead;
+			}
+
+			dataParsers[0](_dataBuffer, this, amPortType::Data);
+			dataParsers[1](_dataBuffer, this, amPortType::Data);
 		}
 
 		// resend invitations
@@ -98,40 +122,40 @@ protected:
 	}
 
 public:
-	inline void setHandleConnected(void(*fptr)(uint32_t, char*)) { _connectedCallback = fptr; }
+	inline void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
 	inline void setHandleDisconnected(void(*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
-public:
-	// Session management
+protected:
 	inline void ManageInvites();
 	inline void ManageTiming();
+
+	inline void ReceivedInvitation(const AppleMIDI_Invitation_t&, const amPortType&);
+
+	friend class AppleMIDIParser<UdpClass>;
+	friend class rtpMIDIParser<UdpClass>;
+
+private:
+	inline void ReceivedControlInvitation(const AppleMIDI_Invitation_t&);
+	inline void ReceivedDataInvitation(const AppleMIDI_Invitation_t&);
 
 private:
 	UdpClass _dataPort;
 	UdpClass _controlPort;
 
-	uint16_t _port = CONTROL_PORT;
+	uint16_t _port = 0;
 
-	char _sessionName[SESSION_NAME_MAX_LEN + 1];
+	typedef int(*FPPARSER)(midi::RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*, const amPortType&);
 
-	byte _packetBuffer[PACKET_MAX_SIZE];
+	FPPARSER controlParsers[1];
+	FPPARSER dataParsers[2];
 
-	// SSRC, Synchronization source.
-	// (RFC 1889) The source of a stream of RTP packets, identified by a 32-bit numeric SSRC identifier
-	// carried in the RTP header so as not to be dependent upon the network address. All packets from a
-	// synchronization source form part of the same timing and sequence number space, so a receiver groups
-	// packets by synchronization source for playback. Examples of synchronization sources include the
-	// sender of a stream of packets derived from a signal source such as a microphone or a camera, or an
-	// RTP mixer. A synchronization source may change its data format, e.g., audio encoding, over time.
-	// The SSRC identifier is a randomly chosen value meant to be globally unique within a particular RTP
-	// session. A participant need not use the same SSRC identifier for all the RTP sessions in a
-	// multimedia session; the binding of the SSRC identifiers is provided through RTCP. If a participant
-	// generates multiple streams in one RTP session, for example from separate video cameras, each must
-	// be identified as a different SSRC.
-	uint32_t _ssrc = 0;
+	midi::RingBuffer<byte, BUFFER_MAX_SIZE> _dataBuffer;
+	midi::RingBuffer<byte, BUFFER_MAX_SIZE> _controlBuffer;
+
+	SessionManager _sessionManager;
 
 private:
-	void(*_connectedCallback)(uint32_t, char*);
+	void(*_connectedCallback)(uint32_t, const char*);
 	void(*_disconnectedCallback)(uint32_t);
 };
 
