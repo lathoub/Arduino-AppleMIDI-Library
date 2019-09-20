@@ -5,7 +5,7 @@
 
 #include "AppleMidi.h"
 
-char ssid[] = "The Mighty Network"; //  your network SSID (name)
+char ssid[] = "The Hefty Network"; //  your network SSID (name)
 char pass[] = "0208196700";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
@@ -52,6 +52,7 @@ void setup()
 
   // Create a session and wait for a remote host to connect to us
   AppleMIDI.begin("test");
+  MIDI.begin(1);
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
@@ -68,7 +69,7 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  AppleMIDI.read();
+  MIDI.read();
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
@@ -93,7 +94,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(uint32_t ssrc, char* name) {
+void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
   isConnected  = true;
   Serial.print(F("Connected to session "));
   Serial.println(name);

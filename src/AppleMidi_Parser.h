@@ -13,8 +13,6 @@ template<class UdpClass>
 class AppleMIDIParser
 {
 public:
-	static int Port;
-
 	static int Parser(midi::RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, AppleMidiTransport<UdpClass>* appleMidi, const amPortType& portType)
 	{
 		Serial.print("AppleMIDI_Parser::Parser received ");

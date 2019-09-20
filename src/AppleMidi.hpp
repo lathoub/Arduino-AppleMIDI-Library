@@ -42,7 +42,7 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(const AppleMIDI_Inv
 		{
 			Serial.println("No free slots");
 			// no free slots, we cant accept invite
-			AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
+			//AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
 			//write(_controlPort, invitationRejected, _controlPort.remoteIP(), _controlPort.remotePort());
 			return;
 		}
@@ -57,7 +57,13 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(const AppleMIDI_Inv
 
 	auto success = _controlPort.beginPacket(_controlPort.remoteIP(), _controlPort.remotePort());
 
-	_controlPort.write((uint8_t*)& 0xfff, 2);
+	uint32_t temp = toEndian(amProtocolVersion);
+	_controlPort.write((uint8_t*)amSignature, sizeof(amSignature));
+	_controlPort.write((uint8_t*)amInvitationAccepted, sizeof(amInvitationAccepted));
+	_controlPort.write(reinterpret_cast<uint8_t*>(&temp), sizeof(amProtocolVersion));
+	//_controlPort.write(reinterpret_cast<uint8_t*>(toEndian(_sessionManager.getSynchronizationSource())), sizeof(uint32_t));
+	//_controlPort.write(reinterpret_cast<uint8_t*>(toEndian(invitation.initiatorToken)), sizeof(uint32_t));
+	//_controlPort.write((uint8_t*)_sessionManager.getSessionName(), strlen(_sessionManager.getSessionName()));
 
 	success = _controlPort.endPacket();
 	_controlPort.flush();
@@ -76,16 +82,16 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(const AppleMIDI_Invita
 	int i = _sessionManager.GetSessionSlotUsingSSrc(invitation.ssrc);
 	if (i < 0)
 	{
-		AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
+		//AppleMIDI_InvitationRejected invitationRejected(invitation.ssrc, invitation.initiatorToken, invitation.sessionName);
 		//write(_controlPort, invitationRejected, _controlPort.remoteIP(), _controlPort.remotePort());
 		return;
 	}
 
-	AppleMIDI_InvitationAccepted acceptInvitation(_sessionManager.getSynchronizationSource(), invitation.initiatorToken, _sessionManager.getSessionName());
+	//AppleMIDI_InvitationAccepted acceptInvitation(_sessionManager.getSynchronizationSource(), invitation.initiatorToken, _sessionManager.getSessionName());
 	//write(_controlPort, acceptInvitation, _controlPort.remoteIP(), _controlPort.remotePort());
 
 	// Send bitrate limit
-	AppleMIDI_BitrateReceiveLimit rateLimit;
+	//AppleMIDI_BitrateReceiveLimit rateLimit;
 	// write(_controlPort, rateLimit, _controlPort.remoteIP(), _controlPort.remotePort());
 
 	//Sessions[i].contentIP = _dataPort.remoteIP();

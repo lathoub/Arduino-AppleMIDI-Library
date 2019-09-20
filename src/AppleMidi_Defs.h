@@ -49,12 +49,12 @@ typedef struct __attribute__((packed)) AppleMIDI_InvitationAccepted
 	uint32_t	ssrc;
 	char		sessionName[SESSION_NAME_MAX_LEN + 1];
 
-	inline AppleMIDI_InvitationAccepted(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
-	{
-		this->initiatorToken = initiatorToken;
-		this->ssrc = ssrc;
-		strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
-	}
+	//inline AppleMIDI_InvitationAccepted(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
+	//{
+	//	this->initiatorToken = initiatorToken;
+	//	this->ssrc = ssrc;
+	//	strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
+	//}
 
 } AppleMIDI_InvitationAccepted_t;
 
@@ -64,12 +64,12 @@ typedef struct __attribute__((packed)) AppleMIDI_InvitationRejected
 	uint32_t	ssrc;
 	char		sessionName[SESSION_NAME_MAX_LEN + 1];
 
-	inline AppleMIDI_InvitationRejected(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
-	{
-		this->initiatorToken = initiatorToken;
-		this->ssrc = ssrc;
-		strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
-	}
+	//inline AppleMIDI_InvitationRejected(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
+	//{
+	//	this->initiatorToken = initiatorToken;
+	//	this->ssrc = ssrc;
+	//	strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
+	//}
 
 } AppleMIDI_InvitationRejected_t;
 
@@ -78,10 +78,10 @@ typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
 	uint32_t	ssrc;
 	uint32_t	bitratelimit;
 
-	AppleMIDI_BitrateReceiveLimit()
-	{
-		bitratelimit = BUFFER_MAX_SIZE;
-	}
+	//AppleMIDI_BitrateReceiveLimit()
+	//{
+	//	bitratelimit = BUFFER_MAX_SIZE;
+	//}
 
 } AppleMIDI_BitrateReceiveLimit_t;
 
