@@ -3,32 +3,66 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+class Endian
+{
+private:
+    static constexpr uint32_t uint32_ = 0x01020304;
+    static constexpr uint8_t magic_ = (const uint8_t&)uint32_;
+public:
+    static constexpr bool little = magic_ == 0x04;
+    static constexpr bool middle = magic_ == 0x02;
+    static constexpr bool big = magic_ == 0x01;
+    static_assert(little || middle || big, "Cannot determine endianness!");
+private:
+    Endian() = delete;
+};
+
 namespace {
 
-	static uint64_t readUInt64(byte a, byte b, byte c, byte d, byte e, byte f, byte g, byte h)
+	static uint64_t ntohll(byte a, byte b, byte c, byte d, byte e, byte f, byte g, byte h)
 	{
+if (Endian::big)
 		return	(uint64_t)a << 56 |
-			(uint64_t)b << 48 |
-			(uint64_t)c << 40 |
-			(uint64_t)d << 32 |
-			(uint64_t)e << 24 |
-			(uint64_t)f << 16 |
-			(uint64_t)g << 8 |
-			(uint64_t)h;
+				(uint64_t)b << 48 |
+				(uint64_t)c << 40 |
+				(uint64_t)d << 32 |
+				(uint64_t)e << 24 |
+				(uint64_t)f << 16 |
+				(uint64_t)g << 8 |
+				(uint64_t)h;
+else
+		return	(uint64_t)h << 56 |
+				(uint64_t)g << 48 |
+				(uint64_t)f << 40 |
+				(uint64_t)e << 32 |
+				(uint64_t)d << 24 |
+				(uint64_t)c << 16 |
+				(uint64_t)b << 8 |
+				(uint64_t)a;
 	}
 
-	static uint32_t readUInt32(byte a, byte b, byte c, byte d)
+	static uint32_t ntohl(byte a, byte b, byte c, byte d)
 	{
+if (Endian::big)
 		return	(uint32_t)a << 24 |
-			(uint32_t)b << 16 |
-			(uint32_t)c << 8 |
-			(uint32_t)d;
+				(uint32_t)b << 16 |
+				(uint32_t)c << 8 |
+				(uint32_t)d;
+else
+		return	(uint32_t)d << 24 |
+				(uint32_t)c << 16 |
+				(uint32_t)b << 8 |
+				(uint32_t)a;
 	}
 
-	static uint16_t readUInt16(byte a, byte b)
+	static uint16_t ntohs(byte a, byte b)
 	{
+if (Endian::big)
 		return	(uint32_t)a << 8 |
-			(uint32_t)b;
+			    (uint32_t)b;
+else
+		return	(uint32_t)b << 8 |
+			    (uint32_t)a;
 	}
 
 	//! Byte swap unsigned short
@@ -71,58 +105,52 @@ namespace {
 		return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
 	}
 
-	static uint16_t toEndian(uint16_t number)
+	static uint16_t htons(uint16_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_uint16(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_uint16(number);
+		else
+			return number;
 	}
 
-	static int16_t toEndian(int16_t number)
+	static int16_t htons(int16_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_int16(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_int16(number);
+		else
+			return number;
 	}
 
-	static uint32_t toEndian(uint32_t number)
+	static uint32_t htonl(uint32_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_uint32(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_uint32(number);
+		else
+			return number;
 	}
 
-	static int32_t toEndian(int32_t number)
+	static int32_t htonl(int32_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_int32(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_int32(number);
+		else
+			return number;
 	}
 
-	static uint64_t toEndian(uint64_t number)
+	static uint64_t htonll(uint64_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_uint64(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_uint64(number);
+		else
+			return number;
 	}
 
-	static int64_t toEndian(int64_t number)
+	static int64_t htonll(int64_t number)
 	{
-#if ( SYSTEM_ENDIAN == _ENDIAN_LITTLE_ )
-		return swap_int64(number);
-#else
-		return number;
-#endif
+		if (Endian::little)
+			return swap_int64(number);
+		else
+			return number;
 	}
 
 }

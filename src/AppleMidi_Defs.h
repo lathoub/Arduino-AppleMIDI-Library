@@ -3,87 +3,82 @@
 #include <IPAddress.h>
 
 #include "AppleMidi_Namespace.h"
-#include "AppleMidi_Settings.h"
+
+#include "Midi_Defs.h"
+
+#define SLAVE
+//#define MASTER
+
+BEGIN_APPLEMIDI_NAMESPACE
 
 #ifndef UDP_TX_PACKET_MAX_SIZE
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
-#define SESSION_NAME_MAX_LEN 24
+#define MIDI_SAMPLING_RATE_176K4HZ 176400
+#define MIDI_SAMPLING_RATE_192KHZ 192000
+#define MIDI_SAMPLING_RATE_DEFAULT 10000
 
 #define SYNC_CK0 0
 #define SYNC_CK1 1
 #define SYNC_CK2 2
 
-BEGIN_APPLEMIDI_NAMESPACE
+#define SESSION_NAME_MAX_LEN 24
 
-// amount of socket / 2
-#define MAX_SESSIONS (2)
+#define MAX_SESSIONS 2
+#define MAX_PARTICIPANTS 5
+
+// Max size of dissectable packet
+#define BUFFER_MAX_SIZE 64
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = { 0xff, 0xff };
 
 /* 2 (stored in network byte order (big-endian)) */
-const uint32_t amProtocolVersion = 2;
+const byte amProtocolVersion[] = { 0x00, 0x00, 0x00, 0x02 };
 
 /* Apple network MIDI valid commands */
 const byte amInvitation[] = { 'I', 'N' };
-const byte amInvitationAccepted[] = { 'O', 'K' };
-const byte amInvitationRejected[] = { 'N', 'O' };
 const byte amEndSession[] = { 'B', 'Y' };
 const byte amSyncronization[] = { 'C', 'K' };
+const byte amInvitationAccepted[] = { 'O', 'K' };
+const byte amInvitationRejected[] = { 'N', 'O' };
 const byte amReceiverFeedback[] = { 'R', 'S' };
 const byte amBitrateReceiveLimit[] = { 'R', 'L' };
 
+// Same struct for Invitation, InvitationAccepted and InvitationRejected
 typedef struct __attribute__((packed)) AppleMIDI_Invitation
-
 {
 	uint32_t	initiatorToken;
 	uint32_t	ssrc;
 	char		sessionName[SESSION_NAME_MAX_LEN + 1];
+
+	inline const uint8_t getLength() const
+	{
+		return sizeof(AppleMIDI_Invitation) - (SESSION_NAME_MAX_LEN) + strlen(sessionName);
+	}
+
 } AppleMIDI_Invitation_t;
-
-typedef struct __attribute__((packed)) AppleMIDI_InvitationAccepted
-{
-	uint32_t	initiatorToken;
-	uint32_t	ssrc;
-	char		sessionName[SESSION_NAME_MAX_LEN + 1];
-
-	//inline AppleMIDI_InvitationAccepted(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
-	//{
-	//	this->initiatorToken = initiatorToken;
-	//	this->ssrc = ssrc;
-	//	strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
-	//}
-
-} AppleMIDI_InvitationAccepted_t;
-
-typedef struct __attribute__((packed)) AppleMIDI_InvitationRejected
-{
-	uint32_t	initiatorToken;
-	uint32_t	ssrc;
-	char		sessionName[SESSION_NAME_MAX_LEN + 1];
-
-	//inline AppleMIDI_InvitationRejected(uint32_t ssrc, uint32_t initiatorToken, const char* sessionName)
-	//{
-	//	this->initiatorToken = initiatorToken;
-	//	this->ssrc = ssrc;
-	//	strncpy(this->sessionName, sessionName, SESSION_NAME_MAX_LEN);
-	//}
-
-} AppleMIDI_InvitationRejected_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
 {
 	uint32_t	ssrc;
 	uint32_t	bitratelimit;
-
-	//AppleMIDI_BitrateReceiveLimit()
-	//{
-	//	bitratelimit = BUFFER_MAX_SIZE;
-	//}
-
 } AppleMIDI_BitrateReceiveLimit_t;
+
+typedef struct __attribute__((packed)) AppleMIDI_Syncronization
+{
+	uint32_t	ssrc;
+	uint8_t		count;
+	uint8_t		padding[3];
+	uint64_t	timestamps[3];
+} AppleMIDI_Syncronization_t;
+
+typedef struct __attribute__((packed)) AppleMIDI_EndSession
+{
+	uint32_t	initiatorToken;
+	uint32_t	ssrc;
+} AppleMIDI_EndSession_t;
 
 enum amPortType : uint8_t
 {
@@ -91,6 +86,14 @@ enum amPortType : uint8_t
 	Data,
 };
 
+enum ParticipantMode : uint8_t
+{
+	Undefined,
+	Slave,
+	Master,
+};
+
+#ifdef MASTER
 enum SessionInviteStatus : uint8_t
 {
 	None,
@@ -100,39 +103,6 @@ enum SessionInviteStatus : uint8_t
 	SendContentInvite,
 	WaitingForContentInvitationAccepted,
 };
-
-enum SessionInitiator : uint8_t
-{
-	Undefined,
-	Remote,
-	Local,
-};
-
-typedef struct {
-	SessionInviteStatus	status;
-	unsigned long		lastSend;
-	IPAddress			remoteHost;
-	uint16_t			remotePort;
-	int					attempts;
-	uint32_t			ssrc;
-	uint32_t			initiatorToken;
-} SessionInvite_t;
-
-typedef struct {
-	bool				enabled;
-	unsigned long		lastTime;
-	uint32_t			count;
-	bool				busy;
-} SessionSyncronization_t;
-
-typedef struct {
-	uint32_t				ssrc; // the unique identifier
-	uint16_t				seqNum;
-	SessionInitiator		initiator;
-	SessionSyncronization_t	syncronization;
-	IPAddress				contentIP;
-	uint16_t				contentPort;
-	SessionInvite_t			invite;
-} Session_t;
+#endif
 
 END_APPLEMIDI_NAMESPACE

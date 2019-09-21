@@ -1,5 +1,4 @@
 #include <Ethernet.h>
-
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -12,19 +11,7 @@ unsigned long t0 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
-
-// Code size:
-//
-// IDE 1.8.9
-//
-// Arduino Ethernet
-// Sketch uses 24520 bytes (76%) of program storage space. Maximum is 32256 bytes.
-// Global variables use 1230 bytes (60%) of dynamic memory, leaving 813 bytes for local variables. Maximum is 2048 bytes.
-//
-// If the device does not initiate sessions, consider changing in AppleMidi_Settings and save about 2000 bytes
-//  #undef APPLEMIDI_REMOTE_SESSIONS
-// Sketch uses 22600 bytes (70%)
-
+AppleMIDI_Session* session;
 
 // -----------------------------------------------------------------------------
 //
@@ -58,10 +45,11 @@ void setup()
   Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
-  MIDI.begin("test");
+  session = AppleMIDI.addSession("test");
+  MIDI.begin(1);
 
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+ // session->setHandleConnected(OnAppleMidiConnected);
+ // session->setHandleDisconnected(OnAppleMidiDisconnected);
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
