@@ -32,6 +32,9 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define MIDI_SAMPLING_RATE_192KHZ 192000
 #define MIDI_SAMPLING_RATE_DEFAULT 10000
 
+#define PARSER_NOT_ENOUGH_DATA -1
+#define PARSER_UNEXPECTED_DATA 0
+
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = { 0xff, 0xff };
 

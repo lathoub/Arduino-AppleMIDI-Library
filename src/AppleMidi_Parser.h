@@ -5,6 +5,7 @@ using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+#include "AppleMidi_Defs.h"
 #include "AppleMidi_Util.h"
 
 template<class UdpClass>
@@ -22,7 +23,7 @@ public:
 
 		uint16_t minimumLen = 4;
 		if (buffer.getLength() < minimumLen)
-			return -1;
+			return PARSER_NOT_ENOUGH_DATA;
 
 		uint16_t i = 0;
 
@@ -36,7 +37,7 @@ public:
 			//Serial.print(signature[1], HEX);
 			//Serial.println(" was expecting 0xFFFF");
 
-			return 0;
+			return PARSER_UNEXPECTED_DATA;
 		}
 
 		byte command[2]; // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
@@ -54,7 +55,7 @@ public:
 			// minimum amount : 4 bytes for protocol version, 4 bytes for initiator token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
 			if (buffer.getLength() < minimumLen) 
-				return -1;
+				return PARSER_NOT_ENOUGH_DATA;
 
 			// 2 (stored in network byte order (big-endian))
 			byte protocolVersion[4];
@@ -70,7 +71,7 @@ public:
 				//Serial.print(protocolVersion[2], HEX);
 				//Serial.print(protocolVersion[3], HEX);
 				//Serial.println(" was expecting 0x00000002");
-				return 0;
+				return PARSER_UNEXPECTED_DATA;
 			}
 
 			AppleMIDI_Invitation invitation;
@@ -90,7 +91,7 @@ public:
 				invitation.sessionName[bi++] = buffer.peek(i++);
 			invitation.sessionName[bi++] = '\0';
 			if (buffer.peek(i++) != 0x00)
-				return -1;
+				return PARSER_NOT_ENOUGH_DATA;
 
 			//Serial.print("Consumed ");
 			//Serial.print(i);
@@ -109,7 +110,7 @@ public:
 			// minimum amount : 4 bytes for protocol version, 4 bytes for initiator token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
 			if (buffer.getLength() < minimumLen) 
-				return -1;
+				return PARSER_NOT_ENOUGH_DATA;
 
 			// 2 (stored in network byte order (big-endian))
 			byte protocolVersion[4];
@@ -125,7 +126,7 @@ public:
 				//Serial.print(protocolVersion[2], HEX);
 				//Serial.print(protocolVersion[3], HEX);
 				//Serial.println(" was expecting 0x00000002");
-				return 0;
+				return PARSER_UNEXPECTED_DATA;
 			}
 
 			AppleMIDI_EndSession endSession;
@@ -152,7 +153,7 @@ public:
 			// minimum amount : 4 bytes for sender SSRC, 1 byte for count, 3 bytes padding and 3 times 8 bytes
 			minimumLen += (4 + 1 + 3 + (3 * 8));
 			if (buffer.getLength() < minimumLen) 
-				return -1;
+				return PARSER_NOT_ENOUGH_DATA;
 
 			AppleMIDI_Syncronization syncronization;
 
@@ -193,7 +194,7 @@ public:
 		return 99;
 		}
 #endif
-		return 0;
+		return PARSER_UNEXPECTED_DATA;
 	}
 };
 

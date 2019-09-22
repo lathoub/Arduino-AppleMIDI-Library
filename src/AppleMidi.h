@@ -62,6 +62,7 @@ protected:
 	friend class MidiInterface<AppleMidiTransport<UdpClass>>;
 
 public:
+	// TODO: trt to return a reference to session, not a pointer
 	Session<UdpClass>* begin(const char* name, const uint16_t port = CONTROL_PORT)
 	{
 		session.begin(name, port);

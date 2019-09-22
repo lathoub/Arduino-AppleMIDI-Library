@@ -36,15 +36,19 @@ public:
 		uint8_t csrc_count = RTP_CSRC_COUNT(rtp.vpxcc);
 		if (2 != version)
 		{
-			return 0;
+			return PARSER_UNEXPECTED_DATA;
 		}
 
 		bool marker = RTP_MARKER(rtp.mpayload);
 		uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
 		if (PAYLOADTYPE_RTPMIDI != payloadType)
 		{
-			return 0;
+			return PARSER_UNEXPECTED_DATA;
 		}
+
+		minimumLen = sizeof(RtpMIDI);
+		if (buffer.getLength() < minimumLen)
+			return PARSER_NOT_ENOUGH_DATA;
 
 		RtpMIDI rtpMidi;
 		rtpMidi.flags = buffer.peek(i++);
@@ -57,16 +61,20 @@ public:
 			cmdLen	= (cmdLen << 8) | octet;
 		}
 
-		i += cmdLen;
+		if (buffer.getLength() < cmdLen)
+			return PARSER_NOT_ENOUGH_DATA;
+
+		Serial.print("rtp + rtpmidi bytes Consumed ");
+		Serial.println(i);
+
+		buffer.pop(i); // consume all the bytes used so far
 
 		session->ReceivedMidi(rtp, rtpMidi, buffer, cmdLen);
 
-		Serial.print("Consumed ");
-		Serial.print(i);
-		Serial.println(" bytes");
+		buffer.pop(cmdLen); // consume all the bytes used so far
 
-		buffer.pop(i); // consume all the bytes that made up this message
-
+		Serial.print("MIDI bytes Consumed: ");
+		Serial.println(cmdLen);
 
 		return i;
 	}

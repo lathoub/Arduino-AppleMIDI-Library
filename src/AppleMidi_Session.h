@@ -7,6 +7,8 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+// read: https://tools.ietf.org/html/rfc4696
+
 template<class UdpClass>
 class Participant
 {
@@ -118,11 +120,15 @@ public:
 			{
 				auto bytesRead = controlPort.read(packetBuffer, sizeof(packetBuffer));
 				controlBuffer.write(packetBuffer, bytesRead);
-
 				packetSize -= bytesRead;
 			}
-			auto retVal = controlParsers[0](controlBuffer, this, amPortType::Control);
-			// TODO
+			while (true) {
+				auto retVal = controlParsers[0](controlBuffer, this, amPortType::Control);
+				if (PARSER_NOT_ENOUGH_DATA == retVal)
+					break;
+				else if (PARSER_UNEXPECTED_DATA == retVal)
+					controlBuffer.pop(1);
+			}
 		}
 
 		packetSize = dataPort.parsePacket();
@@ -131,12 +137,22 @@ public:
 			{
 				auto bytesRead = dataPort.read(packetBuffer, sizeof(packetBuffer));
 				dataBuffer.write(packetBuffer, bytesRead);
-
 				packetSize -= bytesRead;
 			}
-			auto retVal = dataParsers[0](dataBuffer, this, amPortType::Data);
-			dataParsers[1](dataBuffer, this, amPortType::Data);
-			// TODO
+			while (true) {
+				auto retVal = dataParsers[0](dataBuffer, this, amPortType::Data);
+				if (PARSER_NOT_ENOUGH_DATA == retVal)
+					break; // we had the correct parser, but not enough data yet. 
+				else if (PARSER_UNEXPECTED_DATA == retVal)
+				{
+					// data did not match the parser, they with another parser
+					retVal = dataParsers[1](dataBuffer, this, amPortType::Data);
+					if (PARSER_NOT_ENOUGH_DATA == retVal)
+						break; // we had the correct parser, but not enough data yet. 
+					else if (PARSER_UNEXPECTED_DATA == retVal)
+						dataBuffer.pop(1); // non of the parsers worked, remove the leading byte and try again
+				}
+			}
 		}
 
 #ifdef INITIATOR
@@ -248,21 +264,18 @@ public:
 		success = dataPort.endPacket();
 		dataPort.flush();
 
-		// indicate our buffer size
+		/* With the bitrate receive limit packet, the recipient can tell the sender to limit
+		   the transmission to a certain bitrate.  This is important if the peer is a gateway
+		   to a hardware-device that only supports a certain speed.  Like the MIDI 1.0 DIN-cable
+		   MIDI-implementation which is limited to 31250.  */
+
+		// TODO indicate our buffer size
 		//success = _controlPort.beginPacket(_controlPort.remoteIP(), _controlPort.remotePort());
 		//	_controlPort.write((uint8_t*)amSignature, sizeof(amSignature));
 		//	_controlPort.write((uint8_t*)amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit));
 		//	_controlPort.write((uint8_t*)amProtocolVersion, sizeof(amProtocolVersion));
 		//success = _controlPort.endPacket();
 		//_controlPort.flush();
-
-		// indicates that the 2-step invitation has occured
-	//	participant->
-
-		//_sessionManager[i].contentIP = _dataPort.remoteIP();
-		//_sessionManager[i].contentPort = _dataPort.remotePort();
-		//_sessionManager[i].invite.status = None;
-		//_sessionManager[i].syncronization.enabled = true; // synchronisation can start
 
 		participant->sessionController = SessionController::Listener;
 
