@@ -1,13 +1,8 @@
 #pragma once
 
-#include <IPAddress.h>
+#include "RingBuffer.h"
 
 #include "AppleMidi_Namespace.h"
-
-#include "Midi_Defs.h"
-
-#include <midi_RingBuffer.h>
-using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -15,18 +10,20 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
-#undef OPTIONAL_REMOTE_NAME
 #undef OPTIONAL_MDNS
 
-#define SESSION_NAME_MAX_LEN 24
+#define APPLEMIDI_SESSION_NAME_MAX_LEN 24
 
-#define MAX_PARTICIPANTS 5
+#define APPLEMIDI_MAX_PARTICIPANTS 5
 
 // Max size of dissectable packet
 #define BUFFER_MAX_SIZE 64
 
-#define LISTENER
-//#define INITIATOR
+#define APPLEMIDI_LISTENER
+//#define APPLEMIDI_INITIATOR
+
+#define APPLEMIDI_PARTICIPANT_SLOT_FREE 0
+#define APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND -1
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
@@ -34,6 +31,9 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 #define PARSER_NOT_ENOUGH_DATA -1
 #define PARSER_UNEXPECTED_DATA 0
+
+typedef uint32_t ssrc_t;
+typedef uint32_t initiatorToken_t;
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = { 0xff, 0xff };
@@ -57,26 +57,26 @@ const uint8_t SYNC_CK2 = 2;
 // Same struct for Invitation, InvitationAccepted and InvitationRejected
 typedef struct __attribute__((packed)) AppleMIDI_Invitation
 {
-	uint32_t	initiatorToken;
-	uint32_t	ssrc;
-	char		sessionName[SESSION_NAME_MAX_LEN + 1];
+	initiatorToken_t	initiatorToken;
+	ssrc_t				ssrc;
+	char				sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 
-	inline const uint8_t getLength() const
+	const size_t getLength() const
 	{
-		return sizeof(AppleMIDI_Invitation) - (SESSION_NAME_MAX_LEN) + strlen(sessionName);
+		return sizeof(AppleMIDI_Invitation) - (APPLEMIDI_SESSION_NAME_MAX_LEN) + strlen(sessionName);
 	}
 
 } AppleMIDI_Invitation_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
 {
-	uint32_t	ssrc;
+	ssrc_t		ssrc;
 	uint32_t	bitratelimit;
 } AppleMIDI_BitrateReceiveLimit_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_Syncronization
 {
-	uint32_t	ssrc;
+	ssrc_t		ssrc;
 	uint8_t		count;
 	uint8_t		padding[3];
 	uint64_t	timestamps[3];
@@ -84,25 +84,9 @@ typedef struct __attribute__((packed)) AppleMIDI_Syncronization
 
 typedef struct __attribute__((packed)) AppleMIDI_EndSession
 {
-	uint32_t	initiatorToken;
-	uint32_t	ssrc;
+	initiatorToken_t	initiatorToken;
+	ssrc_t				ssrc;
 } AppleMIDI_EndSession_t;
-
-
-typedef struct Rtp
-{
-	uint8_t		vpxcc;
-	uint8_t		mpayload;
-	uint16_t	sequenceNr;
-	uint32_t	timestamp;
-	uint32_t	ssrc;
-} Rtp_t;
-
-typedef struct RtpMIDI
-{
-	uint8_t		flags;
-} RtpMIDI_t;
-
 
 // from: https://en.wikipedia.org/wiki/RTP-MIDI
 // Apple decided to create their own protocol, imposing all parameters related to
@@ -131,7 +115,7 @@ enum SessionController : uint8_t
 	Initiator,
 };
 
-#ifdef MASTER
+#ifdef APPLEMIDI_INITIATOR
 enum SessionInviteStatus : uint8_t
 {
 	None,

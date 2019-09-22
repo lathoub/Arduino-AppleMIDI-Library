@@ -28,7 +28,7 @@ typedef struct rtpMidi_Clock {
 	}
 
 	/// <summary>
-	///     Returns an timestamp value suitable for inclusion in a RTP packet header.
+	/// Returns an timestamp value suitable for inclusion in a RTP packet header.
 	/// </summary>
 	uint32_t Now()
 	{
@@ -61,9 +61,9 @@ private:
 		return lapse;
 	}
 
-	inline unsigned long Ticks() const
+	unsigned long Ticks() const
 	{
-		return micros();
+		return millis();
 	}
 
 } RtpMidiClock_t;

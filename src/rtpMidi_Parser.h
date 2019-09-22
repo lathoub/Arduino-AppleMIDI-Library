@@ -1,27 +1,26 @@
-#include <midi_RingBuffer.h>
-using namespace MIDI_NAMESPACE;
+#include "RingBuffer.h"
 
 #include "AppleMidi_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
 #include "rtpMidi_Defs.h"
-#include "AppleMidi_Util.h"
+#include "endian.h"
 
 template<class UdpClass>
-class Session;
+class AppleMidiTransport;
 
 template<class UdpClass>
 class rtpMIDIParser
 {
 public:
-	static int Parser(midi::RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, Session<UdpClass>* session, const amPortType& portType)
+	static int Parser(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, AppleMidiTransport<UdpClass>* session, const amPortType& portType)
 	{
-		uint16_t minimumLen = sizeof(Rtp);
+		int minimumLen = sizeof(Rtp);
 		if (buffer.getLength() < minimumLen)
 			return -1;
 
-		uint16_t i = 0;
+		int i = 0;
 
 		Rtp rtp;
 		rtp.vpxcc        = buffer.peek(i++);
@@ -52,7 +51,7 @@ public:
 
 		RtpMIDI rtpMidi;
 		rtpMidi.flags = buffer.peek(i++);
-		uint16_t cmdLen = rtpMidi.flags & RTP_MIDI_CS_MASK_SHORTLEN;
+		int cmdLen = rtpMidi.flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
 		/* see if we have small or large len-field */
 		if (rtpMidi.flags & RTP_MIDI_CS_FLAG_B)

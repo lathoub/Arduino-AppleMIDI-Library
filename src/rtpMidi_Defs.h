@@ -4,6 +4,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+#define CONTROL_PORT 5004
+
+/* magic number */
 #define PAYLOADTYPE_RTPMIDI 97
 
 /* Version is the first 2 bits of the first octet*/
@@ -32,6 +35,18 @@ other than 0! */
 #define RTP_MIDI_CS_MASK_SHORTLEN 0x0f
 #define RTP_MIDI_CS_MASK_LONGLEN 0x0fff
 
+typedef struct __attribute__((packed)) Rtp
+{
+	uint8_t		vpxcc;
+	uint8_t		mpayload;
+	uint16_t	sequenceNr;
+	uint32_t	timestamp;
+	ssrc_t	    ssrc;
+} Rtp_t;
 
+typedef struct __attribute__((packed)) RtpMIDI
+{
+	uint8_t		flags;
+} RtpMIDI_t;
 
 END_APPLEMIDI_NAMESPACE
