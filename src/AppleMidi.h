@@ -3,10 +3,7 @@
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 #include <MIDI.h>
-#include <midi_RingBuffer.h>
-using namespace MIDI_NAMESPACE;
 
-#include "AppleMidi_Defs.h"
 #include "AppleMidi_Settings.h"
 #include "AppleMidi_Session.h"
 
@@ -35,6 +32,7 @@ protected:
 
 	inline bool beginTransmission()
 	{
+		// setup
 		return true;
 	};
 
@@ -44,51 +42,44 @@ protected:
 
 	inline void endTransmission()
 	{
+		// send it thru AppleMIDI here
+		// in welke session/midi device sturen we de noten???
 	};
 
 	inline byte read()
 	{
-		return 0x00;
+		return session.midiBuffer.read();
 	};
 
 	inline unsigned available()
 	{
 		// entry point for parsing content
-		run();
+		session.run();
 
-		return 0;
+		return session.midiBuffer.getLength();
 	};
 
 	friend class MidiInterface<AppleMidiTransport<UdpClass>>;
 
 public:
-	Session<UdpClass>* addSession(const char* name, const uint16_t port = CONTROL_PORT)
+	Session<UdpClass>* begin(const char* name, const uint16_t port = CONTROL_PORT)
 	{
-		auto session = &_sessions[0];
-		session->begin(name, port);
-
-		return session;
-	}
-
-protected:
-	inline void run()
-	{
-		for (int i = 0; i < MAX_SESSIONS; i++)
-			_sessions[i].run();
+		session.begin(name, port);
+		return &session;
 	}
 
 private:
-	Session<UdpClass>	_sessions[MAX_SESSIONS];
+	// only 1 session can be attached
+	Session<UdpClass>	session;
 };
 
-#define APPLEMIDI_CREATE_INSTANCE(Type, Name)             \
-	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __st;   \
-	__st AppleMIDI;                                           \
-	midi::MidiInterface<__st> Name((__st&)AppleMIDI); \
-	typedef APPLEMIDI_NAMESPACE::Session<Type> AppleMIDI_Session;
+#define APPLEMIDI_CREATE_INSTANCE(Type, midiName, appleMidiName, appleMidiSessionName) \
+	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
+	__amt appleMidiName;                                           \
+	midi::MidiInterface<__amt> midiName((__amt&)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE()               \
-	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI);
+	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, AppleMIDISession);
 
 END_APPLEMIDI_NAMESPACE
 

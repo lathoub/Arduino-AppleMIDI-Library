@@ -1,7 +1,9 @@
-BEGIN_APPLEMIDI_NAMESPACE
-
 #include <midi_RingBuffer.h>
 using namespace MIDI_NAMESPACE;
+
+#include "AppleMidi_Namespace.h"
+
+BEGIN_APPLEMIDI_NAMESPACE
 
 #include "AppleMidi_Util.h"
 
@@ -20,7 +22,7 @@ public:
 
 		uint16_t minimumLen = 4;
 		if (buffer.getLength() < minimumLen)
-			return 0;
+			return -1;
 
 		uint16_t i = 0;
 
@@ -44,7 +46,7 @@ public:
 		if (false)
 		{
 		}
-#ifdef SLAVE
+#ifdef LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
 			//Serial.println("received Invitation");
@@ -52,7 +54,7 @@ public:
 			// minimum amount : 4 bytes for protocol version, 4 bytes for initiator token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
 			if (buffer.getLength() < minimumLen) 
-				return 0;
+				return -1;
 
 			// 2 (stored in network byte order (big-endian))
 			byte protocolVersion[4];
@@ -88,10 +90,7 @@ public:
 				invitation.sessionName[bi++] = buffer.peek(i++);
 			invitation.sessionName[bi++] = '\0';
 			if (buffer.peek(i++) != 0x00)
-			{
-				//Serial.println("Could not find 0x00, not enough data");
-				return 0;
-			}
+				return -1;
 
 			//Serial.print("Consumed ");
 			//Serial.print(i);
@@ -110,7 +109,7 @@ public:
 			// minimum amount : 4 bytes for protocol version, 4 bytes for initiator token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
 			if (buffer.getLength() < minimumLen) 
-				return 0;
+				return -1;
 
 			// 2 (stored in network byte order (big-endian))
 			byte protocolVersion[4];
@@ -153,7 +152,7 @@ public:
 			// minimum amount : 4 bytes for sender SSRC, 1 byte for count, 3 bytes padding and 3 times 8 bytes
 			minimumLen += (4 + 1 + 3 + (3 * 8));
 			if (buffer.getLength() < minimumLen) 
-				return 0;
+				return -1;
 
 			AppleMIDI_Syncronization syncronization;
 
@@ -172,9 +171,11 @@ public:
 			buffer.pop(i); // consume all the bytes that made up this message
 
 			session->receivedSyncronization(syncronization, portType);
+
+			return i;
 		}
 #endif
-#ifdef MASTER
+#ifdef INITIATOR
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
 			return 99;

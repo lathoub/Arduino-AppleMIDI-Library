@@ -63,7 +63,7 @@ private:
 
 	inline unsigned long Ticks() const
 	{
-		return millis();
+		return micros();
 	}
 
 } RtpMidiClock_t;

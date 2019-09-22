@@ -10,8 +10,7 @@ byte mac[] = {
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
-AppleMIDI_Session* session;
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.hAppleMidiSession session;
 
 // -----------------------------------------------------------------------------
 //
@@ -45,11 +44,11 @@ void setup()
   Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
-  session = AppleMIDI.addSession("test");
+  auto AppleMIDISession = AppleMIDI.begin("Arduino");
   MIDI.begin(1);
 
- // session->setHandleConnected(OnAppleMidiConnected);
- // session->setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDISession->setHandleConnected(OnAppleMidiConnected);
+  AppleMIDISession->setHandleDisconnected(OnAppleMidiDisconnected);
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
@@ -88,7 +87,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(uint32_t ssrc, char* name) {
+void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
   isConnected = true;
   Serial.print(F("Connected to session "));
   Serial.println(name);

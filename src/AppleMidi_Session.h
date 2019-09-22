@@ -1,8 +1,8 @@
-#include "AppleMidi_Defs.h"
+#include "AppleMidi_Namespace.h"
 
 #include "AppleMidi_Parser.h"
 #include "rtpMidi_Parser.h"
-
+#include "rtpMidi_Defs.h"
 #include "rtpMidi_Clock.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -11,10 +11,12 @@ template<class UdpClass>
 class Participant
 {
 public:
+#ifdef OPTIONAL_REMOTE_NAME
 	char			name[SESSION_NAME_MAX_LEN + 1];
+#endif
 	uint32_t		ssrc;
 
-	ParticipantMode initiator;
+	SessionController sessionController;
 
 	IPAddress		ip;
 	uint16_t		port; // controlPort, and dataPort = controlPort + 1
@@ -23,7 +25,7 @@ public:
 	{
 		ssrc = 0;
 		port = 0;
-		initiator = ParticipantMode::Undefined;
+		sessionController = SessionController::Undefined;
 	}
 
 	void run()
@@ -34,17 +36,19 @@ public:
 template<class UdpClass>
 class Session
 {
+private:
 	UdpClass		controlPort;
 	UdpClass		dataPort;
+
+	rtpMidi_Clock 	rtpMidiClock;
 
 	midi::RingBuffer<byte, BUFFER_MAX_SIZE> controlBuffer;
 	midi::RingBuffer<byte, BUFFER_MAX_SIZE> dataBuffer;
 
-	rtpMidi_Clock _rtpMidiClock;
-
 private:
 	typedef int(*FPPARSER)(midi::RingBuffer<byte, BUFFER_MAX_SIZE>&, Session<UdpClass>*, const amPortType&);
 
+	// TODO: static?
 	FPPARSER controlParsers[1];
 	FPPARSER dataParsers[2];
 
@@ -57,13 +61,14 @@ private:
 public:
 	Participant<UdpClass> participants[MAX_PARTICIPANTS];
 
-	bool			enabled = false;
+	midi::RingBuffer<byte, BUFFER_MAX_SIZE> midiBuffer;
 
 	uint32_t		ssrc = 0;
 
 	char			localName[SESSION_NAME_MAX_LEN + 1];
+#ifdef OPTIONAL_MDNS
 	char			bonjourName[SESSION_NAME_MAX_LEN + 1];
-
+#endif
 	uint16_t		port; // controlPort, and dataPort = controlPort + 1
 
 	inline void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
@@ -72,13 +77,12 @@ public:
 public:
 	Session()
 	{
-		enabled = false;
-
 		ssrc = 0;
 		port = 0;
 		localName[0] = '\0';
+#ifdef OPTIONAL_MDNS
 		bonjourName[0] = '\0';
-
+#endif
 		for (int i = 0; i < MAX_PARTICIPANTS; i++)
 			participants[0].ssrc = 0;
 
@@ -94,24 +98,18 @@ public:
 		this->ssrc = random(1, INT32_MAX);
 		this->port = port;
 		strncpy(this->localName, name, SESSION_NAME_MAX_LEN);
+#ifdef OPTIONAL_MDNS
 		strncpy(this->bonjourName, name, SESSION_NAME_MAX_LEN);
-
+#endif
 		controlPort.begin(this->port);	// UDP socket for control messages
 		dataPort.begin(this->port + 1);	// UDP socket for data messages
 
 		uint32_t initialTimestamp = 0;
-		_rtpMidiClock.Init(initialTimestamp, MIDI_SAMPLING_RATE_DEFAULT);
-
-		enabled = true;
+		rtpMidiClock.Init(initialTimestamp, MIDI_SAMPLING_RATE_DEFAULT);
 	}
 
 	void run()
 	{
-		// sessions are by default not enabled, a call to .begin() 
-		// enables a session.
-		if (!enabled) 
-			return;
-
 		byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
 
 		auto packetSize = controlPort.parsePacket();
@@ -123,7 +121,7 @@ public:
 
 				packetSize -= bytesRead;
 			}
-			controlParsers[0](controlBuffer, this, amPortType::Control);
+			auto retVal = controlParsers[0](controlBuffer, this, amPortType::Control);
 			// TODO
 		}
 
@@ -136,19 +134,19 @@ public:
 
 				packetSize -= bytesRead;
 			}
-			dataParsers[0](dataBuffer, this, amPortType::Data);
+			auto retVal = dataParsers[0](dataBuffer, this, amPortType::Data);
 			dataParsers[1](dataBuffer, this, amPortType::Data);
 			// TODO
 		}
 
+#ifdef INITIATOR
 		ManagePendingInvites();
 		ManageTiming();
+#endif
 	}
 
 	void stop()
 	{
-		enabled = false;
-
 		// release resources held by the sockets
 		controlPort.stop();
 		dataPort.stop();
@@ -193,10 +191,12 @@ public:
 			}
 
 			participant->ssrc = invitation.ssrc;
+#ifdef OPTIONAL_REMOTE_NAME
 			strncpy(participant->name, invitation.sessionName, SESSION_NAME_MAX_LEN);
+#endif
 			participant->ip = controlPort.remoteIP();
 			participant->port = controlPort.remotePort();
-			participant->initiator = ParticipantMode::Undefined;
+			participant->sessionController = SessionController::Undefined;
 
 		}
 		else
@@ -264,7 +264,7 @@ public:
 		//_sessionManager[i].invite.status = None;
 		//_sessionManager[i].syncronization.enabled = true; // synchronisation can start
 
-		participant->initiator = ParticipantMode::Slave;
+		participant->sessionController = SessionController::Listener;
 
 		if (_connectedCallback != 0)
 			_connectedCallback(invitation.ssrc, invitation.sessionName);
@@ -274,32 +274,34 @@ public:
 	{
 		//Serial.println("receivedSyncronization");
 
+		auto now = rtpMidiClock.Now();
+
 		switch (syncronization.count) {
 		case SYNC_CK0: /* From session initiator */
 			syncronization.count = SYNC_CK1;
-			syncronization.timestamps[syncronization.count] = _rtpMidiClock.Now();			
+			syncronization.timestamps[syncronization.count] = now;			
 			break;
 		case SYNC_CK1: /* From session responder */
 			/* compute media delay */
-			//uint64_t diff = (now - synchronization.timestamps[0]) / 2;
+			//auto diff = (now - syncronization.timestamps[0]) / 2;
 			/* approximate time difference between peer and self */
 			//diff = synchronization.timestamps[2] + diff - now;
 			// Send CK2
 			syncronization.count = SYNC_CK2;
-			syncronization.timestamps[syncronization.count] = _rtpMidiClock.Now();
+			syncronization.timestamps[syncronization.count] = now;
 			/* getting this message means that the responder is still alive! */
 			/* remember the time, if it takes to long to respond, we can assume the responder is dead */
 			/* not implemented at this stage*/
-			//Sessions[index].syncronization.lastTime = _rtpMidiClock.Now();
+			//Sessions[index].syncronization.lastTime = now;
 			//Sessions[index].syncronization.count++;
 			break;
 		case SYNC_CK2: /* From session initiator */
-			/* compute media delay */
-			//uint64_t diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
+			/* compute average delay */
+			//auto diff = (syncronization.timestamps[2] - syncsyncronizationhronization.timestamps[0]) / 2;
 			/* approximate time difference between peer and self */
-			//diff = synchronization.timestamps[2] + diff - now;
+			//diff = syncronization.timestamps[2] + diff - now;
 			syncronization.count = SYNC_CK0;
-			syncronization.timestamps[syncronization.count] = _rtpMidiClock.Now();
+			syncronization.timestamps[syncronization.count] = now;
 			break;
 		}
 
@@ -328,11 +330,36 @@ public:
 
 		auto participant = getParticipant(endSession.ssrc);
 		if (NULL != participant)
-		{
-			//Serial.println("FOUND");
 			participant->ssrc = 0;
-		}
 
+		if (_disconnectedCallback != 0)
+		{
+			Serial.println("calling disconnect callback");
+			_disconnectedCallback(endSession.ssrc);
+		}
+	}
+
+	void ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, midi::RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint16_t cmdLen)
+	{
+		/* if we have a command-section -> dissect it */
+		if (cmdLen > 0) {
+			if (rtpMidi.flags & RTP_MIDI_CS_FLAG_Z) {
+				//int consumed = decodetime(appleMidi, buffer, offset, cmd_len);
+			}
+			while (cmdLen > 0) {
+				midiBuffer.write(buffer.read());
+				cmdLen--;
+			}
+		}
+	}
+
+	void decodeTime(midi::RingBuffer<byte, BUFFER_MAX_SIZE>& buffer)
+	{
+		// TODO
+
+		/* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
+		for (int i = 0; i < 4; i++ ) {
+		}
 	}
 
 	void ManagePendingInvites()

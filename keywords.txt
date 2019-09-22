@@ -6,18 +6,15 @@
 # Datatypes (KEYWORD1)
 #######################################
 AppleMIDI	KEYWORD1
+AppleMidi	KEYWORD1
+AppleMidiSession	KEYWORD1
 AppleMidi.h	KEYWORD1
-AppleMidiInterface	KEYWORD1
-DefaultSettings	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
 begin	         	 KEYWORD2
-invite	         	 KEYWORD2
-getSessionName	KEYWORD2
-getSynchronizationSource	KEYWORD2
 run		             KEYWORD2
 sendNoteOn	         	 KEYWORD2
 sendNoteOff	             KEYWORD2
@@ -54,7 +51,6 @@ sendTick	         KEYWORD2
 # Namespace, considering it as a literal
 applemidi	LITERAL1
 
-CONTROL_PORT	LITERAL1
 APPLEMIDI_CREATE_INSTANCE	LITERAL1
 APPLEMIDI_CREATE_DEFAULT_INSTANCE	LITERAL1
 APPLEMIDI_CREATE_CUSTOM_INSTANCE	LITERAL1

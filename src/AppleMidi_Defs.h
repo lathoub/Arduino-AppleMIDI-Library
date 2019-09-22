@@ -6,8 +6,8 @@
 
 #include "Midi_Defs.h"
 
-#define SLAVE
-//#define MASTER
+#include <midi_RingBuffer.h>
+using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -15,21 +15,22 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
-#define MIDI_SAMPLING_RATE_176K4HZ 176400
-#define MIDI_SAMPLING_RATE_192KHZ 192000
-#define MIDI_SAMPLING_RATE_DEFAULT 10000
-
-#define SYNC_CK0 0
-#define SYNC_CK1 1
-#define SYNC_CK2 2
+#undef OPTIONAL_REMOTE_NAME
+#undef OPTIONAL_MDNS
 
 #define SESSION_NAME_MAX_LEN 24
 
-#define MAX_SESSIONS 2
 #define MAX_PARTICIPANTS 5
 
 // Max size of dissectable packet
 #define BUFFER_MAX_SIZE 64
+
+#define LISTENER
+//#define INITIATOR
+
+#define MIDI_SAMPLING_RATE_176K4HZ 176400
+#define MIDI_SAMPLING_RATE_192KHZ 192000
+#define MIDI_SAMPLING_RATE_DEFAULT 10000
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = { 0xff, 0xff };
@@ -45,6 +46,10 @@ const byte amInvitationAccepted[] = { 'O', 'K' };
 const byte amInvitationRejected[] = { 'N', 'O' };
 const byte amReceiverFeedback[] = { 'R', 'S' };
 const byte amBitrateReceiveLimit[] = { 'R', 'L' };
+
+const uint8_t SYNC_CK0 = 0;
+const uint8_t SYNC_CK1 = 1;
+const uint8_t SYNC_CK2 = 2;
 
 // Same struct for Invitation, InvitationAccepted and InvitationRejected
 typedef struct __attribute__((packed)) AppleMIDI_Invitation
@@ -80,17 +85,47 @@ typedef struct __attribute__((packed)) AppleMIDI_EndSession
 	uint32_t	ssrc;
 } AppleMIDI_EndSession_t;
 
+
+typedef struct Rtp
+{
+	uint8_t		vpxcc;
+	uint8_t		mpayload;
+	uint16_t	sequenceNr;
+	uint32_t	timestamp;
+	uint32_t	ssrc;
+} Rtp_t;
+
+typedef struct RtpMIDI
+{
+	uint8_t		flags;
+} RtpMIDI_t;
+
+
+// from: https://en.wikipedia.org/wiki/RTP-MIDI
+// Apple decided to create their own protocol, imposing all parameters related to
+// synchronization like the sampling frequency. This session protocol is called "AppleMIDI" 
+// in Wireshark software. Session management with AppleMIDI protocol requires two UDP ports, 
+// the first one is called "Control Port", the second one is called "Data Port". When used 
+// within a multithread implementation, only the Data port requires a "real-time" thread, 
+// the other port can be controlled by a normal priority thread. These two ports must be 
+// located at two consecutive locations (n / n+1); the first one can be any of the 65536 
+// possible ports. 
 enum amPortType : uint8_t
 {
 	Control,
 	Data,
 };
 
-enum ParticipantMode : uint8_t
+// from: https://en.wikipedia.org/wiki/RTP-MIDI
+// AppleMIDI implementation defines two kind of session controllers: session initiators 
+// and session listeners. Session initiators are in charge of inviting the session listeners,
+// and are responsible of the clock synchronization sequence. Session initiators can generally
+// be session listeners, but some devices, such as iOS devices, can be session listeners only. 
+enum SessionController : uint8_t
 {
 	Undefined,
-	Slave,
-	Master,
+	Listener,
+	Initiator,
 };
 
 #ifdef MASTER
