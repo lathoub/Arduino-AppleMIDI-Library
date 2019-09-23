@@ -16,6 +16,8 @@ class rtpMIDIParser
 public:
 	static int Parser(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, AppleMidiTransport<UdpClass>* session, const amPortType& portType)
 	{
+		byte a[8]; 
+
 		int minimumLen = sizeof(Rtp);
 		if (buffer.getLength() < minimumLen)
 			return -1;
@@ -25,9 +27,12 @@ public:
 		Rtp rtp;
 		rtp.vpxcc        = buffer.peek(i++);
 		rtp.mpayload     = buffer.peek(i++);
-		rtp.sequenceNr   = ntohs(buffer.peek(i++), buffer.peek(i++));
-		rtp.timestamp    = ntohl(buffer.peek(i++), buffer.peek(i++), buffer.peek(i++), buffer.peek(i++));
-		rtp.ssrc         = ntohl(buffer.peek(i++), buffer.peek(i++), buffer.peek(i++), buffer.peek(i++));
+		a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); 
+		rtp.sequenceNr   = ntohs(a[0], a[1]);
+		a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
+		rtp.timestamp    = ntohl(a[0], a[1], a[2], a[3]);
+		a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
+		rtp.ssrc         = ntohl(a[0], a[1], a[2], a[3]);
 
 		uint8_t version    = RTP_VERSION(rtp.vpxcc);
 		bool padding       = RTP_PADDING(rtp.vpxcc);
