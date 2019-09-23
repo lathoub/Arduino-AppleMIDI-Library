@@ -186,7 +186,7 @@ protected:
 	void ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t cmdLen);
 
 	// Helpers
-	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, uint8_t* command, ssrc_t);
+	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, const byte* command, ssrc_t);
 	static void writeRtpMidiBuffer(UdpClass&ort, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint32_t, ssrc_t);
 
 #ifdef APPLEMIDI_INITIATOR

@@ -232,7 +232,7 @@ int8_t AppleMidiTransport<UdpClass>::getParticipant(const uint32_t participants[
 }
 
 template<class UdpClass>
-void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, byte* command, ssrc_t ssrc)
+void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, const byte* command, ssrc_t ssrc)
 {
     if (port.beginPacket(port.remoteIP(), port.remotePort())) {
         port.write((uint8_t*)amSignature,          sizeof(amSignature));
