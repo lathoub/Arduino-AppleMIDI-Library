@@ -205,6 +205,7 @@ protected:
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE()               \
 	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, "Arduino");
 
+END_APPLEMIDI_NAMESPACE
+
 #include "AppleMidi.hpp"
 
-END_APPLEMIDI_NAMESPACE

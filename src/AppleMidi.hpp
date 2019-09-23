@@ -250,7 +250,7 @@ template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint32_t sequenceNr, ssrc_t ssrc)
 {
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
-        return false;
+        return;
 
     Rtp rtp;
     rtp.vpxcc      = 0b10000000; // TODO: fun with flags
