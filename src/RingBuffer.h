@@ -1,6 +1,8 @@
 #pragma once
 
-namespace {
+#include "AppleMidi_Namespace.h"
+
+BEGIN_APPLEMIDI_NAMESPACE
 
     template<typename DataType, int Size>
     class RingBuffer
@@ -33,6 +35,7 @@ namespace {
         int mWriteHead;
         int mReadHead;
     };
-}
+    
+END_APPLEMIDI_NAMESPACE
 
 #include "RingBuffer.hpp"

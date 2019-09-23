@@ -1,6 +1,8 @@
 #pragma once
 
-namespace {
+#include "AppleMidi_Namespace.h"
+
+BEGIN_APPLEMIDI_NAMESPACE
 
     template<int N>
     struct isPowerOfTwo
@@ -108,4 +110,5 @@ namespace {
             outData[i] = read();
         }
     }
-}
+
+END_APPLEMIDI_NAMESPACE
