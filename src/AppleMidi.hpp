@@ -85,12 +85,12 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitatio
     // Do we know this ssrc already?
     // In case APPLEMIDI_INITIATOR reconnects (after a crash of some sort)
 
-    auto slotIndex = getParticipant(invitation.ssrc);
+    auto slotIndex = getParticipant(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
     {
         // No, not existing; must be a new APPLEMIDI_INITIATOR
         // Find a free slot to remember this participant in
-        slotIndex = getParticipant(APPLEMIDI_PARTICIPANT_SLOT_FREE);
+        slotIndex = getParticipant(participants, APPLEMIDI_PARTICIPANT_SLOT_FREE);
         if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
         {
             //Serial.println("No free slots");
@@ -122,7 +122,7 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& 
     //Serial.print(", sessionName: ");
     //Serial.println(invitation.sessionName);
 
-    auto participant = getParticipant(invitation.ssrc);
+    auto participant = getParticipant(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
     {
         writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
@@ -197,7 +197,7 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
     //Serial.print(", senderSSRC: 0x");
     //Serial.println(endSession.ssrc, HEX);
 
-    auto slotIndex = getParticipant(endSession.ssrc);
+    auto slotIndex = getParticipant(participants, endSession.ssrc);
     if (slotIndex >= 0)
         participants[slotIndex] = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
@@ -221,7 +221,7 @@ void AppleMidiTransport<UdpClass>::ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, Ring
 }
 
 template<class UdpClass>
-int8_t AppleMidiTransport<UdpClass>::getParticipant(const ssrc_t ssrc) const
+int8_t AppleMidiTransport<UdpClass>::getParticipant(const uint32_t participants[], const ssrc_t ssrc)
 {
     for (auto i = 0; i < APPLEMIDI_MAX_PARTICIPANTS; i++)
         if (ssrc == participants[i])
@@ -242,6 +242,57 @@ void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Inv
         port.endPacket();
         port.flush();
     }
+}
+
+template<class UdpClass>
+void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint32_t sequenceNr, ssrc_t ssrc)
+{
+    if (!port.beginPacket(port.remoteIP(), port.remotePort()))
+        return false;
+
+    Rtp rtp;
+    rtp.vpxcc      = 0b10000000; // TODO: fun with flags
+    rtp.mpayload   = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
+    rtp.ssrc       = htonl(ssrc);
+    // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
+    // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
+    // the time at which the events are to be played. Zero means "now." The time stamp
+    // applies to the first MIDI byte in the packet.
+    rtp.timestamp  = htonl(0UL);
+    rtp.sequenceNr = htonl(sequenceNr);
+
+    port.write((uint8_t*)&rtp, sizeof(rtp));
+    // only now the length is known
+    uint16_t bufferLen = buffer.getLength();
+
+    RtpMIDI rtpMidi;
+
+    if (bufferLen <= 0x0F) // can we fit it in 4 bits?
+    {	// fits in 4 bits, so small len
+        rtpMidi.flags = (uint8_t)bufferLen;
+        rtpMidi.flags &= RTP_MIDI_CS_FLAG_B; // TODO clear the RTP_MIDI_CS_FLAG_B
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
+        port.write(rtpMidi.flags);
+    }
+    else
+    {	// no, larger than 4 bits, so large len	
+        rtpMidi.flags = (uint8_t)(bufferLen >> 8); // TODO shift something
+        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B; // TODO set the RTP_MIDI_CS_FLAG_B
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
+        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
+        port.write(rtpMidi.flags);
+        port.write((uint8_t)(bufferLen)); // TODO shift??
+    }
+
+    // from local buffer onto the network
+    while (!buffer.isEmpty())
+        port.write(buffer.read());
+
+    port.endPacket();
+    port.flush();
 }
 
 #ifdef APPLEMIDI_INITIATOR

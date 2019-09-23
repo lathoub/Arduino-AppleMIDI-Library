@@ -26,8 +26,16 @@ class AppleMidiTransport
 public:
 	AppleMidiTransport(const char* name, const uint16_t port = CONTROL_PORT)
 	{
+		// Each stream is distinguished by a unique SSRC value and has a unique sequence
+   		// number and RTP timestamp space.
 		// this is our SSRC
-		this->ssrc = random(1, INT32_MAX);
+		this->ssrc = random(1, UINT32_MAX);
+
+		// In an RTP MIDI stream, the 16-bit sequence number field is
+   		// initialized to a randomly chosen value and is incremented by one
+   		// (modulo 2^16) for each packet sent in the stream.
+		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+		this->sequenceNr = random(1, UINT16_MAX);
 
 		this->port = port;
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
@@ -59,66 +67,41 @@ protected:
 
 	bool beginTransmission()
 	{
-		if (!dataPort.beginPacket(dataPort.remoteIP(), dataPort.remotePort()))
-			return false;
-
-		Rtp rtp;
-		rtp.vpxcc      = 0b10000000; // TODO: fun with flags
-		rtp.mpayload   = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
-		rtp.ssrc       = htonl(ssrc);
-		// https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
-		// The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
-		// the time at which the events are to be played. Zero means "now." The time stamp
-		// applies to the first MIDI byte in the packet.
-		rtp.timestamp  = htonl(0UL);
-		rtp.sequenceNr = htonl(sequenceNr++);
-
-		dataPort.write((uint8_t*)&rtp, sizeof(rtp));
-		
-		// TODO: what with larger SysEx messages???
-
+		// We can't start the writing process here, as we do not know the length
+		// of what we are to send. The RtpMidi protocol start with writing the 
+		// length of the buffer. So we'll copy to a buffer in write, and write
+		// everything in endTransmission
 		return true;
 	};
 
 	void write(byte byte)
 	{
+		// do we still have place in the buffer for 1 more character?
+		if ((outMidiBuffer.getLength()) + 1 > BUFFER_MAX_SIZE) {
+			// buffer is almost full, only 1 more character
+			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.peek(0)) {
+				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
+				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
+				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
+				// and start again with a fresh continuation of
+				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
+				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
+			}
+			else {
+				// TODO: What is this very large message ???
+				Serial.println("buffer to small in write, and not it's not sysex!!!");
+				// TODO: outMidiBuffer.dump();
+			}
+		}
+
 		// store in local buffer, as we do *not* know the length of the message prior to sending
 		outMidiBuffer.write(byte);
 	};
 
 	void endTransmission()
 	{
-		// only now the length is known
-		uint16_t bufferLen = outMidiBuffer.getLength();
-
-		RtpMIDI rtpMidi;
-
-		if (bufferLen <= 0x0F) // can we fit it in 4 bits?
-		{	// fits in 4 bits, so small len
-			rtpMidi.flags = (uint8_t)bufferLen;
-			rtpMidi.flags &= RTP_MIDI_CS_FLAG_B; // TODO clear the RTP_MIDI_CS_FLAG_B
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
-			dataPort.write(rtpMidi.flags);
-		}
-		else
-		{	// no, larger than 4 bits, so large len	
-			rtpMidi.flags = (uint8_t)(bufferLen >> 8); // TODO shift something
-			rtpMidi.flags |= RTP_MIDI_CS_FLAG_B; // TODO set the RTP_MIDI_CS_FLAG_B
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
-			// rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
-			dataPort.write(rtpMidi.flags);
-			dataPort.write((uint8_t)(bufferLen)); // TODO shift??
-		}
-
-		// from local buffer onto the network
-		while (!outMidiBuffer.isEmpty())
-			dataPort.write(outMidiBuffer.read());
-
-		dataPort.endPacket();
-		dataPort.flush();
+		writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
+		// writeRtpMidiBuffer is clean now (writeRtpMidiBuffer empties the buffer!)
 	};
 
 	byte read()
@@ -167,7 +150,7 @@ private:
 
 	ssrc_t	ssrc = 0;
 
-	uint32_t sequenceNr = 0; // counter for outgoing messages
+	uint32_t sequenceNr = 0; // counter for outgoing messages // TODO: start with randam number??
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #ifdef OPTIONAL_MDNS
@@ -198,14 +181,15 @@ protected:
 	void ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t cmdLen);
 
 	// Helpers
-	void writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, uint8_t* command, ssrc_t ssrc);
+	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, uint8_t* command, ssrc_t);
+	static void writeRtpMidiBuffer(UdpClass&ort, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint32_t, ssrc_t);
 
 #ifdef APPLEMIDI_INITIATOR
 	void ManagePendingInvites();
 	void ManageTiming();
 #endif
 
-	int8_t getParticipant(const ssrc_t ssrc) const;
+	static int8_t getParticipant(const uint32_t participants[], const ssrc_t ssrc);
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(Type, midiName, appleMidiName, SessionName) \
