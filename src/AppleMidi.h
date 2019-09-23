@@ -6,7 +6,7 @@
 // feat 4.4.0 summer 2019
 #include "midi_feat4_4_0/MIDI.h"
 
-#include "appleMidi_Defs.h"
+#include "AppleMidi_Defs.h"
 
 #include "rtpMidi_Defs.h"
 #include "rtpMidi_Clock.h"
