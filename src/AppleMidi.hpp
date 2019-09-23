@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AppleMidi_Namespace.h"
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 template<class UdpClass>
