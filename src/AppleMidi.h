@@ -76,6 +76,11 @@ protected:
 
 	void write(byte byte)
 	{
+		if (outMidiBuffer.getLength() > 3)
+		{
+			Serial.println("een bericht > 3 bytes, wel wel wel");
+		}
+
 		// do we still have place in the buffer for 1 more character?
 		if ((outMidiBuffer.getLength()) + 1 > BUFFER_MAX_SIZE) {
 			// buffer is almost full, only 1 more character
