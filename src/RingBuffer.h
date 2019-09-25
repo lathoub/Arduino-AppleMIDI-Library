@@ -4,36 +4,37 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     class RingBuffer
     {
     private:
-        static const int sMask = Size - 1;
+        static const size_t sMask = Size - 1;
 
     public:
         RingBuffer();
         ~RingBuffer();
 
     public:
-        inline int getLength() const;
+        inline size_t getLength() const;
         inline bool isEmpty() const;
+        inline bool isFull() const;
 
     public:
         void write(DataType inData);
-        void write(const DataType* inData, int inSize);
-        void pop(int inNumberOfItems = 1);
+        void write(const DataType* inData, size_t inSize);
+        void pop(size_t inNumberOfItems = 1);
         void clear();
 
     public:
-        DataType peek(int inOffset = 0) const;
+        DataType peek(size_t inOffset = 0) const;
         DataType read();
-        void read(DataType* outData, int inSize);
+        void read(DataType* outData, size_t inSize);
 
     private:
         DataType mData[Size];
-        int mLength;
-        int mWriteHead;
-        int mReadHead;
+        size_t mLength;
+        size_t mWriteHead;
+        size_t mReadHead;
     };
     
 END_APPLEMIDI_NAMESPACE

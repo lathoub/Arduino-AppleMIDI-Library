@@ -4,13 +4,13 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-    template<int N>
+    template<size_t N>
     struct isPowerOfTwo
     {
         static const bool value = N && !(N & (N - 1));
     };
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     RingBuffer<DataType, Size>::RingBuffer()
         : mLength(0)
         , mWriteHead(0)
@@ -20,28 +20,34 @@ BEGIN_APPLEMIDI_NAMESPACE
         memset(mData, DataType(0), Size * sizeof(DataType));
     }
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     RingBuffer<DataType, Size>::~RingBuffer()
     {
     }
 
     // -----------------------------------------------------------------------------
 
-    template<typename DataType, int Size>
-    inline int RingBuffer<DataType, Size>::getLength() const
+    template<typename DataType, size_t Size>
+    inline size_t RingBuffer<DataType, Size>::getLength() const
     {
         return mLength;
     }
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     inline bool RingBuffer<DataType, Size>::isEmpty() const
     {
         return mLength == 0;
     }
 
+    template<typename DataType, size_t Size>
+    inline bool RingBuffer<DataType, Size>::isFull() const
+    {
+        return mLength == Size;
+    }
+
     // -----------------------------------------------------------------------------
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     void RingBuffer<DataType, Size>::write(DataType inData)
     {
         mData[mWriteHead] = inData;
@@ -53,25 +59,25 @@ BEGIN_APPLEMIDI_NAMESPACE
         }
     }
 
-    template<typename DataType, int Size>
-    void RingBuffer<DataType, Size>::write(const DataType* inData, int inSize)
+    template<typename DataType, size_t Size>
+    void RingBuffer<DataType, Size>::write(const DataType* inData, size_t inSize)
     {
-        for (int i = 0; i < inSize; ++i)
+        for (auto i = 0; i < inSize; ++i)
         {
             write(inData[i]);
         }
     }
 
-    template<typename DataType, int Size>
-    void RingBuffer<DataType, Size>::pop(int inNumberOfItems)
+    template<typename DataType, size_t Size>
+    void RingBuffer<DataType, Size>::pop(size_t inNumberOfItems)
     {
-        for (int i = 0; i < inNumberOfItems; ++i)
+        for (auto i = 0; i < inNumberOfItems; ++i)
         {
             read();
         }
     }
 
-    template<typename DataType, int Size>
+    template<typename DataType, size_t Size>
     void RingBuffer<DataType, Size>::clear()
     {
         memset(mData, DataType(0), Size * sizeof(DataType));
@@ -82,15 +88,15 @@ BEGIN_APPLEMIDI_NAMESPACE
 
     // -----------------------------------------------------------------------------
 
-    template<typename DataType, int Size>
-    DataType RingBuffer<DataType, Size>::peek(int inOffset) const
+    template<typename DataType, size_t Size>
+    DataType RingBuffer<DataType, Size>::peek(size_t inOffset) const
     {
-        const int head = (mReadHead + inOffset) & sMask;
+        const auto head = (mReadHead + inOffset) & sMask;
         return mData[head];
     }
 
-    template<typename DataType, int Size>
-    DataType RingBuffer<DataType, Size>::read()
+    template<typename DataType, size_t Size>
+    DataType RingBuffer<DataType, Size>::read() 
     {
         mLength--;
         if (mLength < 0) {
@@ -102,10 +108,10 @@ BEGIN_APPLEMIDI_NAMESPACE
         return data;
     }
 
-    template<typename DataType, int Size>
-    void RingBuffer<DataType, Size>::read(DataType* outData, int inSize)
+    template<typename DataType, size_t Size>
+    void RingBuffer<DataType, Size>::read(DataType* outData, size_t inSize)
     {
-        for (int i = 0; i < inSize; ++i)
+        for (auto i = 0; i < inSize; ++i)
         {
             outData[i] = read();
         }

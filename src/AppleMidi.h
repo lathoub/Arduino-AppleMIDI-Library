@@ -8,6 +8,7 @@
 
 #include "AppleMidi_Defs.h"
 
+#include "rtp_Defs.h"
 #include "rtpMidi_Defs.h"
 #include "rtpMidi_Clock.h"
 
@@ -23,19 +24,13 @@ BEGIN_APPLEMIDI_NAMESPACE
 template<class UdpClass>
 class AppleMidiTransport 
 {
+	typedef size_t(*FPAPPLEMIDIPARSER)(RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*, const amPortType&);
+	typedef size_t(*FPRTPMIDIPARSER)(RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*);
+
 public:
 	AppleMidiTransport(const char* name, const uint16_t port = CONTROL_PORT)
 	{
-		// Each stream is distinguished by a unique SSRC value and has a unique sequence
-   		// number and RTP timestamp space.
-		// this is our SSRC
-		this->ssrc = random(1, UINT32_MAX);
-
-		// In an RTP MIDI stream, the 16-bit sequence number field is
-   		// initialized to a randomly chosen value and is incremented by one
-   		// (modulo 2^16) for each packet sent in the stream.
-		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
-		this->sequenceNr = random(1, UINT16_MAX);
+		randomSeed(analogRead(0));
 
 		this->port = port;
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
@@ -43,21 +38,34 @@ public:
 		strncpy(this->bonjourName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #endif		
 
-		for (int i = 0; i < APPLEMIDI_MAX_PARTICIPANTS; i++)
+		for (auto i = 0; i < APPLEMIDI_MAX_PARTICIPANTS; i++)
 			participants[i] = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
 		// attach the parsers
-		controlParsers[0] = &AppleMIDIParser<UdpClass>::Parser;
+		controlAppleMidiParser = &AppleMIDIParser<UdpClass>::Parser;
 
-		dataParsers[0] = &rtpMIDIParser<UdpClass>::Parser;
-		dataParsers[1] = &AppleMIDIParser<UdpClass>::Parser;
-
-		enabled = true;
+		// Put the most used parser first
+		dataRtpMidiParsers = &rtpMIDIParser<UdpClass>::Parser;
+		dataAppleMidiParsers = &AppleMIDIParser<UdpClass>::Parser;
 	};
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
+		// Each stream is distinguished by a unique SSRC value and has a unique sequence
+   		// number and RTP timestamp space.
+		// this is our SSRC
+		this->ssrc = random(1, INT32_MAX) * 2;
+
+		// In an RTP MIDI stream, the 16-bit sequence number field is
+   		// initialized to a randomly chosen value and is incremented by one
+   		// (modulo 2^16) for each packet sent in the stream.
+		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+		this->sequenceNr = random(1, UINT16_MAX);
+
+		Serial.print("ssrc: ");
+		Serial.println(this->ssrc);
+
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
 
@@ -106,7 +114,6 @@ protected:
 	void endTransmission()
 	{
 		writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
-		// writeRtpMidiBuffer is clean now (writeRtpMidiBuffer empties the buffer!)
 	};
 
 	byte read()
@@ -116,9 +123,11 @@ protected:
 
 	unsigned available()
 	{
-		run();
+		readDataPackets();
+		readControlPackets();
 
-		// if any MIDI came in, make it available for the read command
+		// if any MIDI bytes came in (thru readDtataPackets), 
+		// make them available for the read command
 		return inMidiBuffer.getLength();
 	};
 
@@ -130,16 +139,13 @@ private:
 	UdpClass		controlPort;
 	UdpClass		dataPort;
 
-	rtpMidi_Clock 	rtpMidiClock;
-
 	// reading from the network
 	RingBuffer<byte, BUFFER_MAX_SIZE> controlBuffer;
 	RingBuffer<byte, BUFFER_MAX_SIZE> dataBuffer;
 
-	typedef int(*FPPARSER)(RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*, const amPortType&);
-
-	FPPARSER controlParsers[1]; // TODO: these are static functions, can they be made static across ? (less memory usage when declaring multiple sessions)
-	FPPARSER dataParsers[2];
+	FPAPPLEMIDIPARSER controlAppleMidiParser;
+	FPRTPMIDIPARSER dataRtpMidiParsers;
+	FPAPPLEMIDIPARSER dataAppleMidiParsers;
 
 	// Allow the parser access to protected messages, to prevent
 	// outside world from calling public parser call back messages
@@ -152,10 +158,12 @@ private:
 	// buffer for incoming and outgoing midi messages
 	RingBuffer<byte, BUFFER_MAX_SIZE> inMidiBuffer;
 	RingBuffer<byte, BUFFER_MAX_SIZE> outMidiBuffer;
+	
+	rtpMidi_Clock 	rtpMidiClock;
 
-	ssrc_t	ssrc = 0;
+	ssrc_t ssrc;
 
-	uint32_t sequenceNr = 0; // counter for outgoing messages // TODO: start with randam number??
+	uint16_t sequenceNr; // counter for outgoing messages 
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #ifdef OPTIONAL_MDNS
@@ -166,14 +174,12 @@ private:
 public:
 	uint32_t participants[APPLEMIDI_MAX_PARTICIPANTS];
 
-	bool enabled = true;
-
 	void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void(*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
 protected:
-
-	void run();
+	void readControlPackets();
+	void readDataPackets();
 
 	// AppleMIDI callbacks from parser
 	void ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType);
@@ -183,27 +189,27 @@ protected:
 	void ReceivedEndSession(AppleMIDI_EndSession& endSession);
 	
 	// rtpMIDI callback from parser
-	void ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t cmdLen);
+	void ReceivedMidi(byte data);
 
 	// Helpers
 	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, const byte* command, ssrc_t);
-	static void writeRtpMidiBuffer(UdpClass&ort, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint32_t, ssrc_t);
+	static void writeRtpMidiBuffer(UdpClass&ort, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint16_t, ssrc_t);
 
 #ifdef APPLEMIDI_INITIATOR
 	void ManagePendingInvites();
 	void ManageTiming();
 #endif
 
-	static int8_t getParticipant(const uint32_t participants[], const ssrc_t ssrc);
+	static int8_t getParticipantIndex(const uint32_t participants[], const ssrc_t ssrc);
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(Type, midiName, appleMidiName, SessionName) \
 	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
-	__amt appleMidiName(SessionName);                                           \
+	__amt appleMidiName(SessionName); \
 	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt&)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE()               \
-	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, "Arduino");
+	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, "abcdefghijklmnopqrstuvwxyz");
 
 END_APPLEMIDI_NAMESPACE
 

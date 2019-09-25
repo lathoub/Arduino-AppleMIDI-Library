@@ -11,6 +11,8 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define APPLEMIDI_LIBRARY_VERSION_MINOR  0
 #define APPLEMIDI_LIBRARY_VERSION_PATCH  0
 
+#define CONTROL_PORT 5004
+
 #ifndef UDP_TX_PACKET_MAX_SIZE
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
@@ -19,28 +21,28 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 #undef OPTIONAL_MDNS
 
-#define APPLEMIDI_SESSION_NAME_MAX_LEN 24
+typedef uint32_t ssrc_t;
+typedef uint32_t initiatorToken_t;
 
-#define APPLEMIDI_MAX_PARTICIPANTS 5
+const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
+
+const static uint8_t APPLEMIDI_MAX_PARTICIPANTS = 5;
+
+const static ssrc_t APPLEMIDI_PARTICIPANT_SLOT_FREE = 0;
+const static int8_t APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND  = -1;
 
 // Max size of dissectable packet
-#define BUFFER_MAX_SIZE 64
+const static uint8_t BUFFER_MAX_SIZE = 64;
 
 #define APPLEMIDI_LISTENER
 //#define APPLEMIDI_INITIATOR
-
-#define APPLEMIDI_PARTICIPANT_SLOT_FREE 0
-#define APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND -1
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
 #define MIDI_SAMPLING_RATE_DEFAULT 10000
 
-#define PARSER_NOT_ENOUGH_DATA -1
-#define PARSER_UNEXPECTED_DATA 0
-
-typedef uint32_t ssrc_t;
-typedef uint32_t initiatorToken_t;
+const static size_t PARSER_NOT_ENOUGH_DATA = (BUFFER_MAX_SIZE + 1);
+const static size_t PARSER_UNEXPECTED_DATA = 0;
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = { 0xff, 0xff };
@@ -106,8 +108,8 @@ typedef struct __attribute__((packed)) AppleMIDI_EndSession
 // possible ports. 
 enum amPortType : uint8_t
 {
-	Control,
-	Data,
+	Control = 0,
+	Data = 1,
 };
 
 // from: https://en.wikipedia.org/wiki/RTP-MIDI

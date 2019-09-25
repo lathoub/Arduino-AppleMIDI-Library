@@ -19,9 +19,22 @@ namespace {
 		Endian() = delete;
 	};
 
+	/* a=target variable, b=bit number to act upon 0-n */
+	#define BIT_SET(a,b) ((a) |= (1ULL<<(b)))
+	#define BIT_CLEAR(a,b) ((a) &= ~(1ULL<<(b)))
+	#define BIT_FLIP(a,b) ((a) ^= (1ULL<<(b)))
+	#define BIT_CHECK(a,b) (!!((a) & (1ULL<<(b))))        // '!!' to make sure this returns 0 or 1
+
+	/* x=target variable, y=mask */
+	#define BITMASK_SET(x,y) ((x) |= (y))
+	#define BITMASK_CLEAR(x,y) ((x) &= (~(y)))
+	#define BITMASK_FLIP(x,y) ((x) ^= (y))
+	#define BITMASK_CHECK_ALL(x,y) (((x) & (y)) == (y))   // warning: evaluates y twice
+	#define BITMASK_CHECK_ANY(x,y) ((x) & (y))
+
 	static uint64_t ntohll(byte a, byte b, byte c, byte d, byte e, byte f, byte g, byte h)
 	{
-if (Endian::big)
+if (Endian::little)
 		return	(uint64_t)a << 56 |
 				(uint64_t)b << 48 |
 				(uint64_t)c << 40 |
@@ -43,7 +56,7 @@ else
 
 	static uint32_t ntohl(byte a, byte b, byte c, byte d)
 	{
-if (Endian::big)
+if (Endian::little)
 		return	(uint32_t)a << 24 |
 				(uint32_t)b << 16 |
 				(uint32_t)c << 8 |
@@ -57,7 +70,7 @@ else
 
 	static uint16_t ntohs(byte a, byte b)
 	{
-if (Endian::big)
+if (Endian::little)
 		return	(uint32_t)a << 8 |
 			    (uint32_t)b;
 else

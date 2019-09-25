@@ -4,67 +4,77 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
+
 template<class UdpClass>
-void AppleMidiTransport<UdpClass>::run()
+void AppleMidiTransport<UdpClass>::readControlPackets()
 {
-    if (!enabled)
-        return;
-
-    byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
-
     auto packetSize = controlPort.parsePacket();
-    if (packetSize > 0) {
-        while (packetSize > 0)
-        {
-            auto bytesRead = controlPort.read(packetBuffer, sizeof(packetBuffer));
-            controlBuffer.write(packetBuffer, bytesRead);
-            packetSize -= bytesRead;
-        }
-        while (true) {
-            auto retVal = controlParsers[0](controlBuffer, this, amPortType::Control);
+    while (packetSize > 0)
+    {
+        auto bytesToRead = min(packetSize, sizeof(packetBuffer));
+        auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
+        packetSize -= bytesRead;
+
+        for (auto i = 0; i < bytesRead; i++)
+            controlBuffer.write(packetBuffer[i]); // append
+
+        uint8_t retVal = PARSER_UNEXPECTED_DATA;
+        while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0)) {
+            retVal = controlAppleMidiParser(controlBuffer, this, amPortType::Control);
             if (PARSER_NOT_ENOUGH_DATA == retVal)
                 break;
-            else if (PARSER_UNEXPECTED_DATA == retVal)
+            if (PARSER_UNEXPECTED_DATA == retVal) 
                 controlBuffer.pop(1);
         }
-    }
 
-    // TODO: what with larger SysEx messages???
-
-    packetSize = dataPort.parsePacket();
-    if (packetSize > 0) {
-        while (packetSize > 0)
+        if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
         {
-            auto bytesRead = dataPort.read(packetBuffer, sizeof(packetBuffer));
-            dataBuffer.write(packetBuffer, bytesRead);
-            packetSize -= bytesRead;
-        }
-        while (true) {
-            auto retVal = dataParsers[0](dataBuffer, this, amPortType::Data);
-            if (PARSER_NOT_ENOUGH_DATA == retVal)
-                break; // we had the correct parser, but not enough data yet. 
-            else if (PARSER_UNEXPECTED_DATA == retVal)
-            {
-                // data did not match the parser, they with another parser
-                retVal = dataParsers[1](dataBuffer, this, amPortType::Data);
-                if (PARSER_NOT_ENOUGH_DATA == retVal)
-                    break; // we had the correct parser, but not enough data yet. 
-                else if (PARSER_UNEXPECTED_DATA == retVal)
-                    dataBuffer.pop(1); // non of the parsers worked, remove the leading byte and try again
-            }
+            Serial.println("o-ow, what now??");
         }
     }
+}
+
+template<class UdpClass>
+void AppleMidiTransport<UdpClass>::readDataPackets()
+{
+    auto packetSize = dataPort.parsePacket();
+    while (packetSize > 0)
+    {
+        auto bytesToRead = min(packetSize, sizeof(packetBuffer));
+        auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
+        packetSize -= bytesRead;
+
+        for (auto i = 0; i < bytesRead; i++)
+            dataBuffer.write(packetBuffer[i]); // append
+
+        uint8_t retVal = PARSER_UNEXPECTED_DATA;
+        while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0)) {
+            retVal = dataRtpMidiParsers(dataBuffer, this);
+            if (PARSER_NOT_ENOUGH_DATA == retVal) break;
+            retVal = dataAppleMidiParsers(dataBuffer, this, amPortType::Data);
+            if (PARSER_NOT_ENOUGH_DATA == retVal) break;
+
+            if (PARSER_UNEXPECTED_DATA == retVal) 
+                dataBuffer.pop(1);
+        }
+
+        if ((PARSER_NOT_ENOUGH_DATA == retVal) && dataBuffer.isFull())
+        {
+            Serial.println("o-ow, what now?? SysEx??");
+        }
+    }  
 
 #ifdef APPLEMIDI_INITIATOR
-		ManagePendingInvites();
-		ManageTiming();
+    ManagePendingInvites();
+    ManageTiming();
 #endif
 }
 
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType)
 {
-    //Serial.println("receivedInvitation");
+    // Serial.println("receivedInvitation");
 
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
@@ -75,38 +85,28 @@ void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invi
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitation& invitation)
 {
-    //Serial.println("ReceivedControlInvitation");
+    // Serial.println("ReceivedControlInvitation");
 
-    //Serial.print("initiator: 0x");
-    //Serial.print(invitation.initiatorToken, HEX);
-    //Serial.print(", senderSSRC: 0x");
-    //Serial.print(invitation.ssrc, HEX);
-    //Serial.print(", sessionName: ");
-    //Serial.println(invitation.sessionName);
+    // Serial.print("initiator: 0x");
+    // Serial.print(invitation.initiatorToken, HEX);
+    // Serial.print(", senderSSRC: 0x");
+    // Serial.print(invitation.ssrc, HEX);
+    // Serial.print(", sessionName: ");
+    // Serial.println(invitation.sessionName);
 
-    // Do we know this ssrc already?
-    // In case APPLEMIDI_INITIATOR reconnects (after a crash of some sort)
+    strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
+    invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
 
-    auto slotIndex = getParticipant(participants, invitation.ssrc);
+    auto slotIndex = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
     {
-        // No, not existing; must be a new APPLEMIDI_INITIATOR
-        // Find a free slot to remember this participant in
-        slotIndex = getParticipant(participants, APPLEMIDI_PARTICIPANT_SLOT_FREE);
+        slotIndex = getParticipantIndex(participants, APPLEMIDI_PARTICIPANT_SLOT_FREE);
         if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
         {
-            //Serial.println("No free slots");
-            // no free slots, we cant accept invite
             writeInvitation(controlPort, invitation, amInvitationRejected, ssrc);
             return;
         }
-
-        // remember this participant
         participants[slotIndex] = invitation.ssrc;
-    }
-    else
-    {
-        // Participant already exists, do nothing
     }
 
     writeInvitation(controlPort, invitation, amInvitationAccepted, ssrc);
@@ -115,16 +115,19 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitatio
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& invitation)
 {
-    //Serial.println("ReceivedControlInvitation");
+    // Serial.println("ReceivedControlInvitation");
 
-    //Serial.print("initiator: 0x");
-    //Serial.print(invitation.initiatorToken, HEX);
-    //Serial.print(", senderSSRC: 0x");
-    //Serial.print(invitation.ssrc, HEX);
-    //Serial.print(", sessionName: ");
-    //Serial.println(invitation.sessionName);
+    // Serial.print("initiator: 0x");
+    // Serial.print(invitation.initiatorToken, HEX);
+    // Serial.print(", senderSSRC: 0x");
+    // Serial.print(invitation.ssrc, HEX);
+    // Serial.print(", sessionName: ");
+    // Serial.println(invitation.sessionName);
 
-    auto participant = getParticipant(participants, invitation.ssrc);
+    strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
+    invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
+
+    auto participant = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
     {
         writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
@@ -133,6 +136,7 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& 
 
     writeInvitation(dataPort, invitation, amInvitationAccepted, ssrc);
 
+    // callback in IDE
     if (NULL != _connectedCallback)
         _connectedCallback(invitation.ssrc, invitation.sessionName);
 }
@@ -199,7 +203,7 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
     //Serial.print(", senderSSRC: 0x");
     //Serial.println(endSession.ssrc, HEX);
 
-    auto slotIndex = getParticipant(participants, endSession.ssrc);
+    auto slotIndex = getParticipantIndex(participants, endSession.ssrc);
     if (slotIndex >= 0)
         participants[slotIndex] = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
@@ -208,22 +212,13 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 }
 
 template<class UdpClass>
-void AppleMidiTransport<UdpClass>::ReceivedMidi(Rtp& rtp, RtpMIDI& rtpMidi, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t cmdLen)
+void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
-    /* if we have a command-section -> dissect it */
-    if (cmdLen > 0) {
-        if (rtpMidi.flags & RTP_MIDI_CS_FLAG_Z) {
-            //int consumed = decodetime(appleMidi, buffer, offset, cmd_len);
-        }
-        while (cmdLen > 0) {
-            inMidiBuffer.write(buffer.read());
-            cmdLen--;
-        }
-    }
+    inMidiBuffer.write(data);
 }
 
 template<class UdpClass>
-int8_t AppleMidiTransport<UdpClass>::getParticipant(const uint32_t participants[], const ssrc_t ssrc)
+int8_t AppleMidiTransport<UdpClass>::getParticipantIndex(const uint32_t participants[], const ssrc_t ssrc)
 {
     for (auto i = 0; i < APPLEMIDI_MAX_PARTICIPANTS; i++)
         if (ssrc == participants[i])
@@ -234,10 +229,12 @@ int8_t AppleMidiTransport<UdpClass>::getParticipant(const uint32_t participants[
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, const byte* command, ssrc_t ssrc)
 {
+    // Serial.println("writeInvitation");
+
     if (port.beginPacket(port.remoteIP(), port.remotePort())) {
-        port.write((uint8_t*)amSignature,          sizeof(amSignature));
-        port.write((uint8_t*)amInvitationRejected, sizeof(amInvitationRejected));
-        port.write((uint8_t*)amProtocolVersion,    sizeof(amProtocolVersion));
+        port.write((uint8_t*)amSignature,       sizeof(amSignature));
+        port.write((uint8_t*)command,           sizeof(amInvitationRejected));
+        port.write((uint8_t*)amProtocolVersion, sizeof(amProtocolVersion));
         invitation.initiatorToken = htonl(invitation.initiatorToken);
         invitation.ssrc           = htonl(ssrc);
         port.write(reinterpret_cast<uint8_t*>(&invitation), invitation.getLength());
@@ -247,7 +244,7 @@ void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Inv
 }
 
 template<class UdpClass>
-void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint32_t sequenceNr, ssrc_t ssrc)
+void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint16_t sequenceNr, ssrc_t ssrc)
 {
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
         return;
@@ -261,30 +258,31 @@ void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer
     // the time at which the events are to be played. Zero means "now." The time stamp
     // applies to the first MIDI byte in the packet.
     rtp.timestamp  = htonl(0UL);
-    rtp.sequenceNr = htonl(sequenceNr);
-
+    rtp.sequenceNr = htons(sequenceNr);
     port.write((uint8_t*)&rtp, sizeof(rtp));
+
     // only now the length is known
     uint16_t bufferLen = buffer.getLength();
 
     RtpMIDI rtpMidi;
 
-    if (bufferLen <= 0x0F) // can we fit it in 4 bits?
-    {	// fits in 4 bits, so small len
+    if (bufferLen <= 0x0F)
+    {
+        // Short header OK
         rtpMidi.flags = (uint8_t)bufferLen;
-        rtpMidi.flags &= RTP_MIDI_CS_FLAG_B; // TODO clear the RTP_MIDI_CS_FLAG_B
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_B);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_J);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_Z);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_P);
         port.write(rtpMidi.flags);
     }
     else
-    {	// no, larger than 4 bits, so large len	
+    {	
         rtpMidi.flags = (uint8_t)(bufferLen >> 8); // TODO shift something
-        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B; // TODO set the RTP_MIDI_CS_FLAG_B
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_J; // TODO no journaling
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_Z; // TODO no Z
-        // rtpMidi.flags |= RTP_MIDI_CS_FLAG_P; // TODO no P
+        BIT_SET(rtpMidi.flags, RTP_MIDI_CS_FLAG_B);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_J);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_Z);
+        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_P);
         port.write(rtpMidi.flags);
         port.write((uint8_t)(bufferLen)); // TODO shift??
     }
