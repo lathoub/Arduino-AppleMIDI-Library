@@ -267,24 +267,23 @@ void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer
     RtpMIDI rtpMidi;
 
     if (bufferLen <= 0x0F)
-    {
-        // Short header OK
+    {   // Short header
         rtpMidi.flags = (uint8_t)bufferLen;
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_B);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_J);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_Z);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_P);
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_B;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
         port.write(rtpMidi.flags);
     }
     else
-    {	
-        rtpMidi.flags = (uint8_t)(bufferLen >> 8); // TODO shift something
-        BIT_SET(rtpMidi.flags, RTP_MIDI_CS_FLAG_B);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_J);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_Z);
-        BIT_CLEAR(rtpMidi.flags, RTP_MIDI_CS_FLAG_P);
+    {	// Long header
+        rtpMidi.flags = (uint8_t)(bufferLen >> 8);
+        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
         port.write(rtpMidi.flags);
-        port.write((uint8_t)(bufferLen)); // TODO shift??
+        port.write((uint8_t)(bufferLen));
     }
 
     // from local buffer onto the network

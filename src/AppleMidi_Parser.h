@@ -195,12 +195,36 @@ public:
 
 			return i;
 		}
-#endif
-#ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			return 99;
+			Serial.println("received ReceiverFeedback");
+
+			// minimum amount : 4 bytes for sender SSRC, 4 bytes for sequence number
+			minimumLen += (4 + 4);
+			if (buffer.getLength() < minimumLen) 
+				return PARSER_NOT_ENOUGH_DATA;
+
+			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
+			ssrc_t ssrc = ntohl(a[0], a[1], a[2], a[3]);
+
+			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
+			uint16_t sequenceNr = ntohs(a[0], a[1]);
+
+			Serial.print("ssrc: 0x");
+			Serial.println(ssrc, HEX);
+			Serial.print("sequenceNr: ");
+			Serial.println(sequenceNr);
+
+			buffer.pop(i); // consume all the bytes that made up this message
+
+			Serial.print("Consumed ");
+			Serial.print(i);
+			Serial.println(" bytes");
+
+			return i;
 		}
+#endif
+#ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
 		{
 			return 99;

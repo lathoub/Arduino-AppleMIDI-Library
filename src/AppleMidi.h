@@ -61,10 +61,13 @@ protected:
    		// initialized to a randomly chosen value and is incremented by one
    		// (modulo 2^16) for each packet sent in the stream.
 		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
-		this->sequenceNr = random(1, UINT16_MAX);
+		this->sequenceNr = random(1, INT16_MAX) * 2;
 
-		Serial.print("ssrc: ");
-		Serial.println(this->ssrc);
+		Serial.print("ssrc: 0x");
+		Serial.println(this->ssrc, HEX);
+
+		Serial.print("sequenceNr: ");
+		Serial.println(this->sequenceNr);
 
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
@@ -84,11 +87,6 @@ protected:
 
 	void write(byte byte)
 	{
-		if (outMidiBuffer.getLength() > 3)
-		{
-			Serial.println("een bericht > 3 bytes, wel wel wel");
-		}
-
 		// do we still have place in the buffer for 1 more character?
 		if ((outMidiBuffer.getLength()) + 1 > BUFFER_MAX_SIZE) {
 			// buffer is almost full, only 1 more character
