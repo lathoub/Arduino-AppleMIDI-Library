@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RingBuffer.h"
+#include "midi_feat4_4_0/midi_Defs.h"
 
 #include "AppleMidi_Namespace.h"
 
@@ -55,11 +56,13 @@ public:
 		if (buffer.getLength() < 1)
 			return PARSER_NOT_ENOUGH_DATA;
 
+        Serial.println("------------------------------------------");
+
 		/* RTP-MIDI starts with 4 bits of flags... */
 		uint8_t flags = buffer.peek(i++);
 
 		// Always a midi section
-		i += decodeMidiSection(flags, buffer, session);
+		decodeMidiSection(flags, buffer, session, i);
 
 		/* if we have a journal-section -> dissect it */
 		if (flags & RTP_MIDI_CS_FLAG_J) {
@@ -74,10 +77,8 @@ public:
 		return i;
 	}
 
-	static size_t decodeMidiSection(uint8_t flags, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, AppleMidiTransport<UdpClass>* session)
+	static size_t decodeMidiSection(uint8_t flags, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, AppleMidiTransport<UdpClass>* session, size_t& i)
 	{
-		size_t i = 0;
-
 		// ...followed by a length-field of at least 4 bits
 		uint16_t cmdLen = flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
@@ -98,88 +99,297 @@ public:
 		if (cmdLen > 0) {
 			int cmdCount = 0;
 
+            Serial.println("we have a command section");
+
+            Serial.print("cmdLen: ");
+            Serial.println(cmdLen);
+
+            uint8_t runningstatus = 0;
+            
 			/* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
 			while (cmdLen) {
+                
+                Serial.print("cmdLen: ");
+                Serial.println(cmdLen);
+
 				/* for the first command we only have a delta-time if Z-Flag is set */
 				if ( (cmdCount) || (flags & RTP_MIDI_CS_FLAG_Z) ) {
-					size_t consumed = decodeTime(buffer, i); // fixed amount of bytes??
+					size_t consumed = decodeTime(buffer, i);
 					cmdLen -= consumed;
+                    i += consumed;
 				}
+                else
+                {
+                    Serial.println("no delta time record");
+                }
+                
+                Serial.print("cmdLen: ");
+                Serial.println(cmdLen);
+
 				if (cmdLen > 0) {
-					/* Decode a MIDI-command - if 0 is returned something went wrong */
-					size_t consumed = decodeMidi(buffer, i);
+                    /* Decode a MIDI-command - if 0 is returned something went wrong */
+					size_t consumed = decodeMidi(buffer, i, runningstatus);
+                    Serial.print("runningstatus(2) = ");
+                    Serial.println(runningstatus, HEX);
+
 					cmdLen -= consumed;
+                    i += consumed;
 
 					cmdCount++;
 				}
 			}
 		}
 
+        Serial.print("i: ");
+        Serial.println(i);
+
 		return i;
 	}
 
-	static size_t decodeTime(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
+    
+    
+    
+    
+	static size_t decodeTime(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t i)
 	{
-		uint8_t consumed = 0;
+        Serial.println("delta time record.");
 
-		// TODO: always 4 bytes??
-
+        uint8_t consumed = 0;
+        
 		/* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
 		for (uint8_t j = 0; j < 4; j++) {
-			uint8_t octet = buffer.peek(i++);
-			unsigned long deltatime = (deltatime << 7) | (octet & RTP_MIDI_DELTA_TIME_OCTET_MASK);
-			consumed++;
+			uint8_t  octet = buffer.peek(i + consumed);
+            
+            Serial.print("octet: ");
+            Serial.println(octet, HEX);
+            
+			uint32_t deltatime = (deltatime << 7) | (octet & RTP_MIDI_DELTA_TIME_OCTET_MASK);
+            consumed++;
+            
+            Serial.print("deltatime: ");
+            Serial.println(deltatime);
 
 			if ((octet & RTP_MIDI_DELTA_TIME_EXTENSION) == 0)
 				break;
 		}
 
+        switch (consumed)
+        {
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+        }
+        
+        
 		return consumed;
 	}
 
-	static size_t decodeMidi(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
+	static size_t decodeMidi(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t i, uint8_t& runningstatus)
 	{
-		// parse, just to get the length
+        Serial.println("midi record");
 
-		// TODO: how to reuse the midi parser
+        
+        int k = 0;
+        
+        uint8_t octet = buffer.peek(i + k); k++;
+        bool using_rs;
+        
+        Serial.print("octet: 0x");
+        Serial.println(octet, HEX);
 
+        /* midi realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
+         * not be intermingled with other MIDI-commands, so we handle this case right here and return */
+        if ( octet >= 0xf8 ) {
+            Serial.println("midi realtime-data");
+            return k;
+        }
+        
+        /* see if this first octet is a status message */
+        if ((octet & RTP_MIDI_COMMAND_STATUS_FLAG) == 0) {
+            Serial.println("status msg");
+            /* if we have no running status yet -> error */
+            if (((runningstatus) & RTP_MIDI_COMMAND_STATUS_FLAG) == 0 ) {
+                Serial.println("no runnning status yet : error");
+                return 0;
+            }
+            /* our first octet is "virtual" coming from a preceding MIDI-command,
+             * so actually we have not really consumed anything yet */
+            octet = runningstatus;
+            using_rs = true;
+        }
+        else
+        {
+            Serial.println("a real status-byte");
+            /* We have a "real" status-byte */
+            using_rs = false;
+            /* Let's see how this octet influences our running-status */
+            /* if we have a "normal" MIDI-command then the new status replaces the current running-status */
+            if ( octet < 0xf0 ) {
+                runningstatus = octet;
+                Serial.print("runningstatus = ");
+                Serial.println(octet, HEX);
+            } else {
+                /* system-realtime-commands maintain the current running-status
+                 * other system-commands clear the running-status, since we
+                 * already handled realtime, we can reset it here */
+                runningstatus = 0;
+                Serial.println("runningstatus = 0");
+            }
+        }
+
+        /* non-system MIDI-commands encode the command in the high nibble and the channel
+         * in the low nibble - so we will take care of those cases next */
+        if ( octet < 0xf0 ) {
+            Serial.println("non-system MIDI-commands");
+
+            uint8_t type    = (octet & 0xf0);
+            uint8_t channel = (octet & 0x0f) + 1;
+
+            Serial.print("type: 0x");
+            Serial.println(type, HEX);
+            Serial.print(" channel: ");
+            Serial.println(channel);
+
+            switch ( type ) {
+                case MIDI_NAMESPACE::MidiType::NoteOff: {
+                    Serial.println("noteOff ");
+                    uint8_t note     = buffer.peek(i + k); k++;
+                    uint8_t velocity = buffer.peek(i + k); k++;
+                    Serial.print(" note: 0x");
+                    Serial.print(note);
+                    Serial.print(" velocity: ");
+                    Serial.println(velocity);
+                    //ext_consumed = decode_note_off( tvb, pinfo, tree, cmd_count, offset,  cmd_len, octet, *rsoffset, using_rs );
+                    } break;
+                case MIDI_NAMESPACE::MidiType::NoteOn: {
+                    Serial.println("noteOff ");
+                    uint8_t note     = buffer.peek(i + k); k++;
+                    uint8_t velocity = buffer.peek(i + k); k++;
+                    Serial.print(" note: 0x");
+                    Serial.print(note);
+                    Serial.print(" velocity: 0x");
+                    Serial.println(velocity);
+                    //ext_consumed = decode_note_on( tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    } break;
+                case MIDI_NAMESPACE::MidiType::AfterTouchPoly: {
+                    //ext_consumed = decode_poly_pressure(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    } break;
+                case MIDI_NAMESPACE::MidiType::ControlChange:
+                    //ext_consumed = decode_control_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    break;
+                case MIDI_NAMESPACE::MidiType::ProgramChange:
+                    //ext_consumed = decode_program_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    break;
+                case MIDI_NAMESPACE::MidiType::AfterTouchChannel:
+                    //ext_consumed = decode_channel_pressure(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    break;
+                case MIDI_NAMESPACE::MidiType::PitchBend:
+                    //ext_consumed = decode_pitch_bend_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
+                    break;
+            }
+            
+            Serial.print("return(a): ");
+            Serial.println(k);
+
+            return k;
+        }
+
+        /* Here we catch the remaining system-common commands */
+        switch ( octet ) {
+            case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
+                //ext_consumed =  decode_sysex_start( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+            case MIDI_NAMESPACE::MidiType::TimeCodeQuarterFrame:
+                //ext_consumed =  decode_mtc_quarter_frame( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+            case MIDI_NAMESPACE::MidiType::SongPosition:
+                //ext_consumed =  decode_song_position_pointer( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+            case MIDI_NAMESPACE::MidiType::SongSelect:
+                //ext_consumed =  decode_song_select( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+            case MIDI_NAMESPACE::MidiType::TuneRequest:
+                //ext_consumed =  decode_tune_request( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+            case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
+                //ext_consumed =  decode_sysex_end( tvb, pinfo, tree, cmd_count, offset, cmd_len );
+                break;
+        }
+
+        
 	//	session->ReceivedMidi(rtp, rtpMidi, buffer, cmdLen);
-		return 0;
+        
+        Serial.print("return(b): ");
+        Serial.println(k);
+
+		return k;
 	}
 
 	static size_t decodeJournalSection(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
 	{
+        Serial.println("journal section");
+
 		/* lets get the main flags from the recovery journal header */
 		uint8_t flags = buffer.peek(i++);
 
 		/* At the same place we find the total channels encoded in the channel journal */
 		uint8_t totalChannels = flags & RTP_MIDI_JS_MASK_TOTALCHANNELS;
 
+        Serial.print("totalChannels: ");
+        Serial.println(totalChannels);
+
 		/* the checkpoint-sequence-number can be used to see if the recovery journal covers all lost events */
-		buffer.peek(i++);
-		buffer.peek(i++);
+		byte a = buffer.peek(i++);
+		byte b = buffer.peek(i++);
+        uint16_t checkPoint = ntohs(a,b);
+
+        Serial.print("checkPoint: ");
+        Serial.println(checkPoint);
 
 		/* do we have system journal? */
-		if ( flags & RTP_MIDI_JS_FLAG_Y ) {
+        if ( flags & RTP_MIDI_JS_FLAG_S ) {
+            Serial.println("preceding RTP");
+        }
+        
+		if (flags & RTP_MIDI_JS_FLAG_Y) {
 			/* first we need to get the flags & length from the system-journal */
-			// int consumed = systemJournal(appleMidi, packetBuffer, offset);
+			decodeSystemJournal(buffer, i);
 		}
 
 		/* do we have channel journal(s)? */
-		if ( flags & RTP_MIDI_JS_FLAG_A	 ) {
+		if (flags & RTP_MIDI_JS_FLAG_A) {
 			/* iterate through all the channels specified in header */
-			for (auto i = 0; i <= totalChannels; i++ ) {
-				//int consumed = channelJournal(appleMidi, packetBuffer, offset);
+			for (auto j = 0; j <= totalChannels; j++ ) {
+				decodeChannelJournal(buffer, i);
 			}
 		}	
 
-		return 0;
+        if (flags & RTP_MIDI_JS_FLAG_H) {
+            Serial.println("standard encoding");
+        }
+        
+        Serial.print("i: ");
+        Serial.println(i);
+
+		return i;
 	}
 
 	static size_t decodeSystemJournal(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
 	{
 		uint16_t systemflags = buffer.peek(i++); // 2 bytes!!!
 		uint16_t sysjourlen  = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
+
+        Serial.println("system journal");
+
+        Serial.print("systemflags: ");
+        Serial.println(systemflags, HEX);
+        Serial.print("sysjourlen: ");
+        Serial.println(sysjourlen);
 
 		/* Do we have a simple system commands chapter? */
 		if (systemflags & RTP_MIDI_SJ_FLAG_D) {
@@ -210,13 +420,145 @@ public:
 			// offset += ext_consumed;
 		}
 
-		return 0;
+        Serial.print("i: ");
+        Serial.println(i);
+
+		return i;
 	}
 
 	static size_t decodeChannelJournal(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
 	{
-		return 0;
+        Serial.println("channel journal");
+
+        byte a = buffer.peek(i++);
+        byte b = buffer.peek(i++);
+        byte c = buffer.peek(i++);
+
+        Serial.println(a, HEX);
+        Serial.println(b, HEX);
+        Serial.println(c, HEX);
+
+        uint32_t chanflags = ntohl(0x00, a,b,c);
+
+        Serial.print("chanflags: ");
+        Serial.println(chanflags, HEX);
+
+        uint16_t chanjourlen = ( chanflags & RTP_MIDI_CJ_MASK_LENGTH ) >> 8;
+
+        Serial.print("chanjourlen: ");
+        Serial.println(chanjourlen);
+
+        /* Do we have a program change chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_P ) {
+        }
+        
+        /* Do we have a control chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_C ) {
+        }
+            
+        /* Do we have a parameter changes? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_M ) {
+        }
+        
+        /* Do we have a pitch-wheel chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_W ) {
+        }
+        
+        /* Do we have a note on/off chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_N ) {
+            decode_cj_chapter_n(buffer, i);
+        }
+        
+        /* Do we have a note command extras chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_E ) {
+        }
+        
+        /* Do we have channel aftertouch chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_T ) {
+        }
+        
+        /* Do we have a poly aftertouch chapter? */
+        if ( chanflags & RTP_MIDI_CJ_FLAG_A ) {
+        }
+        
+        /* Make sanity check for consumed data vs. stated length of this channels journal */
+        //if ( consumed != chanjourlen ) {
+        //}
+        
+        Serial.print("i: ");
+        Serial.println(i);
+
+		return i;
 	}
+    
+    static size_t decode_cj_chapter_n(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
+    {
+        Serial.println("note on/off chapter");
+
+        /* first we need to get the flags & length of this chapter */
+        
+        byte a = buffer.peek(i++);
+        byte b = buffer.peek(i++);
+
+        uint16_t header = ntohs(a,b);
+        int log_count = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
+        int low       = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
+        int high      = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
+
+        Serial.print("header: 0x");
+        Serial.println(header, HEX);
+        Serial.print("log_count/length");
+        Serial.println(log_count);
+        Serial.print("low: ");
+        Serial.println(low);
+        Serial.print("high: ");
+        Serial.println(high);
+
+        /* how many offbits octets do we have? */
+        int octet_count;
+        if ( low <= high ) {
+            octet_count = high - low + 1;
+        } else if ( ( low == 15 ) && ( high == 0 ) ) {
+            octet_count = 0;
+        } else if ( ( low == 15 ) && ( high == 1 ) ) {
+            octet_count = 0;
+        } else {
+            return -1;
+        }
+
+        /* special case -> no offbit octets, but 128 note-logs */
+        if ( ( log_count == 127 ) && ( low == 15) && ( high == 0 ) ) {
+            log_count++;
+        }
+
+        Serial.print("log_count: ");
+        Serial.println(log_count);
+
+        Serial.print("octet_count: ");
+        Serial.println(octet_count);
+
+        if ( log_count > 0 ) {
+            for (int j = 0; i < log_count; i++ ) {
+                buffer.peek(i++);
+                buffer.peek(i++);
+            }
+        }
+
+        if ( octet_count > 0 ) {
+            for (int j = 0; i < octet_count; i++ ) {
+                buffer.peek(i++);
+            }
+        }
+        
+        Serial.print("i: ");
+        Serial.println(i);
+
+        
+        return i;
+    }
+    
+    
+    
 };
 
 END_APPLEMIDI_NAMESPACE

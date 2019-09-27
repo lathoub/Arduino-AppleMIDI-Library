@@ -4,6 +4,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+/* used to mask the most significant bit, which flags the start of a new midi-command! */
+#define RTP_MIDI_COMMAND_STATUS_FLAG 0x80
+
 /* used to mask the lower 7 bits of the single octets that make up the delta-time */
 #define RTP_MIDI_DELTA_TIME_OCTET_MASK 0x7f
 /* used to mask the most significant bit, which flags the extension of the delta-time */
