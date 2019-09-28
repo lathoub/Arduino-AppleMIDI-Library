@@ -31,7 +31,7 @@ void AppleMidiTransport<UdpClass>::readControlPackets()
 
     if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
     {
-        Serial.println("o-ow, what now??");
+        Log.error("o-ow, what now??");
     }
 }
 

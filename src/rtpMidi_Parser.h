@@ -129,9 +129,95 @@ public:
 					uint32_t chanflags = ntohl(0x00, a, b, c);
 					uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
-					minimumLen += (chanjourlen - 3); // TODO: klopt da??
-					if (buffer.getLength() < minimumLen)
-						return PARSER_NOT_ENOUGH_DATA;
+					/* Do we have a program change chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_P ) {
+						minimumLen += 3;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						i += 3;
+					}
+
+					/* Do we have a control chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_C ) {
+					}
+
+					/* Do we have a parameter changes? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_M ) {
+					}
+
+					/* Do we have a pitch-wheel chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_W ) {
+						minimumLen += 2;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						i += 2;
+					}
+
+					/* Do we have a note on/off chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_N ) {
+						minimumLen += 2;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						byte a = buffer.peek(i++);
+						byte b = buffer.peek(i++);
+
+						uint16_t header = ntohs(a,b);
+						uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
+						uint8_t low  = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
+						uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
+
+						// how many offbits octets do we have? 
+						uint8_t offbitCount;
+						if (low <= high) 
+							offbitCount = high - low + 1;
+						else if ((low == 15) && (high == 0)) 
+							offbitCount = 0;
+						else if ((low == 15) && (high == 1)) 
+							offbitCount = 0;
+						else
+							return -1;
+
+						// special case -> no offbit octets, but 128 note-logs
+						if ((logListCount == 127 ) && (low == 15) && (high == 0)) 
+							logListCount++;
+
+						minimumLen += ((logListCount * 2) + offbitCount);
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						i += ((logListCount * 2) + offbitCount);
+
+						// // Log List
+						// for (auto j = 0; j < logListCount; j++ ) {
+						// 	buffer.peek(i++);
+						// 	buffer.peek(i++);
+						// }
+
+						// // Offbit Octets
+						// for (auto j = 0; j < offbitCount; j++ ) {
+						// 	buffer.peek(i++);
+						// }
+					}
+
+					/* Do we have a note command extras chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_E ) {
+					}
+
+					/* Do we have channel aftertouch chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_T ) {
+						minimumLen += 1;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						i += 1;
+					}
+
+					/* Do we have a poly aftertouch chapter? */
+					if ( chanflags & RTP_MIDI_CJ_FLAG_A ) {
+					}
 				}
 			}
 
@@ -327,123 +413,6 @@ public:
         
 		return k;
 	}
-
-/*
-	static size_t decodeJournalSection(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
-	{
-		// lets get the main flags from the recovery journal header
-		uint8_t flags = buffer.peek(i++);
-
-		// At the same place we find the total channels encoded in the channel journal
-		uint8_t totalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
-
-		// the checkpoint-sequence-number can be used to see if the recovery journal covers all lost events
-		byte a = buffer.peek(i++);
-		byte b = buffer.peek(i++);
-        uint16_t checkPoint = ntohs(a,b);
-
-		// do we have system journal?
-        if ( flags & RTP_MIDI_JS_FLAG_S ) {
-        }
-        
-		if (flags & RTP_MIDI_JS_FLAG_Y) {
-			// first we need to get the flags & length from the system-journal
-			decodeSystemJournal(buffer, i);
-		}
-
-		// do we have channel journal(s)?
-		if (flags & RTP_MIDI_JS_FLAG_A) {
-			// iterate through all the channels specified in header
-			for (auto j = 0; j < totalChannels; j++ ) {
-				decodeChannelJournal(buffer, i);
-			}
-		}	
-
-        if (flags & RTP_MIDI_JS_FLAG_H) {
-        }
-        
-		return i;
-	}
-
-	static size_t decodeSystemJournal(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
-	{
-		uint16_t systemflags = buffer.peek(i++); // 2 bytes!!!
-		uint16_t sysjourlen  = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
-
-		// Do we have a simple system commands chapter?
-		if (systemflags & RTP_MIDI_SJ_FLAG_D) {
-			//offset += decode_sj_chapter_d(rtpMidi, packetBuffer, offset );
-		}
-
-		// Do we have a active sensing chapter?
-		if (systemflags & RTP_MIDI_SJ_FLAG_V) {
-			//offset++;
-		}
-
-		// Do we have a sequencer state commands chapter?
-		if (systemflags & RTP_MIDI_SJ_FLAG_Q) {
-			//offset += decode_sj_chapter_q( rtpMidi, packetBuffer, offset );
-		}
-
-		// Do we have a MTC chapter?
-		if (systemflags & RTP_MIDI_SJ_FLAG_F) {
-			//offset += decode_sj_chapter_f( rtpMidi, packetBuffer, offset );
-		}
-
-		// Do we have a Sysex chapter?
-		if (systemflags & RTP_MIDI_SJ_FLAG_X) {
-			// ext_consumed = decode_sj_chapter_x( rtpMidi, packetBuffer, offset, sysjourlen - consumed );
-			// if ( ext_consumed < 0 ) {
-			// 	return ext_consumed;
-			// }
-			// offset += ext_consumed;
-		}
-
-		return i;
-	}
-    
-
-    static size_t decode_cj_chapter_n(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
-    {
-        // first we need to get the flags & length of this chapter
-        
-        byte a = buffer.peek(i++);
-        byte b = buffer.peek(i++);
-
-        uint16_t header = ntohs(a,b);
-        uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
-        uint8_t low  = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
-        uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
-
-        // how many offbits octets do we have? 
-        uint8_t offbitCount;
-        if (low <= high) 
-            offbitCount = high - low + 1;
-        else if ((low == 15) && (high == 0)) 
-            offbitCount = 0;
-        else if ((low == 15) && (high == 1)) 
-            offbitCount = 0;
-        else
-            return -1;
-
-        // special case -> no offbit octets, but 128 note-logs
-        if ((logListCount == 127 ) && (low == 15) && (high == 0)) 
-            logListCount++;
-
-        // Log List
-        for (auto j = 0; j < logListCount; j++ ) {
-            buffer.peek(i++);
-            buffer.peek(i++);
-        }
-
-        // Offbit Octets
-        for (auto j = 0; j < offbitCount; j++ ) {
-            buffer.peek(i++);
-        }
-        
-        return i;
-    }
-*/
     
 };
 
