@@ -56,8 +56,6 @@ public:
 		if (buffer.getLength() < 1)
 			return PARSER_NOT_ENOUGH_DATA;
 
-        Serial.println("------------------------------------------");
-
 		/* RTP-MIDI starts with 4 bits of flags... */
 		uint8_t flags = buffer.peek(i++);
 
@@ -70,9 +68,6 @@ public:
 		}
 
 		buffer.pop(i); // consume all the bytes used so far
-
-		Serial.print("rtpMIDI bytes Consumed: ");
-		Serial.println(i);
 
 		return i;
 	}
@@ -335,8 +330,6 @@ public:
 
 	static size_t decodeChannelJournal(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
 	{
-        Serial.println("channel journal");
-
         byte a = buffer.peek(i++);
         byte b = buffer.peek(i++);
         byte c = buffer.peek(i++);
@@ -386,35 +379,33 @@ public:
     
     static size_t decode_cj_chapter_n(RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, size_t& i)
     {
-        Serial.println("note on/off chapter");
-
         /* first we need to get the flags & length of this chapter */
         
         byte a = buffer.peek(i++);
         byte b = buffer.peek(i++);
 
         uint16_t header = ntohs(a,b);
-        int log_count = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
-        int low       = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
-        int high      = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
+        uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
+        uint8_t low  = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
+        uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
 
         /* how many offbits octets do we have? */
-        int offbitCount;
-        if ( low <= high ) 
+        uint8_t offbitCount;
+        if (low <= high) 
             offbitCount = high - low + 1;
-        else if ( ( low == 15 ) && ( high == 0 ) ) 
+        else if ((low == 15) && (high == 0)) 
             offbitCount = 0;
-        else if ( ( low == 15 ) && ( high == 1 ) ) 
+        else if ((low == 15) && (high == 1)) 
             offbitCount = 0;
         else
             return -1;
 
         /* special case -> no offbit octets, but 128 note-logs */
-        if ( ( log_count == 127 ) && ( low == 15) && ( high == 0 ) ) 
-            log_count++;
+        if ((logListCount == 127 ) && (low == 15) && (high == 0)) 
+            logListCount++;
 
         // Log List
-        for (auto j = 0; j < log_count; j++ ) {
+        for (auto j = 0; j < logListCount; j++ ) {
             buffer.peek(i++);
             buffer.peek(i++);
         }
@@ -426,8 +417,7 @@ public:
         
         return i;
     }
-    
-    
+
     
 };
 

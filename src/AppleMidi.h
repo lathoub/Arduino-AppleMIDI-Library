@@ -63,12 +63,6 @@ protected:
 		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
 		this->sequenceNr = random(1, INT16_MAX) * 2;
 
-		Serial.print("ssrc: 0x");
-		Serial.println(this->ssrc, HEX);
-
-		Serial.print("sequenceNr: ");
-		Serial.println(this->sequenceNr);
-
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
 
