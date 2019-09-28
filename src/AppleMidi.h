@@ -171,6 +171,8 @@ public:
 	void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void(*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
+    const char* sessionName() { return localName; };
+    
 protected:
 	void readControlPackets();
 	void readDataPackets();
