@@ -197,7 +197,7 @@ public:
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			Serial.println("received ReceiverFeedback");
+			// Serial.println("received ReceiverFeedback");
 
 			// minimum amount : 4 bytes for sender SSRC, 4 bytes for sequence number
 			minimumLen += (4 + 4);
@@ -210,16 +210,16 @@ public:
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
 			uint16_t sequenceNr = ntohs(a[0], a[1]);
 
-			Serial.print("ssrc: 0x");
-			Serial.println(ssrc, HEX);
-			Serial.print("sequenceNr: ");
-			Serial.println(sequenceNr);
+			// Serial.print("ssrc: 0x");
+			// Serial.println(ssrc, HEX);
+			// Serial.print("sequenceNr: ");
+			// Serial.println(sequenceNr);
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
-			Serial.print("Consumed ");
-			Serial.print(i);
-			Serial.println(" bytes");
+			// Serial.print("Consumed ");
+			// Serial.print(i);
+			// Serial.println(" bytes");
 
 			return i;
 		}

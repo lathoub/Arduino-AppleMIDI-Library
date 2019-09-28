@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ArduinoLog.h>
+
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 // this is an exported and stripped down version of the MIDI library by  47 blabla

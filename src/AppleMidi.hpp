@@ -18,20 +18,20 @@ void AppleMidiTransport<UdpClass>::readControlPackets()
 
         for (auto i = 0; i < bytesRead; i++)
             controlBuffer.write(packetBuffer[i]); // append
+    }
 
-        uint8_t retVal = PARSER_UNEXPECTED_DATA;
-        while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0)) {
-            retVal = controlAppleMidiParser(controlBuffer, this, amPortType::Control);
-            if (PARSER_NOT_ENOUGH_DATA == retVal)
-                break;
-            if (PARSER_UNEXPECTED_DATA == retVal) 
-                controlBuffer.pop(1);
-        }
+    uint8_t retVal = PARSER_UNEXPECTED_DATA;
+    while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0)) {
+        retVal = controlAppleMidiParser(controlBuffer, this, amPortType::Control);
+        if (PARSER_NOT_ENOUGH_DATA == retVal) break;
+        
+        if (PARSER_UNEXPECTED_DATA == retVal) 
+            controlBuffer.pop(1);
+    }
 
-        if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
-        {
-            Serial.println("o-ow, what now??");
-        }
+    if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
+    {
+        Serial.println("o-ow, what now??");
     }
 }
 
@@ -47,23 +47,23 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
 
         for (auto i = 0; i < bytesRead; i++)
             dataBuffer.write(packetBuffer[i]); // append
+    }
 
-        uint8_t retVal = PARSER_UNEXPECTED_DATA;
-        while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0)) {
-            retVal = dataRtpMidiParsers(dataBuffer, this);
-            if (PARSER_NOT_ENOUGH_DATA == retVal) break;
-            retVal = dataAppleMidiParsers(dataBuffer, this, amPortType::Data);
-            if (PARSER_NOT_ENOUGH_DATA == retVal) break;
+    uint8_t retVal = PARSER_UNEXPECTED_DATA;
+    while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0)) {
+        retVal = dataRtpMidiParsers(dataBuffer, this);
+        if (PARSER_NOT_ENOUGH_DATA == retVal) break;
+        retVal = dataAppleMidiParsers(dataBuffer, this, amPortType::Data);
+        if (PARSER_NOT_ENOUGH_DATA == retVal) break;
 
-            if (PARSER_UNEXPECTED_DATA == retVal) 
-                dataBuffer.pop(1);
-        }
+        if (PARSER_UNEXPECTED_DATA == retVal) 
+            dataBuffer.pop(1);
+    }
 
-        if ((PARSER_NOT_ENOUGH_DATA == retVal) && dataBuffer.isFull())
-        {
-            Serial.println("o-ow, what now?? SysEx??");
-        }
-    }  
+    if ((PARSER_NOT_ENOUGH_DATA == retVal) && dataBuffer.isFull())
+    {
+        Log.error("o-ow, what now?? SysEx??");
+    }
 
 #ifdef APPLEMIDI_INITIATOR
     ManagePendingInvites();
@@ -74,8 +74,6 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType)
 {
-    // Serial.println("receivedInvitation");
-
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
     else
@@ -85,7 +83,7 @@ void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invi
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitation& invitation)
 {
-    // Serial.println("ReceivedControlInvitation");
+    Log.trace(F("Received Control Invitation" CR));
 
     // Serial.print("initiator: 0x");
     // Serial.print(invitation.initiatorToken, HEX);
@@ -115,17 +113,14 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitatio
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& invitation)
 {
-    // Serial.println("ReceivedControlInvitation");
+    Log.trace(F("Received Data Invitation" CR));
 
-    // Serial.print("initiator: 0x");
+    //Log.verbose(F("initiator: %X, senderSSRC: %X, sessionName: %s" CR), invitation.initiatorToken, invitation.ssrc, invitation.sessionName);
     // Serial.print(invitation.initiatorToken, HEX);
     // Serial.print(", senderSSRC: 0x");
     // Serial.print(invitation.ssrc, HEX);
     // Serial.print(", sessionName: ");
     // Serial.println(invitation.sessionName);
-
-    strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
-    invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
 
     auto participant = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
@@ -144,9 +139,16 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& 
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedSyncronization(AppleMIDI_Syncronization& syncronization)
 {
-    //Serial.println("receivedSyncronization");
+    Log.trace(F("received Syncronization %X" CR), syncronization.ssrc);
 
     auto now = rtpMidiClock.Now();
+
+    auto participant = getParticipantIndex(participants, syncronization.ssrc);
+    if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
+    {
+        Log.error(F("participant not found" CR));
+        return;
+    }
 
     switch (syncronization.count) {
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
@@ -196,7 +198,7 @@ void AppleMidiTransport<UdpClass>::ReceivedSyncronization(AppleMIDI_Syncronizati
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endSession)
 {
-    //Serial.println("receivedEndSession");
+    Log.trace(F("receivedEndSession" CR));
 
     //Serial.print("initiator: 0x");
     //Serial.print(endSession.initiatorToken, HEX);
@@ -214,6 +216,8 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
+    Log.verbose(F("ReceivedMidi" CR));
+
     inMidiBuffer.write(data);
 }
 
@@ -229,7 +233,7 @@ int8_t AppleMidiTransport<UdpClass>::getParticipantIndex(const uint32_t particip
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, const byte* command, ssrc_t ssrc)
 {
-    // Serial.println("writeInvitation");
+    Log.verbose(F("writeInvitation" CR));
 
     if (port.beginPacket(port.remoteIP(), port.remotePort())) {
         port.write((uint8_t*)amSignature,       sizeof(amSignature));
@@ -246,6 +250,8 @@ void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Inv
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint16_t sequenceNr, ssrc_t ssrc)
 {
+    Log.verbose(F("writeRtpMidiBuffer" CR));
+
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
         return;
 
