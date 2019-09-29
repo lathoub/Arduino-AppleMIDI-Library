@@ -291,8 +291,8 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
-    N_DEBUG_PRINT(F("ReceivedMidi"));
-    N_DEBUG_PRINTLN(data);
+    N_DEBUG_PRINT(F("ReceivedMidi 0x"));
+    N_DEBUG_PRINTLN(data, HEX);
 
     inMidiBuffer.write(data);
 }
