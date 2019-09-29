@@ -291,9 +291,6 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
-    T_DEBUG_PRINT(F("ReceivedMidi 0x"));
-    T_DEBUG_PRINTLN(data, HEX);
-
     inMidiBuffer.write(data);
 }
 
@@ -329,12 +326,12 @@ void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
 
 #if DEBUG >= LOG_LEVEL_TRACE
-    if (controlBuffer.getLength() > 0) {
+    if (buffer.getLength() > 0) {
         T_DEBUG_PRINT(F("to data socket, Len: "));
-        T_DEBUG_PRINT(controlBuffer.getLength());
+        T_DEBUG_PRINT(buffer.getLength());
         T_DEBUG_PRINT(F(" 0x"));
-        for (auto i = 0; i < controlBuffer.getLength(); i++) {
-            T_DEBUG_PRINT(controlBuffer.peek(i), HEX);
+        for (auto i = 0; i < buffer.getLength(); i++) {
+            T_DEBUG_PRINT(buffer.peek(i), HEX);
             T_DEBUG_PRINT(" ");
         }
         T_DEBUG_PRINTLN();

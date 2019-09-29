@@ -54,6 +54,8 @@ public:
 			return PARSER_UNEXPECTED_DATA;
 		}
 
+    	V_DEBUG_PRINTLN(F("RTP OK"));
+
 		// Next byte is the flag
 		minimumLen += 1;
 		if (buffer.getLength() < minimumLen) {
@@ -78,6 +80,9 @@ public:
 			commandLength = (commandLength << 8) | octet;
 		}
 
+    	V_DEBUG_PRINT(F("Command length: "));
+    	V_DEBUG_PRINTLN(commandLength);
+
 		minimumLen += commandLength;
 		if (buffer.getLength() < minimumLen) {
 			return PARSER_NOT_ENOUGH_DATA;
@@ -100,6 +105,9 @@ public:
 
 			/* At the same place we find the total channels encoded in the channel journal */
 			uint8_t totalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
+
+			V_DEBUG_PRINT(F("totalChannels: "));
+			V_DEBUG_PRINTLN(totalChannels);
 
 			// sequenceNr
 			minimumLen += 2;
@@ -275,6 +283,17 @@ public:
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
 					size_t consumed = decodeMidi(buffer, i, runningstatus);
 
+#if DEBUG >= LOG_LEVEL_TRACE
+        T_DEBUG_PRINT(F("MIDI: consumed: "));
+        T_DEBUG_PRINT(consumed);
+        T_DEBUG_PRINT(F(" 0x"));
+        for (auto j = 0; j < consumed; j++) {
+            T_DEBUG_PRINT(buffer.peek(i+j), HEX);
+            T_DEBUG_PRINT(" ");
+        }
+        T_DEBUG_PRINTLN();
+#endif
+
                     for (auto j = 0; j < consumed; j++)
                         session->ReceivedMidi(buffer.peek(i + j));
 
@@ -316,7 +335,7 @@ public:
         /* midi realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
          * not be intermingled with other MIDI-commands, so we handle this case right here and return */
         if ( octet >= 0xf8 ) {
-            return k;
+            return 1;
         }
         
         /* see if this first octet is a status message */

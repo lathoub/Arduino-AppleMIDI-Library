@@ -53,7 +53,7 @@ struct DefaultSettings
     Must be disabled to send USB MIDI messages to a computer
     Warning: does not work with some hardware, enable with caution.
     */
-    static const bool UseRunningStatus = false;
+    static const bool UseRunningStatus = true;
 
     /*! NoteOn with 0 velocity should be handled as NoteOf.\n
     Set to true  to get NoteOff events when receiving null-velocity NoteOn messages.\n
@@ -65,7 +65,7 @@ struct DefaultSettings
     call when data is available. This can speed up your application if receiving
     a lot of traffic, but might induce MIDI Thru and treatment latency.
     */
-    static const bool Use1ByteParsing = true;
+    static const bool Use1ByteParsing = false;
 
     /*! Maximum size of SysEx receivable. Decrease to save RAM if you don't expect
     to receive SysEx, or adjust accordingly.
