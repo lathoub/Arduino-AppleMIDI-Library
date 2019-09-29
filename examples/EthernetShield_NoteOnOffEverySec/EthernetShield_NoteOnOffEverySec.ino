@@ -1,7 +1,7 @@
 #include <Ethernet.h>
-#include <AppleMidi.h>
 
-#include <ArduinoLog.h>
+#define DEBUG 6
+#include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -23,25 +23,24 @@ APPLEMIDI_CREATE_DEFAULT_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  // Serial communications and wait for port to open:
-  Serial.begin(115200);
-  while (!Serial);
+  DEBUG_BEGIN(115200);
 
-  Log.begin(LOG_LEVEL_NOTICE, &Serial);
-
-  Log.notice("Getting IP address..." CR);
+  N_DEBUG_PRINTLN(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    Log.notice(F(CR "Failed DHCP, check network cable & reboot" CR));
+    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  Log.notice("IP address is %s" CR, Ethernet.localIP());
+  N_DEBUG_PRINT("IP address is ");
+  N_DEBUG_PRINTLN(Ethernet.localIP());
 
-  Log.notice("OK, now make sure you an rtpMIDI session that is Enabled" CR);
-  Log.notice("Add device named Arduino with Host/Port %s:5004" CR, Ethernet.localIP());
-  Log.notice("Then press the Connect button" CR);
-  Log.notice("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes" CR );
+  V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
+  V_DEBUG_PRINT(Ethernet.localIP());
+  V_DEBUG_PRINTLN(F(":5004"));
+  V_DEBUG_PRINTLN(F("Then press the Connect button"));
+  V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
   MIDI.begin(1);
@@ -53,7 +52,7 @@ void setup()
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
-  Log.notice(F("Sending NoteOn/Off of note 45, every second" CR));
+  N_DEBUG_PRINTLN(F("Sending NoteOn/Off of note 45, every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -95,7 +94,8 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
   isConnected = true;
-  Log.notice(F("Connected to session %s" CR), name);
+  N_DEBUG_PRINT(F("Connected to session "));
+  N_DEBUG_PRINTLN(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -103,19 +103,29 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(uint32_t ssrc) {
   isConnected = false;
-  Log.notice(F("Disconnected"));
+  N_DEBUG_PRINTLN(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  Log.notice(F("Incoming NoteOn from channel: %d note: %d velocity: %d" CR), channel, note, velocity);
+  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
+  N_DEBUG_PRINT(channel);
+  N_DEBUG_PRINT(F(", note: "));
+  N_DEBUG_PRINT(note);
+  N_DEBUG_PRINT(F(", velocity: "));
+  N_DEBUG_PRINTLN(velocity);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  Log.notice(F("Incoming NoteOff from channel: %d note: %d velocity: %d" CR), channel, note, velocity);
+  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
+  N_DEBUG_PRINT(channel);
+  N_DEBUG_PRINT(F(", note: "));
+  N_DEBUG_PRINT(note);
+  N_DEBUG_PRINT(F(", velocity: "));
+  N_DEBUG_PRINTLN(velocity);
 }

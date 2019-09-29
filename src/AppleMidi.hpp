@@ -20,18 +20,33 @@ void AppleMidiTransport<UdpClass>::readControlPackets()
             controlBuffer.write(packetBuffer[i]); // append
     }
 
+#if DEBUG >= LOG_LEVEL_TRACE
+    if (controlBuffer.getLength() > 0) {
+        T_DEBUG_PRINT(F("From control socket, Len: "));
+        T_DEBUG_PRINT(controlBuffer.getLength());
+        T_DEBUG_PRINT(F(" 0x"));
+        for (auto i = 0; i < controlBuffer.getLength(); i++) {
+            T_DEBUG_PRINT(controlBuffer.peek(i), HEX);
+            T_DEBUG_PRINT(" ");
+        }
+        T_DEBUG_PRINTLN();
+    }
+#endif
+
     uint8_t retVal = PARSER_UNEXPECTED_DATA;
     while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0)) {
         retVal = controlAppleMidiParser(controlBuffer, this, amPortType::Control);
         if (PARSER_NOT_ENOUGH_DATA == retVal) break;
         
-        if (PARSER_UNEXPECTED_DATA == retVal) 
+        if (PARSER_UNEXPECTED_DATA == retVal) {
+            T_DEBUG_PRINT("control buffer, parse error, removing 1 byte");
             controlBuffer.pop(1);
+        }
     }
 
     if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
     {
-        N_DEBUG_PRINTLN(F("o-ow, what now??"));
+        E_DEBUG_PRINTLN(F("o-ow, what now??"));
     }
 }
 
@@ -49,6 +64,19 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
             dataBuffer.write(packetBuffer[i]); // append
     }
 
+#if DEBUG >= LOG_LEVEL_TRACE
+    if (dataBuffer.getLength() > 0) {
+        T_DEBUG_PRINT(F("From data socket, Len: "));
+        T_DEBUG_PRINT(dataBuffer.getLength());
+        T_DEBUG_PRINT(F(" 0x"));
+        for (auto i = 0; i < dataBuffer.getLength(); i++) {
+            T_DEBUG_PRINT(dataBuffer.peek(i), HEX);
+            T_DEBUG_PRINT(" ");
+        }
+        T_DEBUG_PRINTLN();
+    }
+#endif
+
     uint8_t retVal = PARSER_UNEXPECTED_DATA;
     while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0)) {
         retVal = dataRtpMidiParsers(dataBuffer, this);
@@ -56,13 +84,15 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
         retVal = dataAppleMidiParsers(dataBuffer, this, amPortType::Data);
         if (PARSER_NOT_ENOUGH_DATA == retVal) break;
 
-        if (PARSER_UNEXPECTED_DATA == retVal) 
+        if (PARSER_UNEXPECTED_DATA == retVal) {
+            T_DEBUG_PRINT("data buffer, parse error, removing 1 byte");
             dataBuffer.pop(1);
+        }
     }
 
     if ((PARSER_NOT_ENOUGH_DATA == retVal) && dataBuffer.isFull())
     {
-        N_DEBUG_PRINTLN(F("o-ow, what now?? SysEx??"));
+        E_DEBUG_PRINTLN(F("o-ow, what now?? SysEx??"));
     }
 
 #ifdef APPLEMIDI_INITIATOR
@@ -74,6 +104,8 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType)
 {
+    N_DEBUG_PRINTLN(F("Received Invitation"));
+
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
     else
@@ -100,6 +132,7 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitatio
         slotIndex = getParticipantIndex(participants, APPLEMIDI_PARTICIPANT_SLOT_FREE);
         if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
         {
+            N_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
             writeInvitation(controlPort, invitation, amInvitationRejected, ssrc);
             return;
         }
@@ -123,6 +156,8 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& 
     auto participant = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
     {
+        N_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
+
         writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
         return;
     }
@@ -197,7 +232,8 @@ void AppleMidiTransport<UdpClass>::ReceivedSynchronization(AppleMIDI_Synchroniza
         diff = (now - synchronization.timestamps[0]) / 2;
         /* approximate time difference between peer and self */
         diff = synchronization.timestamps[2] + diff - now;
-
+        // V_DEBUG_PRINT(F("SYNC_CK1 "));
+        // V_DEBUG_PRINTLN((uint32_t)(diff));
         // Send CK2
         synchronization.count = SYNC_CK2;
         synchronization.timestamps[synchronization.count] = now;
@@ -212,6 +248,8 @@ void AppleMidiTransport<UdpClass>::ReceivedSynchronization(AppleMIDI_Synchroniza
         diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
         /* approximate time difference between peer and self */
         diff = synchronization.timestamps[2] + diff - now;
+        // V_DEBUG_PRINT(F("SYNC_CK2 "));
+        // V_DEBUG_PRINTLN((uint32_t)(diff));
         synchronization.count = SYNC_CK0;
         synchronization.timestamps[synchronization.count] = now;
         break;
