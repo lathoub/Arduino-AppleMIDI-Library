@@ -283,6 +283,10 @@ public:
 					/* Decode a MIDI-command - if 0 is returned something went wrong */
 					size_t consumed = decodeMidi(buffer, i, runningstatus);
 
+					if (consumed == 0) {
+        				E_DEBUG_PRINT(F("consumed NO bytes ??!?!"));
+					}
+
 #if DEBUG >= LOG_LEVEL_TRACE
         T_DEBUG_PRINT(F("MIDI: consumed: "));
         T_DEBUG_PRINT(consumed);
