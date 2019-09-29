@@ -104,7 +104,7 @@ void AppleMidiTransport<UdpClass>::readDataPackets()
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType)
 {
-    N_DEBUG_PRINTLN(F("Received Invitation"));
+    T_DEBUG_PRINTLN(F("Received Invitation"));
 
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
@@ -115,13 +115,13 @@ void AppleMidiTransport<UdpClass>::ReceivedInvitation(AppleMIDI_Invitation& invi
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitation& invitation)
 {
-    N_DEBUG_PRINTLN(F("Received Control Invitation"));
-    N_DEBUG_PRINT("initiator: 0x");
-    N_DEBUG_PRINT(invitation.initiatorToken, HEX);
-    N_DEBUG_PRINT(", senderSSRC: 0x");
-    N_DEBUG_PRINT(invitation.ssrc, HEX);
-    N_DEBUG_PRINT(", sessionName: ");
-    N_DEBUG_PRINTLN(invitation.sessionName);
+    T_DEBUG_PRINTLN(F("Received Control Invitation"));
+    T_DEBUG_PRINT("initiator: 0x");
+    T_DEBUG_PRINT(invitation.initiatorToken, HEX);
+    T_DEBUG_PRINT(", senderSSRC: 0x");
+    T_DEBUG_PRINT(invitation.ssrc, HEX);
+    T_DEBUG_PRINT(", sessionName: ");
+    T_DEBUG_PRINTLN(invitation.sessionName);
 
     strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
     invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
@@ -145,13 +145,13 @@ void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitatio
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& invitation)
 {
-    N_DEBUG_PRINTLN(F("Received Data Invitation"));
-    N_DEBUG_PRINT("initiator: 0x");
-    N_DEBUG_PRINT(invitation.initiatorToken, HEX);
-    N_DEBUG_PRINT(", senderSSRC: 0x");
-    N_DEBUG_PRINT(invitation.ssrc, HEX);
-    N_DEBUG_PRINT(", sessionName: ");
-    N_DEBUG_PRINTLN(invitation.sessionName);
+    T_DEBUG_PRINTLN(F("Received Data Invitation"));
+    T_DEBUG_PRINT("initiator: 0x");
+    T_DEBUG_PRINT(invitation.initiatorToken, HEX);
+    T_DEBUG_PRINT(", senderSSRC: 0x");
+    T_DEBUG_PRINT(invitation.ssrc, HEX);
+    T_DEBUG_PRINT(", sessionName: ");
+    T_DEBUG_PRINTLN(invitation.sessionName);
 
     auto participant = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
@@ -199,8 +199,8 @@ user to choose between a new connection attempt or closing the session.
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedSynchronization(AppleMIDI_Synchronization& synchronization)
 {
-    V_DEBUG_PRINT(F("received Synchronization 0x"));
-    V_DEBUG_PRINTLN(synchronization.ssrc, HEX);
+    T_DEBUG_PRINT(F("received Synchronization 0x"));
+    T_DEBUG_PRINTLN(synchronization.ssrc, HEX);
 
     auto now = rtpMidiClock.Now(); // units of 100 microseconds
 
@@ -274,11 +274,11 @@ void AppleMidiTransport<UdpClass>::ReceivedSynchronization(AppleMIDI_Synchroniza
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endSession)
 {
-    N_DEBUG_PRINTLN(F("receivedEndSession"));
-    N_DEBUG_PRINT("initiator: 0x");
-    N_DEBUG_PRINT(endSession.initiatorToken, HEX);
-    N_DEBUG_PRINT(", senderSSRC: 0x");
-    N_DEBUG_PRINTLN(endSession.ssrc, HEX);
+    T_DEBUG_PRINTLN(F("receivedEndSession"));
+    T_DEBUG_PRINT("initiator: 0x");
+    T_DEBUG_PRINT(endSession.initiatorToken, HEX);
+    T_DEBUG_PRINT(", senderSSRC: 0x");
+    T_DEBUG_PRINTLN(endSession.ssrc, HEX);
 
     auto slotIndex = getParticipantIndex(participants, endSession.ssrc);
     if (slotIndex >= 0)
@@ -291,8 +291,8 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
-    N_DEBUG_PRINT(F("ReceivedMidi 0x"));
-    N_DEBUG_PRINTLN(data, HEX);
+    T_DEBUG_PRINT(F("ReceivedMidi 0x"));
+    T_DEBUG_PRINTLN(data, HEX);
 
     inMidiBuffer.write(data);
 }
@@ -309,7 +309,7 @@ int8_t AppleMidiTransport<UdpClass>::getParticipantIndex(const uint32_t particip
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, const byte* command, ssrc_t ssrc)
 {
-    V_DEBUG_PRINTLN(F("writeInvitation"));
+    T_DEBUG_PRINTLN(F("writeInvitation"));
 
     if (port.beginPacket(port.remoteIP(), port.remotePort())) {
         port.write((uint8_t*)amSignature,       sizeof(amSignature));
@@ -326,10 +326,31 @@ void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Inv
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint16_t sequenceNr, ssrc_t ssrc)
 {
-    V_DEBUG_PRINTLN(F("writeRtpMidiBuffer"));
+    T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
 
-    if (!port.beginPacket(port.remoteIP(), port.remotePort()))
+#if DEBUG >= LOG_LEVEL_TRACE
+    if (controlBuffer.getLength() > 0) {
+        T_DEBUG_PRINT(F("to data socket, Len: "));
+        T_DEBUG_PRINT(controlBuffer.getLength());
+        T_DEBUG_PRINT(F(" 0x"));
+        for (auto i = 0; i < controlBuffer.getLength(); i++) {
+            T_DEBUG_PRINT(controlBuffer.peek(i), HEX);
+            T_DEBUG_PRINT(" ");
+        }
+        T_DEBUG_PRINTLN();
+    }
+#endif
+
+    T_DEBUG_PRINT(" sequenceNr: ");
+    T_DEBUG_PRINTLN(sequenceNr);
+
+    if (!port.beginPacket(port.remoteIP(), port.remotePort())) {
+        E_DEBUG_PRINTLN(F("Error port.beginPacket host: "));
+        E_DEBUG_PRINTLN(port.remoteIP());
+        E_DEBUG_PRINTLN(F(", port: "));
+        E_DEBUG_PRINTLN(port.remotePort());
         return;
+    }
 
     Rtp rtp;
     rtp.vpxcc      = 0b10000000; // TODO: fun with flags

@@ -78,10 +78,10 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-    //   MIDI.sendNoteOn(note, velocity, channel);
-    //   MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
 
-    //MIDI.sendSysEx(sizeof(se), se, true);
+    MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
   }
 }
 
