@@ -20,13 +20,13 @@ public:
 	{
 		byte a[8]; 
 
-		// Serial.print("AppleMIDI_Parser::Parser received ");
-		// Serial.print(buffer.getLength());
-		// Serial.println(" bytes");
+		// N_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
+		// N_DEBUG_PRINT(buffer.getLength());
+		// N_DEBUG_PRINTLN(" bytes");
 
 		size_t minimumLen = (2 + 2); // Signature + Command
 		if (buffer.getLength() < minimumLen) {
-			// Serial.print("PARSER_NOT_ENOUGH_DATA ");
+			// N_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
 			return PARSER_NOT_ENOUGH_DATA;
 		}
 
@@ -36,10 +36,10 @@ public:
 		signature[0] = buffer.peek(i++);
 		signature[1] = buffer.peek(i++);
 		if (0 != memcmp(signature, amSignature, sizeof(amSignature))) {
-			// Serial.print("Wrong signature: 0x");
-			// Serial.print(signature[0], HEX);
-			// Serial.print(signature[1], HEX);
-			// Serial.println(" was expecting 0xFFFF");
+			// N_DEBUG_PRINT("Wrong signature: 0x");
+			// N_DEBUG_PRINT(signature[0], HEX);
+			// N_DEBUG_PRINT(signature[1], HEX);
+			// N_DEBUG_PRINTLN(" was expecting 0xFFFF");
 
 			return PARSER_UNEXPECTED_DATA;
 		}
@@ -54,12 +54,12 @@ public:
 #ifdef APPLEMIDI_LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			//Serial.println("received Invitation");
+			//N_DEBUG_PRINTLN("received Invitation");
 
 			// minimum amount : 4 bytes for protocol version, 4 bytes for APPLEMIDI_INITIATOR token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
 			if (buffer.getLength() < minimumLen) {
-				//Serial.print("PARSER_NOT_ENOUGH_DATA ");
+				//N_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
 				return PARSER_NOT_ENOUGH_DATA;
 			}
 
@@ -70,12 +70,12 @@ public:
 			protocolVersion[2] = buffer.peek(i++);
 			protocolVersion[3] = buffer.peek(i++);
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion))) {
-				// Serial.print("Wrong protocolVersion: 0x");
-				// Serial.print(protocolVersion[0], HEX);
-				// Serial.print(protocolVersion[1], HEX);
-				// Serial.print(protocolVersion[2], HEX);
-				// Serial.print(protocolVersion[3], HEX);
-				// Serial.println(" was expecting 0x00000002");
+				// N_DEBUG_PRINT("Wrong protocolVersion: 0x");
+				// N_DEBUG_PRINT(protocolVersion[0], HEX);
+				// N_DEBUG_PRINT(protocolVersion[1], HEX);
+				// N_DEBUG_PRINT(protocolVersion[2], HEX);
+				// N_DEBUG_PRINT(protocolVersion[3], HEX);
+				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
 				return PARSER_UNEXPECTED_DATA;
 			}
 			
@@ -88,10 +88,10 @@ public:
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
 			invitation.ssrc = ntohl(a[0], a[1], a[2], a[3]);
 
-			// Serial.print("initiator: 0x");
-			// Serial.println(invitation.initiatorToken, HEX);
-			// Serial.print("senderSSRC: 0x");
-			// Serial.println(invitation.ssrc, HEX);
+			// N_DEBUG_PRINT("initiator: 0x");
+			// N_DEBUG_PRINTLN(invitation.initiatorToken, HEX);
+			// N_DEBUG_PRINT("senderSSRC: 0x");
+			// N_DEBUG_PRINTLN(invitation.ssrc, HEX);
 
 			uint16_t bi = 0;
 			while ((i < buffer.getLength()) && (buffer.peek(i) != 0x00) && (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN))
@@ -100,19 +100,19 @@ public:
 
 			if (i == buffer.getLength() || buffer.peek(i++) != 0x00)
 			{
-				//Serial.println("PARSER_NOT_ENOUGH_DATA");
+				//N_DEBUG_PRINTLN("PARSER_NOT_ENOUGH_DATA");
 				return PARSER_NOT_ENOUGH_DATA;
 			}
 
-			// Serial.print("Consumed ");
-			// Serial.print(i);
-			// Serial.println(" bytes");
+			// N_DEBUG_PRINT("Consumed ");
+			// N_DEBUG_PRINT(i);
+			// N_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
-			// Serial.print("Remaining bytes ");
-			// Serial.print(buffer.getLength());
-			// Serial.println(" bytes");
+			// N_DEBUG_PRINT("Remaining bytes ");
+			// N_DEBUG_PRINT(buffer.getLength());
+			// N_DEBUG_PRINTLN(" bytes");
 
 			session->ReceivedInvitation(invitation, portType);
 
@@ -120,7 +120,7 @@ public:
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
-			//Serial.println("received EndSession");
+			//N_DEBUG_PRINTLN("received EndSession");
 
 			// minimum amount : 4 bytes for protocol version, 4 bytes for APPLEMIDI_INITIATOR token, 4 bytes for sender SSRC
 			minimumLen += (4 + 4 + 4);
@@ -134,12 +134,12 @@ public:
 			protocolVersion[2] = buffer.peek(i++);
 			protocolVersion[3] = buffer.peek(i++);
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion))) {
-				// Serial.print("Wrong protocolVersion: 0x");
-				// Serial.print(protocolVersion[0], HEX);
-				// Serial.print(protocolVersion[1], HEX);
-				// Serial.print(protocolVersion[2], HEX);
-				// Serial.print(protocolVersion[3], HEX);
-				// Serial.println(" was expecting 0x00000002");
+				// N_DEBUG_PRINT("Wrong protocolVersion: 0x");
+				// N_DEBUG_PRINT(protocolVersion[0], HEX);
+				// N_DEBUG_PRINT(protocolVersion[1], HEX);
+				// N_DEBUG_PRINT(protocolVersion[2], HEX);
+				// N_DEBUG_PRINT(protocolVersion[3], HEX);
+				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
 				return PARSER_UNEXPECTED_DATA;
 			}
 
@@ -152,9 +152,9 @@ public:
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
 			endSession.ssrc = ntohl(a[0], a[1], a[2], a[3]);
 
-			// Serial.print("Consumed ");
-			// Serial.print(i);
-			// Serial.println(" bytes");
+			// N_DEBUG_PRINT("Consumed ");
+			// N_DEBUG_PRINT(i);
+			// N_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -164,7 +164,7 @@ public:
 		}
 		else if (0 == memcmp(command, amSyncronization, sizeof(amSyncronization)))
 		{
-			//Serial.println("received Syncronization");
+			//N_DEBUG_PRINTLN("received Syncronization");
 
 			// minimum amount : 4 bytes for sender SSRC, 1 byte for count, 3 bytes padding and 3 times 8 bytes
 			minimumLen += (4 + 1 + 3 + (3 * 8));
@@ -185,9 +185,9 @@ public:
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); a[4] = buffer.peek(i++); a[5] = buffer.peek(i++); a[6] = buffer.peek(i++); a[7] = buffer.peek(i++); 
 			syncronization.timestamps[2] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
 
-			// Serial.print("Consumed ");
-			// Serial.print(i);
-			// Serial.println(" bytes");
+			// N_DEBUG_PRINT("Consumed ");
+			// N_DEBUG_PRINT(i);
+			// N_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -197,7 +197,7 @@ public:
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			// Serial.println("received ReceiverFeedback");
+			// N_DEBUG_PRINTLN("received ReceiverFeedback");
 
 			// minimum amount : 4 bytes for sender SSRC, 4 bytes for sequence number
 			minimumLen += (4 + 4);
@@ -210,16 +210,16 @@ public:
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
 			uint16_t sequenceNr = ntohs(a[0], a[1]);
 
-			// Serial.print("ssrc: 0x");
-			// Serial.println(ssrc, HEX);
-			// Serial.print("sequenceNr: ");
-			// Serial.println(sequenceNr);
+			// N_DEBUG_PRINT("ssrc: 0x");
+			// N_DEBUG_PRINTLN(ssrc, HEX);
+			// N_DEBUG_PRINT("sequenceNr: ");
+			// N_DEBUG_PRINTLN(sequenceNr);
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
-			// Serial.print("Consumed ");
-			// Serial.print(i);
-			// Serial.println(" bytes");
+			// N_DEBUG_PRINT("Consumed ");
+			// N_DEBUG_PRINT(i);
+			// N_DEBUG_PRINTLN(" bytes");
 
 			return i;
 		}

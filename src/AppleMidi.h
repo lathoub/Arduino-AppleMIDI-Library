@@ -1,7 +1,5 @@
 #pragma once
 
-#include <ArduinoLog.h>
-
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 // this is an exported and stripped down version of the MIDI library by  47 blabla
@@ -18,6 +16,7 @@
 #include "rtpMidi_Parser.h"
 
 #include "endian.h"
+#include "AppleMidi_Debug.h"
 
 #include "AppleMidi_Namespace.h"
 
@@ -96,7 +95,7 @@ protected:
 			}
 			else {
 				// TODO: What is this very large message ???
-				Serial.println("buffer to small in write, and not it's not sysex!!!");
+				N_DEBUG_PRINTLN("buffer to small in write, and not it's not sysex!!!");
 				// TODO: outMidiBuffer.dump();
 			}
 		}

@@ -17,12 +17,11 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define UDP_TX_PACKET_MAX_SIZE 24
 #endif
 
-#define APPLEMIDI_MEMORY_LEAN
-
 #undef OPTIONAL_MDNS
 
 typedef uint32_t ssrc_t;
 typedef uint32_t initiatorToken_t;
+typedef uint64_t timestamp_t;
 
 const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
 
@@ -88,7 +87,7 @@ typedef struct __attribute__((packed)) AppleMIDI_Syncronization
 	ssrc_t		ssrc;
 	uint8_t		count;
 	uint8_t		padding[3];
-	uint64_t	timestamps[3];
+	timestamp_t	timestamps[3];
 } AppleMIDI_Syncronization_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_EndSession
@@ -119,7 +118,6 @@ enum amPortType : uint8_t
 // be session listeners, but some devices, such as iOS devices, can be session listeners only. 
 enum SessionController : uint8_t
 {
-	Undefined,
 	Listener,
 	Initiator,
 };
