@@ -84,13 +84,12 @@ template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedControlInvitation(AppleMIDI_Invitation& invitation)
 {
     N_DEBUG_PRINTLN(F("Received Control Invitation"));
-
-    // N_DEBUG_PRINT("initiator: 0x");
-    // N_DEBUG_PRINT(invitation.initiatorToken, HEX);
-    // N_DEBUG_PRINT(", senderSSRC: 0x");
-    // N_DEBUG_PRINT(invitation.ssrc, HEX);
-    // N_DEBUG_PRINT(", sessionName: ");
-    // N_DEBUG_PRINTLN(invitation.sessionName);
+    N_DEBUG_PRINT("initiator: 0x");
+    N_DEBUG_PRINT(invitation.initiatorToken, HEX);
+    N_DEBUG_PRINT(", senderSSRC: 0x");
+    N_DEBUG_PRINT(invitation.ssrc, HEX);
+    N_DEBUG_PRINT(", sessionName: ");
+    N_DEBUG_PRINTLN(invitation.sessionName);
 
     strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
     invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
@@ -114,13 +113,12 @@ template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& invitation)
 {
     N_DEBUG_PRINTLN(F("Received Data Invitation"));
-
-    //Log.verbose(F("initiator: %X, senderSSRC: %X, sessionName: %s"), invitation.initiatorToken, invitation.ssrc, invitation.sessionName);
-    // N_DEBUG_PRINT(invitation.initiatorToken, HEX);
-    // N_DEBUG_PRINT(", senderSSRC: 0x");
-    // N_DEBUG_PRINT(invitation.ssrc, HEX);
-    // N_DEBUG_PRINT(", sessionName: ");
-    // N_DEBUG_PRINTLN(invitation.sessionName);
+    N_DEBUG_PRINT("initiator: 0x");
+    N_DEBUG_PRINT(invitation.initiatorToken, HEX);
+    N_DEBUG_PRINT(", senderSSRC: 0x");
+    N_DEBUG_PRINT(invitation.ssrc, HEX);
+    N_DEBUG_PRINT(", sessionName: ");
+    N_DEBUG_PRINTLN(invitation.sessionName);
 
     auto participant = getParticipantIndex(participants, invitation.ssrc);
     if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
@@ -136,47 +134,86 @@ void AppleMidiTransport<UdpClass>::ReceivedDataInvitation(AppleMIDI_Invitation& 
         _connectedCallback(invitation.ssrc, invitation.sessionName);
 }
 
+/*! \brief .
+
+From: http://en.wikipedia.org/wiki/RTP_MIDI
+
+The session initiator sends a first message (named CK0) to the remote partner, giving its local time on
+64 bits (Note that this is not an absolute time, but a time related to a local reference, generally given
+in microseconds since the startup of operating system kernel). This time is expressed on 10 kHz sampling
+clock basis (100 microseconds per increment) The remote partner must answer to this message with a CK1 message,
+containing its own local time on 64 bits. Both partners then know the difference between their respective clocks
+and can determine the offset to apply to Timestamp and Deltatime fields in RTP-MIDI protocol. The session
+initiator finishes this sequence by sending a last message called CK2, containing the local time when it
+received the CK1 message. This technique allows to compute the average latency of the network, and also to
+compensate a potential delay introduced by a slow starting thread (this situation can occur with non-realtime
+operating systems like Linux, Windows or OS X)
+
+Apple recommends to repeat this sequence a few times just after opening the session, in order to get better
+synchronization accuracy (in case of one of the sequence has been delayed accidentally because of a temporary
+network overload or a latency peak in a thread activation)
+
+This sequence must repeat cyclically (between 2 and 6 times per minute typically), and always by the session
+initiator, in order to maintain long term synchronization accuracy by compensation of local clock drift, and also
+to detect a loss of communication partner. A partner not answering to multiple CK0 messages shall consider that
+the remote partner is disconnected. In most cases, session initiators switch their state machine into "Invitation"
+state in order to re-establish communication automatically as soon as the distant partner reconnects to the
+network. Some implementations (especially on personal computers) display also an alert message and offer to the
+user to choose between a new connection attempt or closing the session.
+*/
 template<class UdpClass>
-void AppleMidiTransport<UdpClass>::ReceivedSyncronization(AppleMIDI_Syncronization& syncronization)
+void AppleMidiTransport<UdpClass>::ReceivedSynchronization(AppleMIDI_Synchronization& synchronization)
 {
-    N_DEBUG_PRINT(F("received Syncronization "));
-    N_DEBUG_PRINTLN(syncronization.ssrc);
+    V_DEBUG_PRINT(F("received Synchronization 0x"));
+    V_DEBUG_PRINTLN(synchronization.ssrc, HEX);
 
-    auto now = rtpMidiClock.Now();
+    auto now = rtpMidiClock.Now(); // units of 100 microseconds
 
-    auto participant = getParticipantIndex(participants, syncronization.ssrc);
-    if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == participant)
+    uint64_t diff;
+
+    auto slotIndex = getParticipantIndex(participants, synchronization.ssrc);
+    if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
     {
-        N_DEBUG_PRINTLN(F("participant not found"));
-        return;
+        slotIndex = getParticipantIndex(participants, APPLEMIDI_PARTICIPANT_SLOT_FREE);
+        if (APPLEMIDI_PARTICIPANT_SSRC_NOTFOUND == slotIndex)
+        {
+            V_DEBUG_PRINTLN(F("participant not found, no more space on stack"));
+            return;
+        }
+        V_DEBUG_PRINTLN(F("participant not found, added it. Welcome back."));
+        participants[slotIndex] = synchronization.ssrc;
+
+        // if (NULL != _connectedCallback)
+        //     _connectedCallback(synchronization.ssrc, invitation.sessionName);
     }
 
-    switch (syncronization.count) {
+    switch (synchronization.count) {
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
-        syncronization.count = SYNC_CK1;
-        syncronization.timestamps[syncronization.count] = now;			
+        synchronization.count = SYNC_CK1;
+        synchronization.timestamps[synchronization.count] = now;
         break;
     case SYNC_CK1: /* From session responder */
         /* compute media delay */
-        //auto diff = (now - syncronization.timestamps[0]) / 2;
+        diff = (now - synchronization.timestamps[0]) / 2;
         /* approximate time difference between peer and self */
-        //diff = synchronization.timestamps[2] + diff - now;
+        diff = synchronization.timestamps[2] + diff - now;
+
         // Send CK2
-        syncronization.count = SYNC_CK2;
-        syncronization.timestamps[syncronization.count] = now;
+        synchronization.count = SYNC_CK2;
+        synchronization.timestamps[synchronization.count] = now;
         /* getting this message means that the responder is still alive! */
         /* remember the time, if it takes to long to respond, we can assume the responder is dead */
         /* not implemented at this stage*/
-        //Sessions[index].syncronization.lastTime = now;
-        //Sessions[index].syncronization.count++;
+        //Sessions[index].synchronization.lastTime = now;
+        //Sessions[index].synchronization.count++;
         break;
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         /* compute average delay */
-        //auto diff = (syncronization.timestamps[2] - syncsyncronizationhronization.timestamps[0]) / 2;
+        diff = (synchronization.timestamps[2] - synchronization.timestamps[0]) / 2;
         /* approximate time difference between peer and self */
-        //diff = syncronization.timestamps[2] + diff - now;
-        syncronization.count = SYNC_CK0;
-        syncronization.timestamps[syncronization.count] = now;
+        diff = synchronization.timestamps[2] + diff - now;
+        synchronization.count = SYNC_CK0;
+        synchronization.timestamps[synchronization.count] = now;
         break;
     }
 
@@ -185,12 +222,12 @@ void AppleMidiTransport<UdpClass>::ReceivedSyncronization(AppleMIDI_Syncronizati
     if (dataPort.beginPacket(dataPort.remoteIP(), dataPort.remotePort()))
     {
         dataPort.write((uint8_t*)amSignature, sizeof(amSignature));
-        dataPort.write((uint8_t*)amSyncronization, sizeof(amSyncronization));
-        syncronization.ssrc = htonl(ssrc);
-        syncronization.timestamps[0] = htonll(syncronization.timestamps[0]);
-        syncronization.timestamps[1] = htonll(syncronization.timestamps[1]);
-        syncronization.timestamps[2] = htonll(syncronization.timestamps[2]);
-        dataPort.write(reinterpret_cast<uint8_t*>(&syncronization), sizeof(syncronization));
+        dataPort.write((uint8_t*)amSynchronization, sizeof(amSynchronization));
+        synchronization.ssrc = htonl(ssrc);
+        synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
+        synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
+        synchronization.timestamps[2] = htonll(synchronization.timestamps[2]);
+        dataPort.write(reinterpret_cast<uint8_t*>(&synchronization), sizeof(synchronization));
         dataPort.endPacket();
         dataPort.flush();
     }
@@ -200,11 +237,10 @@ template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endSession)
 {
     N_DEBUG_PRINTLN(F("receivedEndSession"));
-
-    //N_DEBUG_PRINT("initiator: 0x");
-    //N_DEBUG_PRINT(endSession.initiatorToken, HEX);
-    //N_DEBUG_PRINT(", senderSSRC: 0x");
-    //N_DEBUG_PRINTLN(endSession.ssrc, HEX);
+    N_DEBUG_PRINT("initiator: 0x");
+    N_DEBUG_PRINT(endSession.initiatorToken, HEX);
+    N_DEBUG_PRINT(", senderSSRC: 0x");
+    N_DEBUG_PRINTLN(endSession.ssrc, HEX);
 
     auto slotIndex = getParticipantIndex(participants, endSession.ssrc);
     if (slotIndex >= 0)
@@ -217,7 +253,8 @@ void AppleMidiTransport<UdpClass>::ReceivedEndSession(AppleMIDI_EndSession& endS
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::ReceivedMidi(byte data)
 {
-    N_DEBUG_PRINTLN(F("ReceivedMidi"));
+    N_DEBUG_PRINT(F("ReceivedMidi"));
+    N_DEBUG_PRINTLN(data);
 
     inMidiBuffer.write(data);
 }
@@ -234,7 +271,7 @@ int8_t AppleMidiTransport<UdpClass>::getParticipantIndex(const uint32_t particip
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Invitation& invitation, const byte* command, ssrc_t ssrc)
 {
-    N_DEBUG_PRINTLN(F("writeInvitation"));
+    V_DEBUG_PRINTLN(F("writeInvitation"));
 
     if (port.beginPacket(port.remoteIP(), port.remotePort())) {
         port.write((uint8_t*)amSignature,       sizeof(amSignature));
@@ -251,7 +288,7 @@ void AppleMidiTransport<UdpClass>::writeInvitation(UdpClass& port, AppleMIDI_Inv
 template<class UdpClass>
 void AppleMidiTransport<UdpClass>::writeRtpMidiBuffer(UdpClass& port, RingBuffer<byte, BUFFER_MAX_SIZE>& buffer, uint16_t sequenceNr, ssrc_t ssrc)
 {
-    N_DEBUG_PRINTLN(F("writeRtpMidiBuffer"));
+    V_DEBUG_PRINTLN(F("writeRtpMidiBuffer"));
 
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
         return;

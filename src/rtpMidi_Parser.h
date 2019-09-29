@@ -21,9 +21,10 @@ public:
 	{
 		byte a[8];
 
-		size_t minimumLen = sizeof(Rtp);
-		if (buffer.getLength() < minimumLen)
-			return -1;
+		auto minimumLen = sizeof(Rtp);
+		if (buffer.getLength() < minimumLen) {
+			return PARSER_NOT_ENOUGH_DATA;
+		}
 
 		size_t i = 0;
 
@@ -55,8 +56,9 @@ public:
 
 		// Next byte is the flag
 		minimumLen += 1;
-		if (buffer.getLength() < minimumLen)
+		if (buffer.getLength() < minimumLen) {
 			return PARSER_NOT_ENOUGH_DATA;
+		}
 
 		/* RTP-MIDI starts with 4 bits of flags... */
 		uint8_t rtpMidiFlags = buffer.peek(i++);
@@ -68,18 +70,20 @@ public:
 		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_B)
 		{
 			minimumLen += 1;
-			if (buffer.getLength() < minimumLen)
+			if (buffer.getLength() < minimumLen) {
 				return PARSER_NOT_ENOUGH_DATA;
+			}
 
 			uint8_t	octet = buffer.peek(i++);
 			commandLength = (commandLength << 8) | octet;
 		}
 
 		minimumLen += commandLength;
-		if (buffer.getLength() < minimumLen)
+		if (buffer.getLength() < minimumLen) {
 			return PARSER_NOT_ENOUGH_DATA;
+		}
 
-		size_t midiPosition = i;
+		auto midiPosition = i;
 
 		i += commandLength;
 
@@ -87,8 +91,9 @@ public:
 		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_J) {
 
 			minimumLen += 1;
-			if (buffer.getLength() < minimumLen)
+			if (buffer.getLength() < minimumLen) {
 				return PARSER_NOT_ENOUGH_DATA;
+			}
 
 			/* lets get the main flags from the recovery journal header */
 			uint8_t flags = buffer.peek(i++);
@@ -102,9 +107,9 @@ public:
 				return PARSER_NOT_ENOUGH_DATA;
 
 			/* the checkpoint-sequence-number can be used to see if the recovery journal covers all lost events */
-			byte a = buffer.peek(i++);
-			byte b = buffer.peek(i++);
-			uint16_t checkPoint = ntohs(a, b);
+			a[0] = buffer.peek(i++);
+			a[1] = buffer.peek(i++);
+			uint16_t checkPoint = ntohs(a[0], a[1]);
 
 			/* do we have system journal? */
 			if (flags & RTP_MIDI_JS_FLAG_S) {
@@ -122,11 +127,11 @@ public:
 					return PARSER_NOT_ENOUGH_DATA;
 
 				for (auto j = 0; j < totalChannels; j++) {
-					byte a = buffer.peek(i++);
-					byte b = buffer.peek(i++);
-					byte c = buffer.peek(i++);
+					a[0] = buffer.peek(i++);
+					a[1] = buffer.peek(i++);
+					a[2] = buffer.peek(i++);
 
-					uint32_t chanflags = ntohl(0x00, a, b, c);
+					uint32_t chanflags = ntohl(0x00, a[0], a[1], a[2]);
 					uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
 					/* Do we have a program change chapter? */
@@ -161,13 +166,13 @@ public:
 						if (buffer.getLength() < minimumLen)
 							return PARSER_NOT_ENOUGH_DATA;
 
-						byte a = buffer.peek(i++);
-						byte b = buffer.peek(i++);
+						a[0] = buffer.peek(i++);
+						a[1] = buffer.peek(i++);
 
-						uint16_t header = ntohs(a,b);
+						const uint16_t header = ntohs(a[0], a[1]);
 						uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
-						uint8_t low  = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
-						uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
+						const uint8_t low  = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
+						const uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
 
 						// how many offbits octets do we have? 
 						uint8_t offbitCount;

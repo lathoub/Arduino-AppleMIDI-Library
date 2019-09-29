@@ -52,7 +52,7 @@ const byte amProtocolVersion[] = { 0x00, 0x00, 0x00, 0x02 };
 /* Apple network MIDI valid commands */
 const byte amInvitation[] = { 'I', 'N' };
 const byte amEndSession[] = { 'B', 'Y' };
-const byte amSyncronization[] = { 'C', 'K' };
+const byte amSynchronization[] = { 'C', 'K' };
 const byte amInvitationAccepted[] = { 'O', 'K' };
 const byte amInvitationRejected[] = { 'N', 'O' };
 const byte amReceiverFeedback[] = { 'R', 'S' };
@@ -82,13 +82,13 @@ typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
 	uint32_t	bitratelimit;
 } AppleMIDI_BitrateReceiveLimit_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_Syncronization
+typedef struct __attribute__((packed)) AppleMIDI_Synchronization
 {
 	ssrc_t		ssrc;
 	uint8_t		count;
 	uint8_t		padding[3];
 	timestamp_t	timestamps[3];
-} AppleMIDI_Syncronization_t;
+} AppleMIDI_Synchronization_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_EndSession
 {

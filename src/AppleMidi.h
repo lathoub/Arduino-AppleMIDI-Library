@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AppleMidi_Debug.h"
+
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 // this is an exported and stripped down version of the MIDI library by  47 blabla
@@ -16,7 +18,6 @@
 #include "rtpMidi_Parser.h"
 
 #include "endian.h"
-#include "AppleMidi_Debug.h"
 
 #include "AppleMidi_Namespace.h"
 
@@ -169,26 +170,24 @@ public:
 
 	void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void(*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
-
-    const char* sessionName() { return localName; };
     
 protected:
 	void readControlPackets();
 	void readDataPackets();
 
 	// AppleMIDI callbacks from parser
-	void ReceivedInvitation(AppleMIDI_Invitation& invitation, const amPortType& portType);
-	void ReceivedControlInvitation(AppleMIDI_Invitation& invitation);
-	void ReceivedDataInvitation(AppleMIDI_Invitation& invitation);
-	void ReceivedSyncronization(AppleMIDI_Syncronization& syncronization);
-	void ReceivedEndSession(AppleMIDI_EndSession& endSession);
+	void ReceivedInvitation(AppleMIDI_Invitation&, const amPortType&);
+	void ReceivedControlInvitation(AppleMIDI_Invitation&);
+	void ReceivedDataInvitation(AppleMIDI_Invitation&);
+	void ReceivedSynchronization(AppleMIDI_Synchronization&);
+	void ReceivedEndSession(AppleMIDI_EndSession&);
 	
 	// rtpMIDI callback from parser
 	void ReceivedMidi(byte data);
 
 	// Helpers
 	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, const byte* command, ssrc_t);
-	static void writeRtpMidiBuffer(UdpClass&ort, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint16_t, ssrc_t);
+	static void writeRtpMidiBuffer(UdpClass&, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint16_t, ssrc_t);
 
 #ifdef APPLEMIDI_INITIATOR
 	void ManagePendingInvites();

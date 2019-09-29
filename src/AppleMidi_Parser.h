@@ -162,7 +162,7 @@ public:
 
 			return i;
 		}
-		else if (0 == memcmp(command, amSyncronization, sizeof(amSyncronization)))
+		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
 			//N_DEBUG_PRINTLN("received Syncronization");
 
@@ -171,19 +171,19 @@ public:
 			if (buffer.getLength() < minimumLen) 
 				return PARSER_NOT_ENOUGH_DATA;
 
-			AppleMIDI_Syncronization syncronization;
+			AppleMIDI_Synchronization synchronization;
 
 			// The sender's synchronization source identifier.
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); 
-			syncronization.ssrc = ntohl(a[0], a[1], a[2], a[3]);
-			syncronization.count = buffer.peek(i++);
+			synchronization.ssrc = ntohl(a[0], a[1], a[2], a[3]);
+			synchronization.count = buffer.peek(i++);
 			buffer.peek(i++); buffer.peek(i++); buffer.peek(i++); // padding, unused
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); a[4] = buffer.peek(i++); a[5] = buffer.peek(i++); a[6] = buffer.peek(i++); a[7] = buffer.peek(i++); 
-			syncronization.timestamps[0] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+			synchronization.timestamps[0] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); a[4] = buffer.peek(i++); a[5] = buffer.peek(i++); a[6] = buffer.peek(i++); a[7] = buffer.peek(i++); 
-			syncronization.timestamps[1] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+			synchronization.timestamps[1] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
 			a[0] = buffer.peek(i++); a[1] = buffer.peek(i++); a[2] = buffer.peek(i++); a[3] = buffer.peek(i++); a[4] = buffer.peek(i++); a[5] = buffer.peek(i++); a[6] = buffer.peek(i++); a[7] = buffer.peek(i++); 
-			syncronization.timestamps[2] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+			synchronization.timestamps[2] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
 
 			// N_DEBUG_PRINT("Consumed ");
 			// N_DEBUG_PRINT(i);
@@ -191,7 +191,7 @@ public:
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
-			session->ReceivedSyncronization(syncronization);
+			session->ReceivedSynchronization(synchronization);
 
 			return i;
 		}
