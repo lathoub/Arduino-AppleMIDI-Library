@@ -9,10 +9,13 @@
 #include "midi_feat4_4_0/MIDI.h"
 
 #include "AppleMidi_Defs.h"
+#include "AppleMidi_Settings.h"
 
 #include "rtp_Defs.h"
 #include "rtpMidi_Defs.h"
 #include "rtpMidi_Clock.h"
+
+#include "AppleMidi_Participant.h"
 
 #include "AppleMidi_Parser.h"
 #include "rtpMidi_Parser.h"
@@ -21,16 +24,20 @@
 
 #include "AppleMidi_Namespace.h"
 
+#ifndef UDP_TX_PACKET_MAX_SIZE
+#define UDP_TX_PACKET_MAX_SIZE 24
+#endif
+
 BEGIN_APPLEMIDI_NAMESPACE
 
-template<class UdpClass>
-class AppleMidiTransport 
+template <class UdpClass, class _Settings = DefaultSettings>
+class AppleMidiTransport
 {
-	typedef size_t(*FPAPPLEMIDIPARSER)(RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*, const amPortType&);
-	typedef size_t(*FPRTPMIDIPARSER)(RingBuffer<byte, BUFFER_MAX_SIZE>&, AppleMidiTransport<UdpClass>*);
+public:
+	typedef _Settings Settings;
 
 public:
-	AppleMidiTransport(const char* name, const uint16_t port = CONTROL_PORT)
+	AppleMidiTransport(const char *name, const uint16_t port = CONTROL_PORT)
 	{
 		randomSeed(analogRead(0));
 
@@ -38,30 +45,26 @@ public:
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #ifdef OPTIONAL_MDNS
 		strncpy(this->bonjourName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
-#endif		
+#endif
 
-		for (auto i = 0; i < APPLEMIDI_MAX_PARTICIPANTS; i++)
-			participants[i] = APPLEMIDI_PARTICIPANT_SLOT_FREE;
+		for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
-		// attach the parsers
-		controlAppleMidiParser = &AppleMIDIParser<UdpClass>::Parser;
-
-		// Put the most used parser first
-		dataRtpMidiParsers = &rtpMIDIParser<UdpClass>::Parser;
-		dataAppleMidiParsers = &AppleMIDIParser<UdpClass>::Parser;
+		appleMIDIParser.session = this;
+		rtpMIDIParser.session = this;
 	};
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
 		// Each stream is distinguished by a unique SSRC value and has a unique sequence
-   		// number and RTP timestamp space.
+		// number and RTP timestamp space.
 		// this is our SSRC
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		// In an RTP MIDI stream, the 16-bit sequence number field is
-   		// initialized to a randomly chosen value and is incremented by one
-   		// (modulo 2^16) for each packet sent in the stream.
+		// initialized to a randomly chosen value and is incremented by one
+		// (modulo 2^16) for each packet sent in the stream.
 		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
 		this->sequenceNr = random(1, INT16_MAX) * 2;
 
@@ -75,7 +78,7 @@ protected:
 	bool beginTransmission()
 	{
 		// We can't start the writing process here, as we do not know the length
-		// of what we are to send. The RtpMidi protocol start with writing the 
+		// of what we are to send. The RtpMidi protocol start with writing the
 		// length of the buffer. So we'll copy to a buffer in write, and write
 		// everything in endTransmission
 		return true;
@@ -84,20 +87,21 @@ protected:
 	void write(byte byte)
 	{
 		// do we still have place in the buffer for 1 more character?
-		if ((outMidiBuffer.getLength()) + 1 > BUFFER_MAX_SIZE) {
+		if ((outMidiBuffer.getLength()) + 1 > Settings::MaxBufferSize)
+		{
 			// buffer is almost full, only 1 more character
-			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.peek(0)) {
+			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.peek(0))
+			{
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
 				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
 				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
 				// and start again with a fresh continuation of
 				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
-				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
+				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 			}
-			else {
-				// TODO: What is this very large message ???
-				N_DEBUG_PRINTLN("buffer to small in write, and not it's not sysex!!!");
-				// TODO: outMidiBuffer.dump();
+			else
+			{
+				F_DEBUG_PRINTLN("buffer to small in write, and it's not sysex!!!");
 			}
 		}
 
@@ -117,10 +121,13 @@ protected:
 
 	unsigned available()
 	{
+		// read packets from both UDP sockets and send the
+		// bytes to the parsers. Valid MIDI data will be placed
+		// in the inMidiBuffer buffer
 		readDataPackets();
 		readControlPackets();
 
-		// if any MIDI bytes came in (thru readDtataPackets), 
+		// if any MIDI bytes came in (thru readDtataPackets),
 		// make them available for the read command
 		return inMidiBuffer.getLength();
 	};
@@ -130,82 +137,80 @@ protected:
 	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
 
 private:
-	UdpClass		controlPort;
-	UdpClass		dataPort;
+	UdpClass controlPort;
+	UdpClass dataPort;
 
 	// reading from the network
-	RingBuffer<byte, BUFFER_MAX_SIZE> controlBuffer;
-	RingBuffer<byte, BUFFER_MAX_SIZE> dataBuffer;
+	RingBuffer<byte, Settings::MaxBufferSize> controlBuffer;
+	RingBuffer<byte, Settings::MaxBufferSize> dataBuffer;
 
-	FPAPPLEMIDIPARSER controlAppleMidiParser;
-	FPRTPMIDIPARSER dataRtpMidiParsers;
-	FPAPPLEMIDIPARSER dataAppleMidiParsers;
+	AppleMIDIParser<UdpClass, Settings> appleMIDIParser;
+	rtpMIDIParser<UdpClass, Settings> rtpMIDIParser;
 
 	// Allow the parser access to protected messages, to prevent
 	// outside world from calling public parser call back messages
-	friend class AppleMIDIParser<UdpClass>;
-	friend class rtpMIDIParser<UdpClass>;
+	friend class AppleMIDIParser<UdpClass, Settings>;
+	friend class rtpMIDIParser<UdpClass, Settings>;
 
-	void(*_connectedCallback)(uint32_t, const char*);
-	void(*_disconnectedCallback)(uint32_t);
+	void (*_connectedCallback)(uint32_t, const char *);
+	void (*_disconnectedCallback)(uint32_t);
 
 	// buffer for incoming and outgoing midi messages
-	RingBuffer<byte, BUFFER_MAX_SIZE> inMidiBuffer;
-	RingBuffer<byte, BUFFER_MAX_SIZE> outMidiBuffer;
-	
-	rtpMidi_Clock 	rtpMidiClock;
+	RingBuffer<byte, Settings::MaxBufferSize> inMidiBuffer;
+	RingBuffer<byte, Settings::MaxBufferSize> outMidiBuffer;
+
+	rtpMidi_Clock rtpMidiClock;
 
 	ssrc_t ssrc;
 
-	uint16_t sequenceNr; // counter for outgoing messages 
+	uint16_t sequenceNr; // counter for outgoing messages
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #ifdef OPTIONAL_MDNS
 	char bonjourName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #endif
-	uint16_t port; // controlPort, and dataPort = controlPort + 1
+	uint16_t port;
+
+private:
+	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
 
 public:
-	uint32_t participants[APPLEMIDI_MAX_PARTICIPANTS];
+	void setHandleConnected(void (*fptr)(uint32_t, const char *)) { _connectedCallback = fptr; }
+	void setHandleDisconnected(void (*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
-	void setHandleConnected(void(*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void(*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
-    
 protected:
 	void readControlPackets();
 	void readDataPackets();
 
 	// AppleMIDI callbacks from parser
-	void ReceivedInvitation(AppleMIDI_Invitation&, const amPortType&);
-	void ReceivedControlInvitation(AppleMIDI_Invitation&);
-	void ReceivedDataInvitation(AppleMIDI_Invitation&);
-	void ReceivedSynchronization(AppleMIDI_Synchronization&);
-	void ReceivedEndSession(AppleMIDI_EndSession&);
-	
+	void ReceivedInvitation(AppleMIDI_Invitation &, const amPortType &);
+	void ReceivedControlInvitation(AppleMIDI_Invitation &);
+	void ReceivedDataInvitation(AppleMIDI_Invitation &);
+	void ReceivedSynchronization(AppleMIDI_Synchronization &);
+	void ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback &);
+	void ReceivedEndSession(AppleMIDI_EndSession &);
+
 	// rtpMIDI callback from parser
 	void ReceivedMidi(byte data);
 
 	// Helpers
-	static void writeInvitation(UdpClass&, AppleMIDI_Invitation&, const byte* command, ssrc_t);
-	static void writeRtpMidiBuffer(UdpClass&, RingBuffer<byte, BUFFER_MAX_SIZE>&, uint16_t, ssrc_t);
+	static void writeInvitation(UdpClass &, AppleMIDI_Invitation &, const byte *command, ssrc_t);
+	static void writeRtpMidiBuffer(UdpClass &, RingBuffer<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t);
 
-#ifdef APPLEMIDI_INITIATOR
 	void ManagePendingInvites();
 	void ManageTiming();
-#endif
 
-	static int8_t getParticipantIndex(const uint32_t participants[], const ssrc_t ssrc);
+	Participant<Settings> *getParticipant(const ssrc_t ssrc);
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(Type, midiName, appleMidiName, SessionName) \
-	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
-	__amt appleMidiName(SessionName); \
-	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt&)appleMidiName);
+	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;              \
+	__amt appleMidiName(SessionName);                                         \
+	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
 
-#define APPLEMIDI_CREATE_DEFAULT_INSTANCE()               \
+#define APPLEMIDI_CREATE_DEFAULT_INSTANCE() \
 	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, "abcdefghijklmnopqrstuvwxyz");
 
 END_APPLEMIDI_NAMESPACE
 
 #include "AppleMidi.hpp"
-

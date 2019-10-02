@@ -135,7 +135,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 typedef struct __attribute__((packed)) RtpMIDI
 {
-	uint8_t		flags;
+	uint8_t flags;
 } RtpMIDI_t;
 
 END_APPLEMIDI_NAMESPACE

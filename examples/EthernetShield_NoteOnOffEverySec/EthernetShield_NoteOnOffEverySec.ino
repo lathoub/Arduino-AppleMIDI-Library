@@ -1,6 +1,6 @@
 #include <Ethernet.h>
 
-#define DEBUG 6
+#define DEBUG 0
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -52,7 +52,7 @@ void setup()
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
-  N_DEBUG_PRINTLN(F("Sending NoteOn/Off of note 45, every second"));
+  N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------

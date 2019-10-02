@@ -8,8 +8,8 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define USEC_PER_SEC 1000000
 #define NSEC_PER_SEC 1000000000
 
-typedef struct rtpMidi_Clock {
-
+typedef struct rtpMidi_Clock
+{
 	uint32_t clockRate_;
 
 	unsigned long startTime_;
@@ -20,7 +20,8 @@ typedef struct rtpMidi_Clock {
 		timestamp_ = initialTimeStamp;
 		clockRate_ = clockRate;
 
-		if (clockRate_ == 0) {
+		if (clockRate_ == 0)
+		{
 			clockRate_ = MIDI_SAMPLING_RATE_DEFAULT;
 		}
 
@@ -67,6 +68,5 @@ private:
 	}
 
 } RtpMidiClock_t;
-
 
 END_APPLEMIDI_NAMESPACE
