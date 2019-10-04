@@ -12,6 +12,10 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+#ifndef PARSER_NOT_ENOUGH_DATA
+#define PARSER_NOT_ENOUGH_DATA (Settings::MaxBufferSize + 1)
+#endif
+
 template <class UdpClass, class Settings>
 class AppleMidiTransport;
 
@@ -252,6 +256,25 @@ public:
 					/* Do we have a note command extras chapter? */
 					if (chanflags & RTP_MIDI_CJ_FLAG_E)
 					{
+						minimumLen += 1;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						/* first we need to get the flags & length of this chapter */
+						uint8_t header = buffer.peek(i++);
+						uint8_t log_count = header & RTP_MIDI_CJ_CHAPTER_E_MASK_LENGTH;
+
+						log_count++;
+
+						minimumLen += (log_count * 2);
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						for (auto j = 0; j < log_count; j++ ) {
+							uint8_t note = buffer.peek(i++) & 0x7f;
+							uint8_t octet = buffer.peek(i++);
+							uint8_t count_vel = octet & 0x7f;
+						}				
 					}
 
 					/* Do we have channel aftertouch chapter? */
@@ -267,6 +290,21 @@ public:
 					/* Do we have a poly aftertouch chapter? */
 					if (chanflags & RTP_MIDI_CJ_FLAG_A)
 					{
+						minimumLen += 2;
+						if (buffer.getLength() < minimumLen)
+							return PARSER_NOT_ENOUGH_DATA;
+
+						/* first we need to get the flags & length of this chapter */
+						uint8_t flags = buffer.peek(i++);
+						uint8_t log_count = flags & RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH;
+
+						/* count is encoded n+1 */
+						log_count++;	
+
+						for (auto j = 0; j < log_count; j++ ) {
+							uint8_t note = buffer.peek(i++);
+							uint8_t pressure = buffer.peek(i++);
+						}				
 					}
 				}
 			}

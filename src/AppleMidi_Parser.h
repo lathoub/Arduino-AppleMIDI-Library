@@ -10,7 +10,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+#ifndef PARSER_NOT_ENOUGH_DATA
 #define PARSER_NOT_ENOUGH_DATA (Settings::MaxBufferSize + 1)
+#endif
 
 template <class UdpClass, class Settings>
 class AppleMidiTransport;
