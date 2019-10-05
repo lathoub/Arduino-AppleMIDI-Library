@@ -70,7 +70,7 @@ void RingBuffer<DataType, Size>::write(const DataType *inData, size_t inSize)
 template <typename DataType, size_t Size>
 void RingBuffer<DataType, Size>::pop(size_t inNumberOfItems)
 {
-    for (auto i = 0; i < inNumberOfItems; ++i)
+    for (size_t i = 0; i < inNumberOfItems; ++i)
     {
         read();
     }

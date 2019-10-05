@@ -3,9 +3,12 @@
 #include "RingBuffer.h"
 #include "endian.h"
 
+
+#include "AppleMidi_Defs.h"
+#include "rtpMidi_Defs.h"
+#include "rtp_Defs.h"
 #include "midi_feat4_4_0/midi_Defs.h"
 
-#include "rtpMidi_Defs.h"
 #include "AppleMidi_Settings.h"
 
 #include "AppleMidi_Namespace.h"
@@ -329,7 +332,7 @@ public:
 	size_t decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
 	{
 		// ...followed by a length-field of at least 4 bits
-		uint16_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
+		size_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
 
 		/* see if we have small or large len-field */
 		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_B)
@@ -352,7 +355,7 @@ public:
 				/* for the first command we only have a delta-time if Z-Flag is set */
 				if ((cmdCount) || (rtpMidiFlags & RTP_MIDI_CS_FLAG_Z))
 				{
-					size_t consumed = decodeTime(buffer, i);
+					auto consumed = decodeTime(buffer, i);
 					commandLength -= consumed;
 					i += consumed;
 				}
@@ -381,7 +384,7 @@ public:
 					T_DEBUG_PRINTLN();
 #endif
 
-					for (auto j = 0; j < consumed; j++)
+					for (size_t j = 0; j < consumed; j++)
 						session->ReceivedMidi(buffer.peek(i + j));
 
 					commandLength -= consumed;

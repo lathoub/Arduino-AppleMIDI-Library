@@ -38,6 +38,7 @@ public:
 
 public:
 	AppleMidiTransport(const char *name, const uint16_t port = CONTROL_PORT)
+		: ssrc(0)
 	{
 		randomSeed(analogRead(0));
 
@@ -136,7 +137,7 @@ protected:
 	// the above functions should only be availble to MidiInterface
 	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
 
-private:
+private: // TODO: make private
 	UdpClass controlPort;
 	UdpClass dataPort;
 
@@ -150,10 +151,10 @@ private:
 	// Allow the parser access to protected messages, to prevent
 	// outside world from calling public parser call back messages
 	friend class AppleMIDIParser<UdpClass, Settings>;
-	friend class rtpMIDIParser<UdpClass, Settings>;
+	//friend class rtpMIDIParser<UdpClass, Settings>;
 
-	void (*_connectedCallback)(uint32_t, const char *);
-	void (*_disconnectedCallback)(uint32_t);
+	void (*_connectedCallback)(uint32_t, const char *) = NULL;
+	void (*_disconnectedCallback)(uint32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
 	RingBuffer<byte, Settings::MaxBufferSize> inMidiBuffer;
@@ -161,9 +162,9 @@ private:
 
 	rtpMidi_Clock rtpMidiClock;
 
-	ssrc_t ssrc;
+	ssrc_t ssrc = 0;
 
-	uint16_t sequenceNr; // counter for outgoing messages
+	uint16_t sequenceNr = 0; // counter for outgoing messages
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #ifdef OPTIONAL_MDNS
@@ -178,7 +179,7 @@ public:
 	void setHandleConnected(void (*fptr)(uint32_t, const char *)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
-protected:
+public:
 	void readControlPackets();
 	void readDataPackets();
 

@@ -16,7 +16,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
         auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (auto i = 0; i < bytesRead; i++)
+        for (size_t i = 0; i < bytesRead; i++)
             controlBuffer.write(packetBuffer[i]); // append
     }
 
@@ -35,7 +35,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     }
 #endif
 
-    uint8_t retVal = PARSER_UNEXPECTED_DATA;
+    size_t retVal = PARSER_UNEXPECTED_DATA;
     while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0))
     {
         retVal = appleMIDIParser.parse(controlBuffer, amPortType::Control);
@@ -68,7 +68,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (auto i = 0; i < bytesRead; i++)
+        for (size_t i = 0; i < bytesRead; i++)
             dataBuffer.write(packetBuffer[i]); // append
     }
 
@@ -87,7 +87,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     }
 #endif
 
-    uint8_t retVal = PARSER_UNEXPECTED_DATA;
+    size_t retVal = PARSER_UNEXPECTED_DATA;
     while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0))
     {
         retVal = rtpMIDIParser.parse(dataBuffer);
@@ -387,7 +387,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     port.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
-    uint16_t bufferLen = buffer.getLength();
+    auto bufferLen = buffer.getLength();
 
     RtpMIDI rtpMidi;
 
