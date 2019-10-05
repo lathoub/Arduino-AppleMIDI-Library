@@ -137,7 +137,7 @@ protected:
 	// the above functions should only be availble to MidiInterface
 	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
 
-private: // TODO: make private
+private:
 	UdpClass controlPort;
 	UdpClass dataPort;
 

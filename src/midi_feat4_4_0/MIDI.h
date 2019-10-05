@@ -41,14 +41,14 @@ the hardware interface, meaning you can use HardwareSerial, SoftwareSerial
 or ak47's Uart classes. The only requirement is that the class implements
 the begin, read, write and available methods.
  */
-template<class SerialPort, class _Settings = DefaultSettings>
+template<class Encoder, class _Settings = DefaultSettings>
 class MidiInterface
 {
 public:
     typedef _Settings Settings;
 
 public:
-    inline  MidiInterface(SerialPort& inSerial);
+    inline  MidiInterface(Encoder&);
     inline ~MidiInterface();
 
 public:
@@ -227,7 +227,7 @@ private:
     typedef Message<Settings::SysExMaxSize> MidiMessage;
 
 private:
-    SerialPort& mSerial;
+    Encoder& mEncoder;
 
 private:
     Channel         mInputChannel;
