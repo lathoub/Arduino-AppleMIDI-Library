@@ -38,7 +38,6 @@ public:
 
 public:
 	AppleMidiTransport(const char *name, const uint16_t port = CONTROL_PORT)
-		: ssrc(0)
 	{
 		randomSeed(analogRead(0));
 

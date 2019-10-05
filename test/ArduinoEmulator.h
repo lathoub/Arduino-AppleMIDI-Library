@@ -76,7 +76,12 @@ public:
 	};
 	size_t read(byte* buffer, size_t size)
 	{
-		return _buffer.read();
+		size = min(size, _buffer.getLength());
+		
+		for (size_t i = 0; i < size; i++)
+			buffer[i] = _buffer.read();
+
+		return size;
 	};
 	void write(uint8_t buffer) 
 	{

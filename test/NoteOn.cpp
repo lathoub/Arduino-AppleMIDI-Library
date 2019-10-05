@@ -6,11 +6,26 @@
 
 #include "..\src\AppleMidi.h"
 
-int main()
-{
-	APPLEMIDI_CREATE_DEFAULT_INSTANCE();
+APPLEMIDI_CREATE_DEFAULT_INSTANCE();
 
+void begin()
+{
 	// Create a session and wait for a remote host to connect to us
 	MIDI.begin(1);
+}
+
+void loop()
+{
 	MIDI.read();
 }
+
+int main()
+{
+	begin();
+
+	while (true)
+	{
+		loop();
+	}
+}
+
