@@ -33,8 +33,13 @@ BEGIN_APPLEMIDI_NAMESPACE
 template <class UdpClass, class _Settings = DefaultSettings>
 class AppleMidiTransport
 {
-public:
 	typedef _Settings Settings;
+
+	// Allow these internal classes access to our private members
+	// to avoid access by the .ino to internal messages
+	friend class AppleMIDIParser<UdpClass, Settings>;
+	friend class rtpMIDIParser<UdpClass, Settings>;
+	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
 
 public:
 	AppleMidiTransport(const char *name, const uint16_t port = CONTROL_PORT)
@@ -53,6 +58,9 @@ public:
 		appleMIDIParser.session = this;
 		rtpMIDIParser.session = this;
 	};
+
+	void setHandleConnected(void (*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
+	void setHandleDisconnected(void (*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -78,9 +86,9 @@ protected:
 	bool beginTransmission()
 	{
 		// We can't start the writing process here, as we do not know the length
-		// of what we are to send. The RtpMidi protocol start with writing the
-		// length of the buffer. So we'll copy to a buffer in write, and write
-		// everything in endTransmission
+		// of what we are to send (The RtpMidi protocol start with writing the
+		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
+		// and actually serialize for real in the endTransmission method
 		return true;
 	};
 
@@ -132,10 +140,6 @@ protected:
 		return inMidiBuffer.getLength();
 	};
 
-	// avoids the above functions to become availble to the .ino programmer,
-	// the above functions should only be availble to MidiInterface
-	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
-
 private:
 	UdpClass controlPort;
 	UdpClass dataPort;
@@ -146,11 +150,6 @@ private:
 
 	AppleMIDIParser<UdpClass, Settings> appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> rtpMIDIParser;
-
-	// Allow the parser access to protected messages, to prevent
-	// outside world from calling public parser call back messages
-	friend class AppleMIDIParser<UdpClass, Settings>;
-	//friend class rtpMIDIParser<UdpClass, Settings>;
 
 	void (*_connectedCallback)(uint32_t, const char *) = NULL;
 	void (*_disconnectedCallback)(uint32_t) = NULL;
@@ -171,14 +170,9 @@ private:
 #endif
 	uint16_t port;
 
-private:
 	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
 
-public:
-	void setHandleConnected(void (*fptr)(uint32_t, const char *)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void (*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
-
-public:
+private:
 	void readControlPackets();
 	void readDataPackets();
 
@@ -203,13 +197,16 @@ public:
 	Participant<Settings> *getParticipant(const ssrc_t ssrc);
 };
 
-#define APPLEMIDI_CREATE_INSTANCE(Type, midiName, appleMidiName, SessionName) \
-	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;              \
-	__amt appleMidiName(SessionName);                                         \
+#define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \
 	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
 
-#define APPLEMIDI_CREATE_DEFAULT_INSTANCE() \
-	APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, AppleMIDI, "abcdefghijklmnopqrstuvwxyz");
+#define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName) \
+	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
+	__amt AppleMIDI(sessionName, 5004);                        \
+	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
+
+#define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
+	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino");
 
 END_APPLEMIDI_NAMESPACE
 

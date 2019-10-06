@@ -35,32 +35,24 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     }
 #endif
 
-    size_t retVal = PARSER_UNEXPECTED_DATA;
-    while ((PARSER_UNEXPECTED_DATA == retVal) && (controlBuffer.getLength() > 0))
+    while (controlBuffer.getLength() > 0)
     {
-        retVal = appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        if (PARSER_NOT_ENOUGH_DATA == retVal)
+        int retVal = appleMIDIParser.parse(controlBuffer, amPortType::Control);
+        if (retVal > 0)
             break;
 
-        if (PARSER_UNEXPECTED_DATA == retVal)
-        {
-            T_DEBUG_PRINT("control buffer, parse error, removing 1 byte");
-            controlBuffer.pop(1);
-        }
-    }
+        if (retVal == PARSER_NOT_ENOUGH_DATA)
+            break;
 
-    if ((PARSER_NOT_ENOUGH_DATA == retVal) && controlBuffer.isFull())
-    {
-        F_DEBUG_PRINTLN(F("Not enough buffer space to read entire message."));
-        F_DEBUG_PRINT(F("Increase the current size in MaxBufferSize from "));
-        F_DEBUG_PRINT(Settings::MaxBufferSize);
-        F_DEBUG_PRINTLN(F(" to (at least) the next Power-of-Two in Settings"));
+		T_DEBUG_PRINT("control buffer, parse error, popping 1 byte ");
+		dataBuffer.pop(1);
     }
 }
 
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 {
+	// TODO: what if packetSize is larger than our buffer
     auto packetSize = dataPort.parsePacket();
     while (packetSize > 0)
     {
@@ -69,7 +61,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         packetSize -= bytesRead;
 
         for (size_t i = 0; i < bytesRead; i++)
-            dataBuffer.write(packetBuffer[i]); // append
+            dataBuffer.write(packetBuffer[i]);
     }
 
 #if DEBUG >= LOG_LEVEL_TRACE
@@ -87,29 +79,37 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     }
 #endif
 
-    size_t retVal = PARSER_UNEXPECTED_DATA;
-    while ((PARSER_UNEXPECTED_DATA == retVal) && (dataBuffer.getLength() > 0))
+    while (dataBuffer.getLength() > 0)
     {
-        retVal = rtpMIDIParser.parse(dataBuffer);
-        if (PARSER_NOT_ENOUGH_DATA == retVal)
+        int retVal1 = rtpMIDIParser.parse(dataBuffer);
+        if (retVal1 > 0)
             break;
-        retVal = appleMIDIParser.parse(dataBuffer, amPortType::Data);
-        if (PARSER_NOT_ENOUGH_DATA == retVal)
+        int retVal2 = appleMIDIParser.parse(dataBuffer, amPortType::Data);
+        if (retVal2 > 0)
             break;
 
-        if (PARSER_UNEXPECTED_DATA == retVal)
-        {
-            T_DEBUG_PRINT("data buffer, parse error, removing 1 byte");
-            dataBuffer.pop(1);
-        }
-    }
+		if ((retVal1 == PARSER_NOT_ENOUGH_DATA) && (retVal2 == PARSER_NOT_ENOUGH_DATA))
+		{
+			F_DEBUG_PRINTLN(F("either buffers have enough data"));
 
-    if ((PARSER_NOT_ENOUGH_DATA == retVal) && dataBuffer.isFull())
-    {
-        F_DEBUG_PRINTLN(F("Not enough buffer space to read entire message."));
-        F_DEBUG_PRINT(F("Increase the current size in MaxBufferSize from "));
-        F_DEBUG_PRINT(Settings::MaxBufferSize);
-        F_DEBUG_PRINTLN(F(" to (at least) the next Power-of-Two in Settings"));
+			// both have not enough data
+			if (dataBuffer.isFull())
+			{
+				// if it is a SysEx, we can shop it up....
+
+				F_DEBUG_PRINTLN(F("Not enough buffer space to read entire message."));
+				F_DEBUG_PRINT(F("Increase the current size in MaxBufferSize from "));
+				F_DEBUG_PRINT(Settings::MaxBufferSize);
+				F_DEBUG_PRINTLN(F(" to (at least) the next Power-of-Two in Settings"));
+			}
+			break;
+		}
+
+		if (retVal1 == PARSER_NOT_ENOUGH_DATA || retVal2 == PARSER_NOT_ENOUGH_DATA)
+			break; // one or the other buffer does not have enough data
+
+		T_DEBUG_PRINT("data buffer, parse error, popping 1 byte ");
+		dataBuffer.pop(1);
     }
 
 #ifdef APPLEMIDI_INITIATOR
@@ -389,7 +389,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     // only now the length is known
     auto bufferLen = buffer.getLength();
 
-    RtpMIDI rtpMidi;
+    RtpMIDI_t rtpMidi;
 
     if (bufferLen <= 0x0F)
     { // Short header

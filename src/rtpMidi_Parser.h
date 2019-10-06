@@ -3,8 +3,6 @@
 #include "RingBuffer.h"
 #include "endian.h"
 
-
-#include "AppleMidi_Defs.h"
 #include "rtpMidi_Defs.h"
 #include "rtp_Defs.h"
 #include "midi_feat4_4_0/midi_Defs.h"
@@ -16,7 +14,11 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 #ifndef PARSER_NOT_ENOUGH_DATA
-#define PARSER_NOT_ENOUGH_DATA (Settings::MaxBufferSize + 1)
+#define PARSER_NOT_ENOUGH_DATA 0
+#endif
+
+#ifndef PARSER_UNEXPECTED_DATA
+#define PARSER_UNEXPECTED_DATA -1
 #endif
 
 template <class UdpClass, class Settings>
@@ -28,11 +30,19 @@ class rtpMIDIParser
 public:
 	AppleMidiTransport<UdpClass, Settings> *session;
 
-	size_t parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
+	//  Parse the incoming string
+	// return:
+	// - return 0, when the parse does not have enough data
+	// - return a negative number, when the parser encounters invalid or
+	//      unexpected data. The negative number indicates the amount of bytes
+	//      that were processed. They can be purged safely
+	// - a positive number indicates the amount of valid bytes processed
+	// 
+	int parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
 	{
 		static byte a[8];
 
-		auto minimumLen = sizeof(Rtp);
+		auto minimumLen = sizeof(Rtp_t);
 		if (buffer.getLength() < minimumLen)
 		{
 			return PARSER_NOT_ENOUGH_DATA;
@@ -40,7 +50,7 @@ public:
 
 		size_t i = 0; // todo: rename to consumed
 
-		Rtp rtp;
+		Rtp_t rtp;
 		rtp.vpxcc = buffer.peek(i++);
 		rtp.mpayload = buffer.peek(i++);
 		a[0] = buffer.peek(i++);

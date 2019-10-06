@@ -28,8 +28,6 @@ const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24; // TODO: change with A
 #define MIDI_SAMPLING_RATE_192KHZ 192000
 #define MIDI_SAMPLING_RATE_DEFAULT 10000
 
-const static size_t PARSER_UNEXPECTED_DATA = 0;
-
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};
 

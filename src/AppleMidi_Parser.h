@@ -11,7 +11,11 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 #ifndef PARSER_NOT_ENOUGH_DATA
-#define PARSER_NOT_ENOUGH_DATA (Settings::MaxBufferSize + 1)
+#define PARSER_NOT_ENOUGH_DATA 0
+#endif
+
+#ifndef PARSER_UNEXPECTED_DATA
+#define PARSER_UNEXPECTED_DATA -1
 #endif
 
 template <class UdpClass, class Settings>
@@ -99,6 +103,7 @@ public:
 			a[2] = buffer.peek(i++);
 			a[3] = buffer.peek(i++);
 			invitation.initiatorToken = ntohl(a[0], a[1], a[2], a[3]);
+			
 			// The sender's synchronization source identifier.
 			a[0] = buffer.peek(i++);
 			a[1] = buffer.peek(i++);
@@ -204,6 +209,7 @@ public:
 			a[2] = buffer.peek(i++);
 			a[3] = buffer.peek(i++);
 			synchronization.ssrc = ntohl(a[0], a[1], a[2], a[3]);
+
 			synchronization.count = buffer.peek(i++);
 			buffer.peek(i++);
 			buffer.peek(i++);
@@ -217,6 +223,7 @@ public:
 			a[6] = buffer.peek(i++);
 			a[7] = buffer.peek(i++);
 			synchronization.timestamps[0] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+
 			a[0] = buffer.peek(i++);
 			a[1] = buffer.peek(i++);
 			a[2] = buffer.peek(i++);
@@ -226,6 +233,7 @@ public:
 			a[6] = buffer.peek(i++);
 			a[7] = buffer.peek(i++);
 			synchronization.timestamps[1] = ntohll(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+
 			a[0] = buffer.peek(i++);
 			a[1] = buffer.peek(i++);
 			a[2] = buffer.peek(i++);
