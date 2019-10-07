@@ -3,8 +3,9 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-namespace
-{
+#include "AppleMidi_Namespace.h"
+
+BEGIN_APPLEMIDI_NAMESPACE
 
 class Endian
 {
@@ -169,4 +170,4 @@ static int64_t htonll(int64_t number)
 		return number;
 }
 
-} // namespace
+END_APPLEMIDI_NAMESPACE
