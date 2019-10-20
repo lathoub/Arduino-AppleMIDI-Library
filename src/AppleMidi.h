@@ -55,8 +55,8 @@ public:
 		for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
 			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
-		appleMIDIParser.session = this;
-		rtpMIDIParser.session = this;
+		_appleMIDIParser.session = this;
+		_rtpMIDIParser.session = this;
 	};
 
 	void setHandleConnected(void (*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
@@ -148,8 +148,8 @@ private:
 	RingBuffer<byte, Settings::MaxBufferSize> controlBuffer;
 	RingBuffer<byte, Settings::MaxBufferSize> dataBuffer;
 
-	AppleMIDIParser<UdpClass, Settings> appleMIDIParser;
-	rtpMIDIParser<UdpClass, Settings> rtpMIDIParser;
+	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
+	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
 
 	void (*_connectedCallback)(uint32_t, const char *) = NULL;
 	void (*_disconnectedCallback)(uint32_t) = NULL;

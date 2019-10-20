@@ -2,8 +2,7 @@
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 
-char ssid[] = "The Hefty Network"; //  your network SSID (name)
-char pass[] = "0208196700";    // your network password (use for WPA, or use as key for WEP)
+#include "config.h"
 
 #define DEBUG 0
 #include <AppleMidi.h>

@@ -9,7 +9,7 @@ static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 {
-    auto packetSize = controlPort.parsePacket();
+    uint32_t packetSize = controlPort.parsePacket();
     while (packetSize > 0)
     {
         auto bytesToRead = min(packetSize, sizeof(packetBuffer));
@@ -37,7 +37,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 
     while (controlBuffer.getLength() > 0)
     {
-        int retVal = appleMIDIParser.parse(controlBuffer, amPortType::Control);
+        int retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal > 0)
             break;
 
@@ -53,7 +53,7 @@ template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 {
 	// TODO: what if packetSize is larger than our buffer
-    auto packetSize = dataPort.parsePacket();
+    uint32_t packetSize = dataPort.parsePacket();
     while (packetSize > 0)
     {
         auto bytesToRead = min(packetSize, sizeof(packetBuffer));
@@ -81,10 +81,10 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 
     while (dataBuffer.getLength() > 0)
     {
-        int retVal1 = rtpMIDIParser.parse(dataBuffer);
+        int retVal1 = _rtpMIDIParser.parse(dataBuffer);
         if (retVal1 > 0)
             break;
-        int retVal2 = appleMIDIParser.parse(dataBuffer, amPortType::Data);
+        int retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
         if (retVal2 > 0)
             break;
 
