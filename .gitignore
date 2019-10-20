@@ -3,3 +3,5 @@ examples/.DS_Store
 src/.DS_Store
 test/.vs
 test/Debug
+examples/ESP32_NoteOnOffEverySec/config.h
+src/.vscode

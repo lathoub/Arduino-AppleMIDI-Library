@@ -40,7 +40,7 @@ public:
 	// 
 	int parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
 	{
-		static byte a[8];
+		conversionBuffer cb;
 
 		auto minimumLen = sizeof(Rtp_t);
 		if (buffer.getLength() < minimumLen)
@@ -53,19 +53,20 @@ public:
 		Rtp_t rtp;
 		rtp.vpxcc = buffer.peek(i++);
 		rtp.mpayload = buffer.peek(i++);
-		a[0] = buffer.peek(i++);
-		a[1] = buffer.peek(i++);
-		rtp.sequenceNr = ntohs(a[0], a[1]);
-		a[0] = buffer.peek(i++);
-		a[1] = buffer.peek(i++);
-		a[2] = buffer.peek(i++);
-		a[3] = buffer.peek(i++);
-		rtp.timestamp = ntohl(a[0], a[1], a[2], a[3]);
-		a[0] = buffer.peek(i++);
-		a[1] = buffer.peek(i++);
-		a[2] = buffer.peek(i++);
-		a[3] = buffer.peek(i++);
-		rtp.ssrc = ntohl(a[0], a[1], a[2], a[3]);
+		
+		cb.buffer[0] = buffer.peek(i++);
+		cb.buffer[1] = buffer.peek(i++);
+		rtp.sequenceNr = ntohs(cb.value16);
+		cb.buffer[0] = buffer.peek(i++);
+		cb.buffer[1] = buffer.peek(i++);
+		cb.buffer[2] = buffer.peek(i++);
+		cb.buffer[3] = buffer.peek(i++);
+		rtp.timestamp = ntohl(cb.value32);
+		cb.buffer[0] = buffer.peek(i++);
+		cb.buffer[1] = buffer.peek(i++);
+		cb.buffer[2] = buffer.peek(i++);
+		cb.buffer[3] = buffer.peek(i++);
+		rtp.ssrc = ntohl(cb.value32);
 
 		uint8_t version = RTP_VERSION(rtp.vpxcc);
 		bool padding = RTP_PADDING(rtp.vpxcc);
@@ -156,9 +157,9 @@ public:
 				return PARSER_NOT_ENOUGH_DATA;
 
 			/* the checkpoint-sequence-number can be used to see if the recovery journal covers all lost events */
-			a[0] = buffer.peek(i++);
-			a[1] = buffer.peek(i++);
-			uint16_t checkPoint = ntohs(a[0], a[1]);
+			cb.buffer[0] = buffer.peek(i++);
+			cb.buffer[1] = buffer.peek(i++);
+			uint16_t checkPoint = ntohs(cb.value16);
 
 			/* do we have system journal? */
 			if (flags & RTP_MIDI_JS_FLAG_S)
@@ -180,11 +181,12 @@ public:
 
 				for (auto j = 0; j < totalChannels; j++)
 				{
-					a[0] = buffer.peek(i++);
-					a[1] = buffer.peek(i++);
-					a[2] = buffer.peek(i++);
+					cb.buffer[0] = buffer.peek(i++);
+					cb.buffer[1] = buffer.peek(i++);
+					cb.buffer[2] = buffer.peek(i++);
+					cb.buffer[3] = 0x00;
 
-					uint32_t chanflags = ntohl(0x00, a[0], a[1], a[2]);
+					uint32_t chanflags = ntohl(cb.value32);
 					uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
 					/* Do we have a program change chapter? */
@@ -222,9 +224,9 @@ public:
 						if (buffer.getLength() < minimumLen)
 							return PARSER_NOT_ENOUGH_DATA;
 
-						a[0] = buffer.peek(i++);
-						a[1] = buffer.peek(i++);
-						const uint16_t header = ntohs(a[0], a[1]);
+						cb.buffer[0] = buffer.peek(i++);
+						cb.buffer[1] = buffer.peek(i++);
+						const uint16_t header = ntohs(cb.value16);
 
 						uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
 						const uint8_t low = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
