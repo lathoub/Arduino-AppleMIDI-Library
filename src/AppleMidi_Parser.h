@@ -31,9 +31,9 @@ public:
 	{
 		conversionBuffer cb;
 
-		// N_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
-		// N_DEBUG_PRINT(buffer.getLength());
-		// N_DEBUG_PRINTLN(" bytes");
+		T_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
+		T_DEBUG_PRINT(buffer.getLength());
+		T_DEBUG_PRINTLN(" bytes");
 
 		byte signature[2]; // Signature "Magic Value" for Apple network MIDI session establishment
 		byte command[2];   // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
@@ -41,7 +41,7 @@ public:
 		size_t minimumLen = (sizeof(signature) + sizeof(command)); // Signature + Command
 		if (buffer.getLength() < minimumLen)
 		{
-			// N_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
+			W_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
 			return PARSER_NOT_ENOUGH_DATA;
 		}
 
@@ -51,10 +51,10 @@ public:
 		signature[1] = buffer.peek(i++);
 		if (0 != memcmp(signature, amSignature, sizeof(amSignature)))
 		{
-			// N_DEBUG_PRINT("Wrong signature: 0x");
-			// N_DEBUG_PRINT(signature[0], HEX);
-			// N_DEBUG_PRINT(signature[1], HEX);
-			// N_DEBUG_PRINTLN(" was expecting 0xFFFF");
+			// E_DEBUG_PRINT("Wrong signature: 0x");
+			// E_DEBUG_PRINT(signature[0], HEX);
+			// E_DEBUG_PRINT(signature[1], HEX);
+			// E_DEBUG_PRINTLN(" was expecting 0xFFFF");
 
 			return PARSER_UNEXPECTED_DATA;
 		}
@@ -68,7 +68,7 @@ public:
 #ifdef APPLEMIDI_LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			//N_DEBUG_PRINTLN("received Invitation");
+			N_DEBUG_PRINTLN("received Invitation");
 
 			byte protocolVersion[4];
 
@@ -111,10 +111,10 @@ public:
 			cb.buffer[3] = buffer.peek(i++);
 			invitation.ssrc = ntohl(cb.value32);
 
-			// N_DEBUG_PRINT("initiator: 0x");
-			// N_DEBUG_PRINTLN(invitation.initiatorToken, HEX);
-			// N_DEBUG_PRINT("senderSSRC: 0x");
-			// N_DEBUG_PRINTLN(invitation.ssrc, HEX);
+			V_DEBUG_PRINT("initiator: 0x");
+			V_DEBUG_PRINTLN(invitation.initiatorToken, HEX);
+			V_DEBUG_PRINT("senderSSRC: 0x");
+			V_DEBUG_PRINTLN(invitation.ssrc, HEX);
 
 			uint16_t bi = 0;
 			while ((i < buffer.getLength()) && (buffer.peek(i) != 0x00) && (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN))
@@ -127,15 +127,15 @@ public:
 				return PARSER_NOT_ENOUGH_DATA;
 			}
 
-			// N_DEBUG_PRINT("Consumed ");
-			// N_DEBUG_PRINT(i);
-			// N_DEBUG_PRINTLN(" bytes");
+			V_DEBUG_PRINT("Consumed ");
+			V_DEBUG_PRINT(i);
+			V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
-			// N_DEBUG_PRINT("Remaining bytes ");
-			// N_DEBUG_PRINT(buffer.getLength());
-			// N_DEBUG_PRINTLN(" bytes");
+			V_DEBUG_PRINT("Remaining bytes ");
+			V_DEBUG_PRINT(buffer.getLength());
+			V_DEBUG_PRINTLN(" bytes");
 
 			session->ReceivedInvitation(invitation, portType);
 
@@ -143,7 +143,7 @@ public:
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
-			//N_DEBUG_PRINTLN("received EndSession");
+			N_DEBUG_PRINTLN("received EndSession");
 
 			byte protocolVersion[4];
 
@@ -182,9 +182,9 @@ public:
 			cb.buffer[3] = buffer.peek(i++);
 			endSession.ssrc = ntohl(cb.value32);
 
-			// N_DEBUG_PRINT("Consumed ");
-			// N_DEBUG_PRINT(i);
-			// N_DEBUG_PRINTLN(" bytes");
+			V_DEBUG_PRINT("Consumed ");
+			V_DEBUG_PRINT(i);
+			V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -194,7 +194,7 @@ public:
 		}
 		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
-			//N_DEBUG_PRINTLN("received Syncronization");
+			N_DEBUG_PRINTLN("received Syncronization");
 
 			AppleMIDI_Synchronization synchronization;
 
@@ -244,9 +244,9 @@ public:
 			cb.buffer[7] = buffer.peek(i++);
 			synchronization.timestamps[2] = ntohll(cb.value64);
 
-			// N_DEBUG_PRINT("Consumed ");
-			// N_DEBUG_PRINT(i);
-			// N_DEBUG_PRINTLN(" bytes");
+			V_DEBUG_PRINT("Consumed ");
+			V_DEBUG_PRINT(i);
+			V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -277,18 +277,18 @@ public:
 			cb.buffer[1] = buffer.peek(i++);
 			receiverFeedback.dummy = ntohs(cb.value16);
 
-			// N_DEBUG_PRINT("ssrc: 0x");
-			// N_DEBUG_PRINTLN(ssrc, HEX);
-			// N_DEBUG_PRINT("sequenceNr: ");
-			// N_DEBUG_PRINTLN(sequenceNr);
+			V_DEBUG_PRINT("ssrc: 0x");
+			V_DEBUG_PRINTLN(ssrc, HEX);
+			V_DEBUG_PRINT("sequenceNr: ");
+			V_DEBUG_PRINTLN(sequenceNr);
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
 			session->ReceivedReceiverFeedback(receiverFeedback);
 
-			// N_DEBUG_PRINT("Consumed ");
-			// N_DEBUG_PRINT(i);
-			// N_DEBUG_PRINTLN(" bytes");
+			V_DEBUG_PRINT("Consumed ");
+			V_DEBUG_PRINT(i);
+			V_DEBUG_PRINTLN(" bytes");
 
 			return i;
 		}

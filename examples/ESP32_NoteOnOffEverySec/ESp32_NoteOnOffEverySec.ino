@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-#define DEBUG 0
+#define DEBUG 4
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -48,7 +48,7 @@ void setup()
   V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
-  MIDI.begin(1);
+  MIDI.begin(1); //listen on channel 1
 
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
@@ -74,7 +74,7 @@ void loop()
   {
     //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
     //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
-    //MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
+    MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
 
     t0 = millis();
     //   Serial.print(F(".");
@@ -85,8 +85,6 @@ void loop()
 
     MIDI.sendNoteOn(note, velocity, channel);
     MIDI.sendNoteOff(note, velocity, channel);
-
-    MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
   }
 }
 

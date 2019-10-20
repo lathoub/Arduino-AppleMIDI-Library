@@ -121,8 +121,6 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::ReceivedInvitation(AppleMIDI_Invitation &invitation, const amPortType &portType)
 {
-    T_DEBUG_PRINTLN(F("Received Invitation"));
-
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
     else
@@ -149,7 +147,7 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI
         participant = getParticipant(APPLEMIDI_PARTICIPANT_SLOT_FREE);
         if (NULL == participant)
         {
-            N_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
+            T_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
             writeInvitation(controlPort, invitation, amInvitationRejected, ssrc);
             return;
         }
