@@ -40,7 +40,7 @@ inline MidiInterface<Encoder, Settings>::MidiInterface(Encoder& inEncoder)
     , mPendingMessageIndex(0)
     , mCurrentRpnNumber(0xffff)
     , mCurrentNrpnNumber(0xffff)
-    , mThruActivated(true)
+    , mThruActivated(false)
     , mThruFilterMode(Thru::Full)
 {
     mNoteOffCallback                = 0;
@@ -103,7 +103,7 @@ void MidiInterface<Encoder, Settings>::begin(Channel inChannel)
     mMessage.data2   = 0;
 
     mThruFilterMode = Thru::Full;
-    mThruActivated  = true;
+    mThruActivated  = false;
 }
 
 // -----------------------------------------------------------------------------

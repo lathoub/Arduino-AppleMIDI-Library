@@ -127,15 +127,11 @@ public:
 				return PARSER_NOT_ENOUGH_DATA;
 			}
 
-			V_DEBUG_PRINT("Consumed ");
-			V_DEBUG_PRINT(i);
-			V_DEBUG_PRINTLN(" bytes");
+            V_DEBUG_PRINT("AppleMidi Consumed ");
+            V_DEBUG_PRINT(i);
+            V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
-
-			V_DEBUG_PRINT("Remaining bytes ");
-			V_DEBUG_PRINT(buffer.getLength());
-			V_DEBUG_PRINTLN(" bytes");
 
 			session->ReceivedInvitation(invitation, portType);
 
@@ -182,9 +178,9 @@ public:
 			cb.buffer[3] = buffer.peek(i++);
 			endSession.ssrc = ntohl(cb.value32);
 
-			V_DEBUG_PRINT("Consumed ");
-			V_DEBUG_PRINT(i);
-			V_DEBUG_PRINTLN(" bytes");
+            V_DEBUG_PRINT("AppleMidi Consumed ");
+            V_DEBUG_PRINT(i);
+            V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -244,9 +240,9 @@ public:
 			cb.buffer[7] = buffer.peek(i++);
 			synchronization.timestamps[2] = ntohll(cb.value64);
 
-			V_DEBUG_PRINT("Consumed ");
-			V_DEBUG_PRINT(i);
-			V_DEBUG_PRINTLN(" bytes");
+            V_DEBUG_PRINT("AppleMidi Consumed ");
+            V_DEBUG_PRINT(i);
+            V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
@@ -278,17 +274,17 @@ public:
 			receiverFeedback.dummy = ntohs(cb.value16);
 
 			V_DEBUG_PRINT("ssrc: 0x");
-			V_DEBUG_PRINTLN(ssrc, HEX);
+			V_DEBUG_PRINTLN(receiverFeedback.ssrc, HEX);
 			V_DEBUG_PRINT("sequenceNr: ");
-			V_DEBUG_PRINTLN(sequenceNr);
+			V_DEBUG_PRINTLN(receiverFeedback.sequenceNr);
+
+            V_DEBUG_PRINT("AppleMidi Consumed ");
+            V_DEBUG_PRINT(i);
+            V_DEBUG_PRINTLN(" bytes");
 
 			buffer.pop(i); // consume all the bytes that made up this message
 
 			session->ReceivedReceiverFeedback(receiverFeedback);
-
-			V_DEBUG_PRINT("Consumed ");
-			V_DEBUG_PRINT(i);
-			V_DEBUG_PRINTLN(" bytes");
 
 			return i;
 		}

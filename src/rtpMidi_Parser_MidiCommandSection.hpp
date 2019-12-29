@@ -42,9 +42,7 @@ size_t decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBuf
                 }
 
 #if DEBUG >= LOG_LEVEL_TRACE
-                T_DEBUG_PRINT(F("MIDI: consumed: "));
-                T_DEBUG_PRINT(consumed);
-                T_DEBUG_PRINT(F(" 0x"));
+                T_DEBUG_PRINT(F("MIDI data 0x"));
                 for (auto j = 0; j < consumed; j++)
                 {
                     T_DEBUG_PRINT(buffer.peek(i + j), HEX);

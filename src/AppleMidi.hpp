@@ -10,6 +10,11 @@ template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 {
     uint32_t packetSize = controlPort.parsePacket();
+    
+    // Only proceed if new data comes in
+    if (packetSize == 0)
+        return;
+
     while (packetSize > 0)
     {
         auto bytesToRead = min(packetSize, sizeof(packetBuffer));
@@ -39,12 +44,20 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     {
         int retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal > 0)
+        {
+            T_DEBUG_PRINTLN(F("OK"));
             break;
-
+        }
+        
         if (retVal == PARSER_NOT_ENOUGH_DATA)
+        {
+            T_DEBUG_PRINTLN(F("control PARSER_NOT_ENOUGH_DATA"));
             break;
-
-		T_DEBUG_PRINT("control buffer, parse error, popping 1 byte ");
+        }
+        
+        // we got something in the buffer that was unexpected.
+        // remove first byte and try again
+		T_DEBUG_PRINTLN(F("control buffer, parse error, popping 1 byte "));
 		dataBuffer.pop(1);
     }
 }
@@ -52,8 +65,14 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 {
-	// TODO: what if packetSize is larger than our buffer
+    // TODO: what if packetSize is larger than our buffer
+    
     uint32_t packetSize = dataPort.parsePacket();
+    
+    // Only proceed if new data comes in
+    if (packetSize == 0)
+        return;
+    
     while (packetSize > 0)
     {
         auto bytesToRead = min(packetSize, sizeof(packetBuffer));
@@ -63,7 +82,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         for (size_t i = 0; i < bytesRead; i++)
             dataBuffer.write(packetBuffer[i]);
     }
-
+    
 #if DEBUG >= LOG_LEVEL_TRACE
     if (dataBuffer.getLength() > 0)
     {
@@ -106,9 +125,13 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 		}
 
 		if (retVal1 == PARSER_NOT_ENOUGH_DATA || retVal2 == PARSER_NOT_ENOUGH_DATA)
-			break; // one or the other buffer does not have enough data
+        {
+            T_DEBUG_PRINTLN(F("data PARSER_NOT_ENOUGH_DATA"));
 
-		T_DEBUG_PRINT("data buffer, parse error, popping 1 byte ");
+            break; // one or the other buffer does not have enough data
+        }
+
+		T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
 		dataBuffer.pop(1);
     }
 
@@ -308,12 +331,6 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedEndSession(AppleMIDI_EndSes
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::ReceivedMidi(byte data)
-{
-    inMidiBuffer.write(data);
-}
-
-template <class UdpClass, class Settings>
 Participant<Settings> *AppleMidiTransport<UdpClass, Settings>::getParticipant(const ssrc_t ssrc)
 {
     for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
@@ -425,6 +442,12 @@ void AppleMidiTransport<UdpClass, Settings>::ManagePendingInvites()
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::ManageTiming()
 {
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiTransport<UdpClass, Settings>::ReceivedMidi(byte data)
+{
+    inMidiBuffer.write(data);
 }
 
 END_APPLEMIDI_NAMESPACE

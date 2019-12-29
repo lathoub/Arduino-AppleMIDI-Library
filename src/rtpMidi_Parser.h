@@ -98,22 +98,27 @@ public:
 			return PARSER_UNEXPECTED_DATA;
 		}
 
+        V_DEBUG_PRINTLN(F("RTP OK"));
+        V_DEBUG_PRINT(F("version: "));
+        V_DEBUG_PRINTLN(version);
+        V_DEBUG_PRINT(F("padding: "));
+        V_DEBUG_PRINTLN(padding);
+        V_DEBUG_PRINT(F("extension: "));
+        V_DEBUG_PRINTLN(extension);
+        V_DEBUG_PRINT(F("csrc_count: "));
+        V_DEBUG_PRINTLN(csrc_count);
+
 		bool marker = RTP_MARKER(rtp.mpayload);
 		uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
 		if (PAYLOADTYPE_RTPMIDI != payloadType)
 		{
+            V_DEBUG_PRINT(F("Unexpected Payload: "));
+            V_DEBUG_PRINTLN(payloadType);
+
 			return PARSER_UNEXPECTED_DATA;
 		}
 
-		V_DEBUG_PRINTLN(F("RTP OK"));
-		V_DEBUG_PRINT(F("version: "));
-		V_DEBUG_PRINTLN(version);
-		V_DEBUG_PRINT(F("padding: "));
-		V_DEBUG_PRINTLN(padding);
-		V_DEBUG_PRINT(F("extension: "));
-		V_DEBUG_PRINTLN(extension);
-		V_DEBUG_PRINT(F("csrc_count: "));
-		V_DEBUG_PRINTLN(csrc_count);
+        V_DEBUG_PRINTLN(F("Payload type RTP-MIDI"));
 
 		// Next byte is the flag
 		minimumLen += 1;
@@ -129,6 +134,9 @@ public:
         
 		/* RTP-MIDI starts with 4 bits of flags... */
 		uint8_t rtpMidiFlags = buffer.peek(i++);
+
+        V_DEBUG_PRINTLN(F("rtpMidiFlags"));
+        V_DEBUG_PRINTLN(rtpMidiFlags);
 
 		// ...followed by a length-field of at least 4 bits
 		uint16_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
@@ -146,7 +154,7 @@ public:
 			commandLength = (commandLength << 8) | octet;
 		}
 
-		V_DEBUG_PRINT(F("Command length: "));
+		V_DEBUG_PRINT(F("MIDI Command length: "));
 		V_DEBUG_PRINTLN(commandLength);
 
 		minimumLen += commandLength;
@@ -166,7 +174,8 @@ public:
 
 		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_J)
 		{
-            decodeJournalSection(buffer, i, minimumLen);
+            auto retVal = decodeJournalSection(buffer, i, minimumLen);
+            // TODO
 		}
 
 		// OK we have parsed all the data
@@ -176,7 +185,15 @@ public:
 		if (commandLength > 0)
 			decodeMidiSection(rtpMidiFlags, buffer, midiPosition);
 
+        V_DEBUG_PRINT(F("rtpMidi consumed: "));
+        V_DEBUG_PRINT(i);
+        V_DEBUG_PRINTLN(F(" bytes"));
+
 		buffer.pop(i); // consume all the bytes used so far
+
+        V_DEBUG_PRINT(F("Remaining bytes "));
+        V_DEBUG_PRINT(buffer.getLength());
+        V_DEBUG_PRINTLN(F(" bytes"));
 
 		return i;
 	}
