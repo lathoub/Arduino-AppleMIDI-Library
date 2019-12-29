@@ -379,7 +379,7 @@ public:
 
 					if (consumed == 0)
 					{
-						E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes ??!?!"));
+						E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
 						E_DEBUG_PRINT(F("decodeMidi commandLength is "));
 						E_DEBUG_PRINTLN(commandLength);
 					}
