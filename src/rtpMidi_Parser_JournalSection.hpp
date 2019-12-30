@@ -127,8 +127,6 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
             V_DEBUG_PRINTLN(chanflags);
             V_DEBUG_PRINT(F("Journal Length: "));
             V_DEBUG_PRINTLN(chanjourlen);
-            V_DEBUG_PRINT(F("i: "));
-            V_DEBUG_PRINTLN(i);
 
             auto j = i;
             i += (chanjourlen - 3); // -3 as the chanflags are included already
@@ -278,11 +276,6 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 //    uint8_t pressure = buffer.peek(j++);
                 //}
             }
-            
-            V_DEBUG_PRINT(F("i j: "));
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINT(" ");
-            V_DEBUG_PRINTLN(j);
         }
     }
 
