@@ -67,7 +67,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
     // By default, the payload format does not use enhanced Chapter C
     // encoding. In this default case, the H bit MUST be set to 0 for all
     // packets in the stream.
-    if ((flags & RTP_MIDI_JS_FLAG_H) != 0)
+    if (flags & RTP_MIDI_JS_FLAG_H)
     {
         // The H bit indicates if MIDI channels in the stream have been
         // configured to use the enhanced Chapter C encoding
@@ -79,7 +79,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
     // structures, including the recovery journal header. The S bit helps
     // receivers efficiently parse the recovery journal in the common case
     // of the loss of a single packet.
-    if ((flags & RTP_MIDI_JS_FLAG_S) != 0)
+    if (flags & RTP_MIDI_JS_FLAG_S)
     {
         V_DEBUG_PRINTLN(F("special encoding"));
         // special encoding
@@ -87,17 +87,17 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
     // If the Y header bit is set to 1, the system journal appears in the
     // recovery journal, directly following the recovery journal header.
-    if ((flags & RTP_MIDI_JS_FLAG_Y) != 0)
+    if (flags & RTP_MIDI_JS_FLAG_Y)
     {
-        V_DEBUG_PRINTLN(F("system journal"));
+        V_DEBUG_PRINTLN(F("System journal"));
     }
 
     // If the A header bit is set to 1, the recovery journal ends with a
     // list of (TOTCHAN + 1) channel journals (the 4-bit TOTCHAN header
     // field is interpreted as an unsigned integer).
-    if ((flags & RTP_MIDI_JS_FLAG_A) != 0)
+    if (flags & RTP_MIDI_JS_FLAG_A)
     {
-        V_DEBUG_PRINTLN(F("channel journal"));
+        V_DEBUG_PRINTLN(F("Channel journal"));
 
         /* At the same place we find the total channels encoded in the channel journal */
         uint8_t totalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
@@ -106,7 +106,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
         V_DEBUG_PRINTLN(totalChannels);
 
         // iterate through all the channels specified in header
-        for (auto j = 0; j < totalChannels; j++)
+        while (totalChannels-- > 0)
         {
             minimumLen += 3;
             if (buffer.getLength() < minimumLen)
@@ -123,6 +123,16 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
             
             uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
             
+            V_DEBUG_PRINT(F("Channel Flags: "));
+            V_DEBUG_PRINTLN(chanflags);
+            V_DEBUG_PRINT(F("Journal Length: "));
+            V_DEBUG_PRINTLN(chanjourlen);
+            V_DEBUG_PRINT(F("i: "));
+            V_DEBUG_PRINTLN(i);
+
+            auto j = i;
+            i += (chanjourlen - 3); // -3 as the chanflags are included already
+            
             /* Do we have a program change chapter? */
             if (chanflags & RTP_MIDI_CJ_FLAG_P)
             {
@@ -131,8 +141,6 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 minimumLen += 3;
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
-                
-                i += 3;
             }
 
             /* Do we have a control chapter? */
@@ -155,8 +163,6 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 minimumLen += 2;
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
-                
-                i += 2;
             }
 
             /* Do we have a note on/off chapter? */
@@ -168,8 +174,8 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
 
-                cb.buffer[0] = buffer.peek(i++);
-                cb.buffer[1] = buffer.peek(i++);
+                cb.buffer[0] = buffer.peek(j++);
+                cb.buffer[1] = buffer.peek(j++);
                 const uint16_t header = ntohs(cb.value16);
 
                 uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
@@ -194,21 +200,24 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                     // offbitCount should be 0 (empty)
                 }
 
+                V_DEBUG_PRINT(F("offbitCount: "));
+                V_DEBUG_PRINTLN(offbitCount);
+                V_DEBUG_PRINT(F("logListCount: "));
+                V_DEBUG_PRINTLN(logListCount);
+
                 minimumLen += ((logListCount * 2) + offbitCount);
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
 
-                i += ((logListCount * 2) + offbitCount);
-
                 // // Log List
                 //for (auto j = 0; j < logListCount; j++ ) {
-                //     buffer.peek(i++);
-                //     buffer.peek(i++);
+                //     buffer.peek(j++);
+                //     buffer.peek(j++);
                 //}
 
                 // // Offbit Octets
                 //for (auto j = 0; j < offbitCount; j++ ) {
-                //     buffer.peek(i++);
+                //     buffer.peek(j++);
                 //}
             }
 
@@ -231,11 +240,11 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
 
-                for (auto j = 0; j < log_count; j++ ) {
-                    uint8_t note = buffer.peek(i++) & 0x7f;
-                    uint8_t octet = buffer.peek(i++);
-                    uint8_t count_vel = octet & 0x7f;
-                }
+                //for (auto k = 0; k < log_count; k++ ) {
+                //    uint8_t note = buffer.peek(j++) & 0x7f;
+                //    uint8_t octet = buffer.peek(j++);
+                //    uint8_t count_vel = octet & 0x7f;
+                //}
             }
 
             /* Do we have channel aftertouch chapter? */
@@ -246,8 +255,6 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 minimumLen += 1;
                 if (buffer.getLength() < minimumLen)
                     return PARSER_NOT_ENOUGH_DATA;
-
-                i += 1;
             }
 
             /* Do we have a poly aftertouch chapter? */
@@ -260,17 +267,22 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                     return PARSER_NOT_ENOUGH_DATA;
 
                 /* first we need to get the flags & length of this chapter */
-                uint8_t flags = buffer.peek(i++);
+                uint8_t flags = buffer.peek(j++);
                 uint8_t log_count = flags & RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH;
 
                 /* count is encoded n+1 */
                 log_count++;
 
-                for (auto j = 0; j < log_count; j++ ) {
-                    uint8_t note = buffer.peek(i++);
-                    uint8_t pressure = buffer.peek(i++);
-                }
+                //for (auto k = 0; k < log_count; k++ ) {
+                //    uint8_t note = buffer.peek(j++);
+                //    uint8_t pressure = buffer.peek(j++);
+                //}
             }
+            
+            V_DEBUG_PRINT(F("i j: "));
+            V_DEBUG_PRINT(i);
+            V_DEBUG_PRINT(" ");
+            V_DEBUG_PRINTLN(j);
         }
     }
 

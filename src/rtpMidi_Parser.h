@@ -42,6 +42,10 @@ public:
 	{
 		conversionBuffer cb;
         
+        T_DEBUG_PRINT("RtpMIDI_Parser::Parser received ");
+        T_DEBUG_PRINT(buffer.getLength());
+        T_DEBUG_PRINTLN(" bytes");
+
         // [RFC3550] provides a complete description of the RTP header fields.
         // In this section, we clarify the role of a few RTP header fields for
         // MIDI applications. All fields are coded in network byte order (big-
@@ -98,16 +102,6 @@ public:
 			return PARSER_UNEXPECTED_DATA;
 		}
 
-        V_DEBUG_PRINTLN(F("RTP OK"));
-        V_DEBUG_PRINT(F("version: "));
-        V_DEBUG_PRINTLN(version);
-        V_DEBUG_PRINT(F("padding: "));
-        V_DEBUG_PRINTLN(padding);
-        V_DEBUG_PRINT(F("extension: "));
-        V_DEBUG_PRINTLN(extension);
-        V_DEBUG_PRINT(F("csrc_count: "));
-        V_DEBUG_PRINTLN(csrc_count);
-
 		bool marker = RTP_MARKER(rtp.mpayload);
 		uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
 		if (PAYLOADTYPE_RTPMIDI != payloadType)
@@ -118,7 +112,21 @@ public:
 			return PARSER_UNEXPECTED_DATA;
 		}
 
-        V_DEBUG_PRINTLN(F("Payload type RTP-MIDI"));
+        V_DEBUG_PRINTLN(F("RTP OK"));
+        V_DEBUG_PRINT(F("version: "));
+        V_DEBUG_PRINTLN(version);
+        V_DEBUG_PRINT(F("padding: "));
+        V_DEBUG_PRINTLN(padding);
+        V_DEBUG_PRINT(F("extension: "));
+        V_DEBUG_PRINTLN(extension);
+        V_DEBUG_PRINT(F("csrc_count: "));
+        V_DEBUG_PRINTLN(csrc_count);
+        V_DEBUG_PRINT(F("Sequence Nr: "));
+        V_DEBUG_PRINTLN(rtp.sequenceNr);
+        V_DEBUG_PRINT(F("Timestamp: "));
+        V_DEBUG_PRINTLN(rtp.timestamp);
+        V_DEBUG_PRINT(F("SSRC: "));
+        V_DEBUG_PRINTLN(rtp.ssrc);
 
 		// Next byte is the flag
 		minimumLen += 1;
