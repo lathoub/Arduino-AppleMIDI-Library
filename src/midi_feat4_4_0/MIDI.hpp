@@ -349,6 +349,25 @@ void MidiInterface<Encoder, Settings>::sendSysEx(unsigned inLength,
     }
 }
 
+/*! \brief Send an Active Sensing message.
+
+ */
+template<class Encoder, class Settings>
+void MidiInterface<Encoder, Settings>::sendActiveSensing()
+{
+    if (mEncoder.beginTransmission())
+    {
+        mEncoder.write(ActiveSensing);
+        mEncoder.endTransmission();
+    }
+
+    if (Settings::UseRunningStatus)
+    {
+        mRunningStatus_TX = InvalidType;
+    }
+}
+
+
 /*! \brief Send a Tune Request message.
 
  When a MIDI unit receives this message,

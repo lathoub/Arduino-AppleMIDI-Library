@@ -99,6 +99,8 @@ public:
     inline void sendTuneRequest();
     inline void sendRealTime(MidiType inType);
 
+    inline void sendActiveSensing();
+    
     inline void beginRpn(unsigned inNumber,
                          Channel inChannel);
     inline void sendRpnValue(unsigned inValue,
