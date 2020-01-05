@@ -53,7 +53,7 @@ struct DefaultSettings
     Must be disabled to send USB MIDI messages to a computer
     Warning: does not work with some hardware, enable with caution.
     */
-    static const bool UseRunningStatus = true;
+    static const bool UseRunningStatus = false;
 
     /*! NoteOn with 0 velocity should be handled as NoteOf.\n
     Set to true  to get NoteOff events when receiving null-velocity NoteOn messages.\n
