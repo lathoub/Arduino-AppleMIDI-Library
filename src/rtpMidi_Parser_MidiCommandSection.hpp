@@ -135,49 +135,32 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, u
     if (octet < 0xf0)
     {
         uint8_t type = (octet & 0xf0);
+#ifdef DEBUG
         uint8_t channel = (octet & 0x0f) + 1;
-
+#endif
+        
         switch (type)
         {
         case MIDI_NAMESPACE::MidiType::NoteOff:
-        {
-            uint8_t note = buffer.peek(i + consumed);
-            consumed++;
-            uint8_t velocity = buffer.peek(i + consumed);
-            consumed++;
-            //ext_consumed = decode_note_off( tvb, pinfo, tree, cmd_count, offset,  cmd_len, octet, *rsoffset, using_rs );
-        }
-        break;
-        case MIDI_NAMESPACE::MidiType::NoteOn:
-        {
-            uint8_t note = buffer.peek(i + consumed);
-            consumed++;
-            uint8_t velocity = buffer.peek(i + consumed);
-            consumed++;
-            //ext_consumed = decode_note_on( tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
-        }
-        break;
-        case MIDI_NAMESPACE::MidiType::AfterTouchPoly:
-        {
             consumed += 2;
-            //ext_consumed = decode_poly_pressure(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
-        }
-        break;
+            break;
+        case MIDI_NAMESPACE::MidiType::NoteOn:
+            consumed += 2;
+            break;
+        case MIDI_NAMESPACE::MidiType::AfterTouchPoly:
+            consumed += 2;
+            break;
         case MIDI_NAMESPACE::MidiType::ControlChange:
             consumed += 2;
-            //ext_consumed = decode_control_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
             break;
         case MIDI_NAMESPACE::MidiType::ProgramChange:
             consumed += 1;
-            //ext_consumed = decode_program_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchChannel:
             consumed += 1;
-            //ext_consumed = decode_channel_pressure(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
             break;
         case MIDI_NAMESPACE::MidiType::PitchBend:
             consumed += 2;
-            //ext_consumed = decode_pitch_bend_change(tvb, pinfo, tree, cmd_count, offset, cmd_len, octet, *rsoffset, using_rs );
             break;
         }
 
@@ -188,25 +171,19 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, u
     switch (octet)
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
-        //ext_consumed =  decode_sysex_start( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     case MIDI_NAMESPACE::MidiType::TimeCodeQuarterFrame:
         consumed += 1;
-        //ext_consumed =  decode_mtc_quarter_frame( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     case MIDI_NAMESPACE::MidiType::SongPosition:
         consumed += 2;
-        //ext_consumed =  decode_song_position_pointer( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     case MIDI_NAMESPACE::MidiType::SongSelect:
         consumed += 1;
-        //ext_consumed =  decode_song_select( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     case MIDI_NAMESPACE::MidiType::TuneRequest:
-        //ext_consumed =  decode_tune_request( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
-        //ext_consumed =  decode_sysex_end( tvb, pinfo, tree, cmd_count, offset, cmd_len );
         break;
     }
 

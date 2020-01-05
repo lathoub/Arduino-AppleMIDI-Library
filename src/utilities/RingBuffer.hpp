@@ -1,7 +1,5 @@
 #pragma once
 
-#include "AppleMidi_Namespace.h"
-
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <size_t N>
@@ -29,6 +27,12 @@ template <typename DataType, size_t Size>
 inline size_t RingBuffer<DataType, Size>::getLength() const
 {
     return mLength;
+}
+
+template <typename DataType, size_t Size>
+inline size_t RingBuffer<DataType, Size>::getFree() const
+{
+    return Size - mLength;
 }
 
 template <typename DataType, size_t Size>

@@ -57,8 +57,8 @@ private:
 	/// </summary>
 	uint32_t CalculateTimeSpent()
 	{
-		uint32_t ticks = Ticks() - startTime_;
-		uint32_t lapse = (ticks * clockRate_) / MSEC_PER_SEC;
+		auto ticks = Ticks() - startTime_;
+		auto lapse = (ticks * clockRate_) / MSEC_PER_SEC;
 		return lapse;
 	}
 

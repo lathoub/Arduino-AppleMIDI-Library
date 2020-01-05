@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RingBuffer.h"
+#include "utilities/RingBuffer.h"
 #include "endian.h"
 
 #include "AppleMidi_Defs.h"

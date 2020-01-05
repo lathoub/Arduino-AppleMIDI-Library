@@ -9,20 +9,22 @@ static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 {
-    uint32_t packetSize = controlPort.parsePacket();
-    
-    // Only proceed if new data comes in
-    if (packetSize == 0)
-        return;
+    auto packetSize = controlPort.parsePacket();
+    if (packetSize == 0) return;
 
-    while (packetSize > 0)
+    #if DEBUG >= LOG_LEVEL_NONE
+        if (controlBuffer.isFull())
+            T_DEBUG_PRINT(F("******** controlBuffer is full, must increase buffer size"));
+    #endif
+
+    while (packetSize > 0 && !controlBuffer.isFull())
     {
-        auto bytesToRead = min(packetSize, sizeof(packetBuffer));
+        auto bytesToRead = min( min(packetSize, controlBuffer.getFree()), sizeof(packetBuffer));
         auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (size_t i = 0; i < bytesRead; i++)
-            controlBuffer.write(packetBuffer[i]); // append
+        for (auto i = 0; i < bytesRead; i++)
+            controlBuffer.write(packetBuffer[i]);
     }
 
 #if DEBUG >= LOG_LEVEL_TRACE
@@ -36,13 +38,13 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
             T_DEBUG_PRINT(controlBuffer.peek(i), HEX);
             T_DEBUG_PRINT(" ");
         }
-        T_DEBUG_PRINTLN();
+        T_DEBUG_PRINTLN("");
     }
 #endif
 
     while (controlBuffer.getLength() > 0)
     {
-        int retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
+        auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal > 0)
         {
             T_DEBUG_PRINTLN(F("OK"));
@@ -65,24 +67,24 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 {
-    // TODO: what if packetSize is larger than our buffer
+    auto packetSize = dataPort.parsePacket();
+    if (packetSize == 0) return;
     
-    uint32_t packetSize = dataPort.parsePacket();
+#if DEBUG >= LOG_LEVEL_NONE
+    if (dataBuffer.isFull())
+        T_DEBUG_PRINT(F("******** dataBuffer is full, must increase buffer size"));
+#endif
     
-    // Only proceed if new data comes in
-    if (packetSize == 0)
-        return;
-    
-    while (packetSize > 0)
+    while (packetSize > 0 && !dataBuffer.isFull())
     {
-        auto bytesToRead = min(packetSize, sizeof(packetBuffer));
+        auto bytesToRead = min( min(packetSize, dataBuffer.getFree()), sizeof(packetBuffer));
         auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (size_t i = 0; i < bytesRead; i++)
+        for (auto i = 0; i < bytesRead; i++)
             dataBuffer.write(packetBuffer[i]);
     }
-    
+
 #if DEBUG >= LOG_LEVEL_TRACE
     if (dataBuffer.getLength() > 0)
     {
@@ -100,10 +102,10 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 
     while (dataBuffer.getLength() > 0)
     {
-        int retVal1 = _rtpMIDIParser.parse(dataBuffer);
+        auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
         if (retVal1 > 0)
             break;
-        int retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
+        auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
         if (retVal2 > 0)
             break;
 
@@ -114,7 +116,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 			// both have not enough data
 			if (dataBuffer.isFull())
 			{
-				// if it is a SysEx, we can shop it up....
+				// if it is a SysEx, we can chop it up....?
 
 				F_DEBUG_PRINTLN(F("Not enough buffer space to read entire message."));
 				F_DEBUG_PRINT(F("Increase the current size in MaxBufferSize from "));

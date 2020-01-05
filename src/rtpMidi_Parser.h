@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RingBuffer.h"
+#include "utilities/RingBuffer.h"
 #include "endian.h"
 
 #include "rtpMidi_Defs.h"
@@ -94,9 +94,11 @@ public:
 		rtp.ssrc = ntohl(cb.value32);
 
 		uint8_t version = RTP_VERSION(rtp.vpxcc);
+#ifdef DEBUG
 		bool padding = RTP_PADDING(rtp.vpxcc);
 		bool extension = RTP_EXTENSION(rtp.vpxcc);
 		uint8_t csrc_count = RTP_CSRC_COUNT(rtp.vpxcc);
+#endif
 		if (2 != version)
 		{
 			return PARSER_UNEXPECTED_DATA;

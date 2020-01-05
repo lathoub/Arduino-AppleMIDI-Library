@@ -28,19 +28,24 @@ public:
 			// rtp-midi and AppleMIDI messages
 
 			// 36 bytes
-			byte noteOnOff[] = { 0x80, 0x61, 0x27, 0x9e, 0x00, 0x1d, 0xb5, 0x36, 0x36, 0x09, 0x2f, 0x2a, // rtp
-								 0x46, // flag
-								 0x80, 0x3f, 0x00, // note  
-								 0x00, // delta time
-								 0x3d, 0x00, // note
-								 0x20, // journal flag
-								 0x27, 0x34, // sequence nr 
-								 0x00, 0x0e, 0x08, // channel 1 channel flag
-								 0x02, 0x59, // note on off
-								 0xbd, 0x40, 0xbf, 0x40, // Log list 
-								 0x15, 0xad, 0x5a, 0xdf, 0xa8 }; // offbit octets
-			for (size_t i = 0; i < sizeof(noteOnOff); i++)
-				write(noteOnOff[i]);
+			byte noteOnOff[] = {
+                                0x80, 0x61, 0x27, 0x9e, 0x00, 0x1d, 0xb5, 0x36, 0x36, 0x09, 0x2f, 0x2a, // rtp
+                                0x46, // flag
+                                0x80, 0x3f, 0x00, // note
+                                0x00, // delta time
+                                0x3d, 0x00, // note
+                                0x20, // journal flag
+                                0x27, 0x34, // sequence nr
+                                0x00, 0x0e, 0x08, // channel 1 channel flag
+                                0x02, 0x59, // note on off
+                                0xbd, 0x40, 0xbf, 0x40, // Log list
+                                0x15, 0xad, 0x5a, 0xdf, 0xa8 // offbit octets
+                            };
+            
+            for (size_t i = 0; i < sizeof(noteOnOff); i++)
+                write(noteOnOff[i]);
+            for (size_t i = 0; i < sizeof(noteOnOff); i++)
+                write(noteOnOff[i]);
 		}
 
 		if (port == 5005 && true)

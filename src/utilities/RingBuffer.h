@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AppleMidi_Namespace.h"
+#include "../AppleMidi_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -15,6 +15,7 @@ public:
     ~RingBuffer();
 
 public:
+    inline size_t getFree() const;
     inline size_t getLength() const;
     inline bool isEmpty() const;
     inline bool isFull() const;

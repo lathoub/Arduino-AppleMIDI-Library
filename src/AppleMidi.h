@@ -68,12 +68,16 @@ protected:
 		// Each stream is distinguished by a unique SSRC value and has a unique sequence
 		// number and RTP timestamp space.
 		// this is our SSRC
+        //
+        // NOTE: random(1, UINT32_MAX) doesn't seem to work!
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		// In an RTP MIDI stream, the 16-bit sequence number field is
 		// initialized to a randomly chosen value and is incremented by one
 		// (modulo 2^16) for each packet sent in the stream.
 		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+        //
+        // NOTE: random(1, UINT32_MAX) doesn't seem to work!
 		this->sequenceNr = random(1, INT16_MAX) * 2;
 
 		controlPort.begin(port);
@@ -200,13 +204,13 @@ private:
 #define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \
 	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
 
-#define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName) \
+#define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
 	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
-	__amt AppleMIDI(sessionName, 5004);                        \
+	__amt AppleMIDI(sessionName, port);                        \
 	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
-	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino");
+	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", 5004);
 
 END_APPLEMIDI_NAMESPACE
 
