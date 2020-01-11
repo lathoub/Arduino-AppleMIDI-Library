@@ -31,7 +31,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     if (controlBuffer.getLength() > 0)
     {
         T_DEBUG_PRINT(F("From control socket, Len: "));
-        T_DEBUG_PRINT(controlBuffer.getLength());
+        T_DEBUG_PRINTLN(controlBuffer.getLength());
         T_DEBUG_PRINT(F(" 0x"));
         for (auto i = 0; i < controlBuffer.getLength(); i++)
         {
@@ -45,22 +45,17 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     while (controlBuffer.getLength() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        if (retVal > 0)
+        switch (retVal)
         {
-            T_DEBUG_PRINTLN(F("OK"));
+        case parserReturn::Processed:
             break;
-        }
-        
-        if (retVal == PARSER_NOT_ENOUGH_DATA)
-        {
+        case parserReturn::NotEnoughData:
             T_DEBUG_PRINTLN(F("control PARSER_NOT_ENOUGH_DATA"));
             break;
+        case parserReturn::UnexpectedData:
+            dataBuffer.pop(1);
+            break;
         }
-        
-        // we got something in the buffer that was unexpected.
-        // remove first byte and try again
-		T_DEBUG_PRINTLN(F("control buffer, parse error, popping 1 byte "));
-		dataBuffer.pop(1);
     }
 }
 
@@ -89,7 +84,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     if (dataBuffer.getLength() > 0)
     {
         T_DEBUG_PRINT(F("From data socket, Len: "));
-        T_DEBUG_PRINT(dataBuffer.getLength());
+        T_DEBUG_PRINTLN(dataBuffer.getLength());
         T_DEBUG_PRINT(F(" 0x"));
         for (auto i = 0; i < dataBuffer.getLength(); i++)
         {
@@ -103,13 +98,13 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     while (dataBuffer.getLength() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
-        if (retVal1 > 0)
+        if (retVal1 == parserReturn::Processed)
             break;
         auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
-        if (retVal2 > 0)
+        if (retVal2 == parserReturn::Processed)
             break;
 
-		if ((retVal1 == PARSER_NOT_ENOUGH_DATA) && (retVal2 == PARSER_NOT_ENOUGH_DATA))
+        if ((retVal1 == parserReturn::NotEnoughData) && (retVal2 == parserReturn::NotEnoughData))
 		{
 			F_DEBUG_PRINTLN(F("either buffers have enough data"));
 
@@ -126,7 +121,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 			break;
 		}
 
-		if (retVal1 == PARSER_NOT_ENOUGH_DATA || retVal2 == PARSER_NOT_ENOUGH_DATA)
+        if (retVal1 == parserReturn::NotEnoughData || retVal2 == parserReturn::NotEnoughData)
         {
             T_DEBUG_PRINTLN(F("data PARSER_NOT_ENOUGH_DATA"));
 

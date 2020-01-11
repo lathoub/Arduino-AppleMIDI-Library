@@ -1,4 +1,4 @@
-size_t decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
+void decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
 {
     // ...followed by a length-field of at least 4 bits
     size_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
@@ -61,8 +61,6 @@ size_t decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBuf
             }
         }
     }
-
-    return i;
 }
 
 size_t decodeTime(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)

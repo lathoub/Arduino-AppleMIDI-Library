@@ -4,19 +4,12 @@
 #include "endian.h"
 
 #include "AppleMidi_Defs.h"
+
 #include "AppleMidi_Settings.h"
 
 #include "AppleMidi_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
-
-#ifndef PARSER_NOT_ENOUGH_DATA
-#define PARSER_NOT_ENOUGH_DATA 0
-#endif
-
-#ifndef PARSER_UNEXPECTED_DATA
-#define PARSER_UNEXPECTED_DATA -1
-#endif
 
 template <class UdpClass, class Settings>
 class AppleMidiTransport;
@@ -27,7 +20,7 @@ class AppleMIDIParser
 public:
 	AppleMidiTransport<UdpClass, Settings> *session;
 
-	size_t parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer, const amPortType &portType)
+	parserReturn parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer, const amPortType &portType)
 	{
 		conversionBuffer cb;
 
@@ -41,8 +34,8 @@ public:
 		size_t minimumLen = (sizeof(signature) + sizeof(command)); // Signature + Command
 		if (buffer.getLength() < minimumLen)
 		{
-			W_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
-			return PARSER_NOT_ENOUGH_DATA;
+			W_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA");
+			return parserReturn::NotEnoughData;
 		}
 
 		size_t i = 0; // TODO: rename to consumed
@@ -56,7 +49,7 @@ public:
 			// E_DEBUG_PRINT(signature[1], HEX);
 			// E_DEBUG_PRINTLN(" was expecting 0xFFFF");
 
-			return PARSER_UNEXPECTED_DATA;
+            return parserReturn::UnexpectedData;
 		}
 
 		command[0] = buffer.peek(i++);
@@ -75,8 +68,7 @@ public:
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
 			if (buffer.getLength() < minimumLen)
 			{
-				//N_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA ");
-				return PARSER_NOT_ENOUGH_DATA;
+                return parserReturn::NotEnoughData;
 			}
 
 			// 2 (stored in network byte order (big-endian))
@@ -92,7 +84,7 @@ public:
 				// N_DEBUG_PRINT(protocolVersion[2], HEX);
 				// N_DEBUG_PRINT(protocolVersion[3], HEX);
 				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
-				return PARSER_UNEXPECTED_DATA;
+                return parserReturn::UnexpectedData;
 			}
 
 			AppleMIDI_Invitation invitation;
@@ -122,10 +114,7 @@ public:
 			invitation.sessionName[bi++] = '\0';
 
 			if (i == buffer.getLength() || buffer.peek(i++) != 0x00)
-			{
-				//N_DEBUG_PRINTLN("PARSER_NOT_ENOUGH_DATA");
-				return PARSER_NOT_ENOUGH_DATA;
-			}
+                return parserReturn::NotEnoughData;
 
             V_DEBUG_PRINT("AppleMidi Consumed ");
             V_DEBUG_PRINT(i);
@@ -135,7 +124,7 @@ public:
 
 			session->ReceivedInvitation(invitation, portType);
 
-			return i;
+            return parserReturn::Processed;
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
@@ -145,7 +134,7 @@ public:
 
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
 			if (buffer.getLength() < minimumLen)
-				return PARSER_NOT_ENOUGH_DATA;
+                return parserReturn::NotEnoughData;
 
 			// 2 (stored in network byte order (big-endian))
 			protocolVersion[0] = buffer.peek(i++);
@@ -160,7 +149,7 @@ public:
 				// N_DEBUG_PRINT(protocolVersion[2], HEX);
 				// N_DEBUG_PRINT(protocolVersion[3], HEX);
 				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
-				return PARSER_UNEXPECTED_DATA;
+                return parserReturn::UnexpectedData;
 			}
 
 			AppleMIDI_EndSession endSession;
@@ -186,7 +175,7 @@ public:
 
 			session->ReceivedEndSession(endSession);
 
-			return i;
+            return parserReturn::Processed;
 		}
 		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
@@ -197,7 +186,7 @@ public:
 			// minimum amount : 4 bytes for sender SSRC, 1 byte for count, 3 bytes padding and 3 times 8 bytes
 			minimumLen += (4 + 1 + 3 + (3 * 8));
 			if (buffer.getLength() < minimumLen)
-				return PARSER_NOT_ENOUGH_DATA;
+                return parserReturn::NotEnoughData;
 
 			// The sender's synchronization source identifier.
 			cb.buffer[0] = buffer.peek(i++);
@@ -248,7 +237,7 @@ public:
 
 			session->ReceivedSynchronization(synchronization);
 
-			return i;
+            return parserReturn::Processed;
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
@@ -258,7 +247,7 @@ public:
 
 			minimumLen += (sizeof(receiverFeedback.ssrc) + sizeof(receiverFeedback.sequenceNr) + sizeof(receiverFeedback.dummy));
 			if (buffer.getLength() < minimumLen)
-				return PARSER_NOT_ENOUGH_DATA;
+                return parserReturn::NotEnoughData;
 
 			cb.buffer[0] = buffer.peek(i++);
 			cb.buffer[1] = buffer.peek(i++);
@@ -286,7 +275,7 @@ public:
 
 			session->ReceivedReceiverFeedback(receiverFeedback);
 
-			return i;
+            return parserReturn::Processed;
 		}
 #endif
 #ifdef APPLEMIDI_INITIATOR
@@ -303,7 +292,7 @@ public:
 			return 99;
 		}
 #endif
-		return PARSER_UNEXPECTED_DATA;
+        return parserReturn::UnexpectedData;
 	}
 };
 

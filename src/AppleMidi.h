@@ -172,7 +172,8 @@ private:
 #ifdef OPTIONAL_MDNS
 	char bonjourName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
 #endif
-	uint16_t port;
+    
+	uint16_t port = 5004;
 
 	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
 

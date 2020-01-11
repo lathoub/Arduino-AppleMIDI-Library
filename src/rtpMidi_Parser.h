@@ -13,14 +13,6 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-#ifndef PARSER_NOT_ENOUGH_DATA
-#define PARSER_NOT_ENOUGH_DATA 0
-#endif
-
-#ifndef PARSER_UNEXPECTED_DATA
-#define PARSER_UNEXPECTED_DATA -1
-#endif
-
 template <class UdpClass, class Settings>
 class AppleMidiTransport;
 
@@ -38,7 +30,7 @@ public:
 	//      that were processed. They can be purged safely
 	// - a positive number indicates the amount of valid bytes processed
 	// 
-	int parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
+	parserReturn parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
 	{
 		conversionBuffer cb;
         
@@ -69,9 +61,7 @@ public:
             
 		auto minimumLen = sizeof(Rtp_t);
 		if (buffer.getLength() < minimumLen)
-		{
-			return PARSER_NOT_ENOUGH_DATA;
-		}
+			return parserReturn::NotEnoughData;
 
 		size_t i = 0; // todo: rename to consumed
 
@@ -101,17 +91,19 @@ public:
 #endif
 		if (2 != version)
 		{
-			return PARSER_UNEXPECTED_DATA;
+            return parserReturn::UnexpectedData;
 		}
 
+#ifdef DEBUG
 		bool marker = RTP_MARKER(rtp.mpayload);
+#endif
 		uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
 		if (PAYLOADTYPE_RTPMIDI != payloadType)
 		{
             V_DEBUG_PRINT(F("Unexpected Payload: "));
             V_DEBUG_PRINTLN(payloadType);
 
-			return PARSER_UNEXPECTED_DATA;
+            return parserReturn::UnexpectedData;
 		}
 
         V_DEBUG_PRINTLN(F("RTP OK"));
@@ -133,9 +125,7 @@ public:
 		// Next byte is the flag
 		minimumLen += 1;
 		if (buffer.getLength() < minimumLen)
-		{
-			return PARSER_NOT_ENOUGH_DATA;
-		}
+            return parserReturn::NotEnoughData;
 
         // The payload MUST begin with the MIDI command section. The
         // MIDI command section codes a (possibly empty) list of timestamped
@@ -145,8 +135,8 @@ public:
 		/* RTP-MIDI starts with 4 bits of flags... */
 		uint8_t rtpMidiFlags = buffer.peek(i++);
 
-        V_DEBUG_PRINTLN(F("rtpMidiFlags"));
-        V_DEBUG_PRINTLN(rtpMidiFlags);
+        V_DEBUG_PRINT(F("rtpMidiFlags: 0x"));
+        V_DEBUG_PRINTLN(rtpMidiFlags, HEX);
 
 		// ...followed by a length-field of at least 4 bits
 		uint16_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
@@ -156,9 +146,7 @@ public:
 		{
 			minimumLen += 1;
 			if (buffer.getLength() < minimumLen)
-			{
-				return PARSER_NOT_ENOUGH_DATA;
-			}
+                return parserReturn::NotEnoughData;
 
 			uint8_t octet = buffer.peek(i++);
 			commandLength = (commandLength << 8) | octet;
@@ -169,9 +157,7 @@ public:
 
 		minimumLen += commandLength;
 		if (buffer.getLength() < minimumLen)
-		{
-			return PARSER_NOT_ENOUGH_DATA;
-		}
+            return parserReturn::NotEnoughData;
 
 		auto midiPosition = i;
 
@@ -185,7 +171,8 @@ public:
 		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_J)
 		{
             auto retVal = decodeJournalSection(buffer, i, minimumLen);
-            // TODO
+            if (retVal != parserReturn::Processed)
+                return retVal;
 		}
 
 		// OK we have parsed all the data
@@ -201,11 +188,11 @@ public:
 
 		buffer.pop(i); // consume all the bytes used so far
 
-        V_DEBUG_PRINT(F("Remaining bytes "));
+        V_DEBUG_PRINT(F("Remaining control bytes "));
         V_DEBUG_PRINT(buffer.getLength());
         V_DEBUG_PRINTLN(F(" bytes"));
 
-		return i;
+        return parserReturn::Processed;
 	}
 
     #include "rtpMidi_Parser_JournalSection.hpp"

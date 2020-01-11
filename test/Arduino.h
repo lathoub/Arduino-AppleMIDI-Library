@@ -2,31 +2,30 @@
 
 #include <iostream>
 
-#define HEX 1
+#define HEX 0
 #define DEC 1
 
 class _serial
 {
 public:
-    void printf(const char * format, ...)  __attribute__ ((format (printf, 2, 3)));
     void print(const char a[]) { std::cout << a; };
     void print(char a) { std::cout << a; };
-    void print(unsigned char a, int = DEC) { std::cout << a; };
-    void print(int a, int = DEC) { std::cout << a; };
-    void print(unsigned int a, int = DEC) { std::cout << a; };
-    void print(long a, int = DEC) { std::cout << a; };
-    void print(unsigned long a, int = DEC) { std::cout << a; };
+    void print(unsigned char a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << (int)a; };
+    void print(int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
+    void print(unsigned int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
+    void print(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
+    void print(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
     void print(double a, int = 2) { std::cout << a; };
     void print(struct tm * timeinfo, const char * format = NULL) {};
 
     void println(const char a[]) { std::cout << a << "\n"; };
     void println(char a) { std::cout << a << "\n"; };
-    void println(unsigned char a, int = DEC) { std::cout << a << "\n"; };
-    void println(int a, int = DEC) { std::cout << a << "\n"; };
-    void println(unsigned int a, int = DEC) { std::cout << a << "\n"; };
-    void println(long a, int = DEC) { std::cout << a << "\n"; };
-    void println(unsigned long a, int = DEC) { std::cout << a << "\n"; };
-    void println(double a, int = 2) { std::cout << a << "\n"; };
+    void println(unsigned char a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << (int)a << "\n"; };
+    void println(int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
+    void println(unsigned int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
+    void println(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
+    void println(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
+    void println(double a, int format = 2) { std::cout << a << "\n"; };
     void println(struct tm * timeinfo, const char * format = NULL) {};
     void println(void) { std::cout << "\n"; };
 };

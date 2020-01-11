@@ -17,7 +17,7 @@
 // o Chapters. Chapters describe recovery information for a single
 //   MIDI command type.
 //
-int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t &i, size_t &minimumLen)
+parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t &i, size_t &minimumLen)
 {
     conversionBuffer cb;
 
@@ -25,25 +25,23 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
     minimumLen += 1;
     if (buffer.getLength() < minimumLen)
-    {
-        return PARSER_NOT_ENOUGH_DATA;
-    }
+        return parserReturn::NotEnoughData;
 
     /* lets get the main flags from the recovery journal header */
     uint8_t flags = buffer.peek(i++);
 
-    V_DEBUG_PRINT(F("flags: "));
-    V_DEBUG_PRINTLN(flags);
+    V_DEBUG_PRINT(F("flags: 0x"));
+    V_DEBUG_PRINTLN(flags, HEX);
 
     // sequenceNr
     minimumLen += 2;
     if (buffer.getLength() < minimumLen)
-        return PARSER_NOT_ENOUGH_DATA;
+        return parserReturn::NotEnoughData;
 
     if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
     {
         V_DEBUG_PRINTLN(F("empty journal section"));
-        return i;
+        return parserReturn::Processed;
     }
     
     // The 16-bit Checkpoint Packet Seqnum header field codes the sequence
@@ -110,11 +108,8 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
         {
             minimumLen += 3;
             if (buffer.getLength() < minimumLen)
-            {
-                V_DEBUG_PRINTLN(F("not enough data......"));
-                return PARSER_NOT_ENOUGH_DATA;
-            }
-            
+                return parserReturn::NotEnoughData;
+
             cb.buffer[0] = 0x00;
             cb.buffer[1] = buffer.peek(i++);
             cb.buffer[2] = buffer.peek(i++);
@@ -138,7 +133,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 3;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
             }
 
             /* Do we have a control chapter? */
@@ -160,7 +155,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 2;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
             }
 
             /* Do we have a note on/off chapter? */
@@ -170,7 +165,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 2;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
 
                 cb.buffer[0] = buffer.peek(j++);
                 cb.buffer[1] = buffer.peek(j++);
@@ -189,7 +184,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
                 else if ((low == 15) && (high == 1))
                     offbitCount = 0;
                 else
-                    return PARSER_UNEXPECTED_DATA; // (LOW > HIGH) value pairs MUST NOT appear in the header.
+                    return parserReturn::UnexpectedData;
 
                 // special case -> no offbit octets, but 128 note-logs
                 if ((logListCount == 127) && (low == 15) && (high == 0))
@@ -205,7 +200,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += ((logListCount * 2) + offbitCount);
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
 
                 // // Log List
                 //for (auto j = 0; j < logListCount; j++ ) {
@@ -226,7 +221,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 1;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
 
                 /* first we need to get the flags & length of this chapter */
                 uint8_t header = buffer.peek(i++);
@@ -236,7 +231,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += (log_count * 2);
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
 
                 //for (auto k = 0; k < log_count; k++ ) {
                 //    uint8_t note = buffer.peek(j++) & 0x7f;
@@ -252,7 +247,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 1;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
             }
 
             /* Do we have a poly aftertouch chapter? */
@@ -262,7 +257,7 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
 
                 minimumLen += 2;
                 if (buffer.getLength() < minimumLen)
-                    return PARSER_NOT_ENOUGH_DATA;
+                    return parserReturn::NotEnoughData;
 
                 /* first we need to get the flags & length of this chapter */
                 uint8_t flags = buffer.peek(j++);
@@ -279,5 +274,5 @@ int decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size
         }
     }
 
-    return i;
+    return parserReturn::Processed;
 }
