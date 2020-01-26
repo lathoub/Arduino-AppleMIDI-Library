@@ -98,8 +98,6 @@ public:
     inline void sendSongSelect(DataByte inSongNumber);
     inline void sendTuneRequest();
     inline void sendRealTime(MidiType inType);
-
-    inline void sendActiveSensing();
     
     inline void beginRpn(unsigned inNumber,
                          Channel inChannel);
@@ -244,6 +242,8 @@ private:
     Thru::Mode      mThruFilterMode : 7;
     MidiMessage     mMessage;
 
+    unsigned long   mLastSendMessageTime;
+    bool            mActiveSensingActivated;
 
 private:
     inline StatusByte getStatus(MidiType inType,

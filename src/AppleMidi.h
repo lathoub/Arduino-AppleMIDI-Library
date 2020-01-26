@@ -83,7 +83,7 @@ protected:
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
 
-		uint32_t initialTimestamp = 0; // TODO: is this supposed to be zero?
+		uint32_t initialTimestamp = rtpMidiClock.Now();
 		rtpMidiClock.Init(initialTimestamp, MIDI_SAMPLING_RATE_DEFAULT);
 	}
 
@@ -106,7 +106,7 @@ protected:
 			{
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
 				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
-				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
+				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
 				// and start again with a fresh continuation of
 				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
 				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
@@ -123,7 +123,7 @@ protected:
 
 	void endTransmission()
 	{
-		writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc);
+		writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
 	};
 
 	byte read()
@@ -198,7 +198,7 @@ private:
 	// Helpers
     static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
     static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
-	static void writeRtpMidiBuffer(UdpClass &, RingBuffer<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t);
+	static void writeRtpMidiBuffer(UdpClass &, RingBuffer<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
 
 	void managePendingInvites();
 	void manageTiming();

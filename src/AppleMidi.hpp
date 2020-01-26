@@ -385,7 +385,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeReceiverFeedback(UdpClass &por
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RingBuffer<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc)
+void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RingBuffer<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
 
@@ -409,9 +409,9 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
 
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
     {
-        E_DEBUG_PRINTLN(F("Error port.beginPacket host: "));
-        E_DEBUG_PRINTLN(port.remoteIP());
-        E_DEBUG_PRINTLN(F(", port: "));
+        E_DEBUG_PRINT(F("Error port.beginPacket host: "));
+        E_DEBUG_PRINT(port.remoteIP());
+        E_DEBUG_PRINT(F(", port: "));
         E_DEBUG_PRINTLN(port.remotePort());
         return;
     }
@@ -424,7 +424,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
     // the time at which the events are to be played. Zero means "now." The time stamp
     // applies to the first MIDI byte in the packet.
-    rtp.timestamp = htonl(0UL);
+    rtp.timestamp = htonl(timestamp);
     rtp.sequenceNr = htons(sequenceNr);
     port.write((uint8_t *)&rtp, sizeof(rtp));
 

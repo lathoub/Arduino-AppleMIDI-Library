@@ -40,6 +40,8 @@ inline MidiInterface<Encoder, Settings>::MidiInterface(Encoder& inEncoder)
     , mPendingMessageIndex(0)
     , mCurrentRpnNumber(0xffff)
     , mCurrentNrpnNumber(0xffff)
+    , mLastSendMessageTime(0)
+    , mActiveSensingActivated(false)
     , mThruActivated(false)
     , mThruFilterMode(Thru::Full)
 {
@@ -95,6 +97,9 @@ void MidiInterface<Encoder, Settings>::begin(Channel inChannel)
 
     mCurrentRpnNumber  = 0xffff;
     mCurrentNrpnNumber = 0xffff;
+
+    mActiveSensingActivated = false;
+    mLastSendMessageTime = millis();
 
     mMessage.valid   = false;
     mMessage.type    = InvalidType;
@@ -178,6 +183,9 @@ void MidiInterface<Encoder, Settings>::send(MidiType inType,
     {
         sendRealTime(inType); // System Real-time and 1 byte.
     }
+    
+    if (mActiveSensingActivated)
+        mLastSendMessageTime = millis();
 }
 
 // -----------------------------------------------------------------------------
@@ -348,25 +356,6 @@ void MidiInterface<Encoder, Settings>::sendSysEx(unsigned inLength,
         mRunningStatus_TX = InvalidType;
     }
 }
-
-/*! \brief Send an Active Sensing message.
-
- */
-template<class Encoder, class Settings>
-void MidiInterface<Encoder, Settings>::sendActiveSensing()
-{
-    if (mEncoder.beginTransmission())
-    {
-        mEncoder.write(ActiveSensing);
-        mEncoder.endTransmission();
-    }
-
-    if (Settings::UseRunningStatus)
-    {
-        mRunningStatus_TX = InvalidType;
-    }
-}
-
 
 /*! \brief Send a Tune Request message.
 
@@ -689,6 +678,20 @@ inline bool MidiInterface<Encoder, Settings>::read()
 template<class Encoder, class Settings>
 inline bool MidiInterface<Encoder, Settings>::read(Channel inChannel)
 {
+    // Active Sensing. This message is intended to be sent
+    // repeatedly to tell the receiver that a connection is alive. Use
+    // of this message is optional. When initially received, the
+    // receiver will expect to receive another Active Sensing
+    // message each 300ms (max), and if it does not then it will
+    // assume that the connection has been terminated. At
+    // termination, the receiver will turn off all voices and return to
+    // normal (non- active sensing) operation.
+    if (mActiveSensingActivated && (millis() - mLastSendMessageTime) > 250)
+    {
+      sendRealTime(ActiveSensing);
+      mLastSendMessageTime = millis();
+    }
+    
     if (inChannel >= MIDI_CHANNEL_OFF)
         return false; // MIDI Input disabled.
 
