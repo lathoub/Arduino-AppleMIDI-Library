@@ -88,6 +88,77 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
     if (flags & RTP_MIDI_JS_FLAG_Y)
     {
         V_DEBUG_PRINTLN(F("System journal"));
+        
+        minimumLen += 2;
+        if (buffer.getLength() < minimumLen)
+            return parserReturn::NotEnoughData;
+
+        cb.buffer[0] = buffer.peek(i++);
+        cb.buffer[1] = buffer.peek(i++);
+        uint16_t systemflags = ntohs(cb.value16);
+        uint16_t sysjourlen  = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
+        
+        /* Do we have a simple system commands chapter? */
+        if (systemflags & RTP_MIDI_SJ_FLAG_D) {
+            V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_FLAG_D"));
+        }
+
+        /* Do we have a active sensing chapter? */
+        if (systemflags & RTP_MIDI_SJ_FLAG_V) {
+            V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_FLAG_V"));
+        }
+
+        /* Do we have a sequencer state commands chapter? */
+        if (systemflags & RTP_MIDI_SJ_FLAG_Q) {
+            V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_FLAG_Q"));
+            
+            minimumLen += 1;
+            if (buffer.getLength() < minimumLen)
+                return parserReturn::NotEnoughData;
+
+            unsigned int start_offset = i;
+            int len = 1;
+
+            /* first we need to get the flags of this chapter */
+            uint8_t sequencerState = buffer.peek(i++);
+
+            if (sequencerState & RTP_MIDI_SJ_CHAPTER_Q_FLAG_S) {
+                V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_CHAPTER_Q_FLAG_S not supported"));
+            }
+            if (sequencerState & RTP_MIDI_SJ_CHAPTER_Q_FLAG_N) {
+                V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_CHAPTER_Q_FLAG_N"));
+                // Active Start / Continue
+            }
+            if (sequencerState & RTP_MIDI_SJ_CHAPTER_Q_FLAG_D) {
+                V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_CHAPTER_Q_FLAG_D not supported"));
+            }
+            if (sequencerState & RTP_MIDI_SJ_CHAPTER_Q_FLAG_C) {
+                V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_CHAPTER_Q_FLAG_C"));
+                minimumLen += 2;
+                if (buffer.getLength() < minimumLen)
+                    return parserReturn::NotEnoughData;
+                
+                // Sequencer State Clock in the next 2 bytes.
+                i++;
+                i++;
+            }
+            if (sequencerState & RTP_MIDI_SJ_CHAPTER_Q_FLAG_T) {
+                V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_CHAPTER_Q_FLAG_T not supported"));
+                i += 3;
+            }
+
+        }
+
+        /* Do we have a MTC chapter? */
+        if (systemflags & RTP_MIDI_SJ_FLAG_F) {
+            V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_FLAG_F"));
+        }
+
+        /* Do we have a Sysex chapter? */
+        if (systemflags & RTP_MIDI_SJ_FLAG_X) {
+            V_DEBUG_PRINTLN(F("RTP_MIDI_SJ_FLAG_X"));
+        }
+
     }
 
     // If the A header bit is set to 1, the recovery journal ends with a
