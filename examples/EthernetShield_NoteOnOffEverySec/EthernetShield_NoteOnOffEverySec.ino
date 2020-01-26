@@ -9,7 +9,6 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned long t0 = millis();
 unsigned long t1 = millis();
 bool isConnected = false;
 
@@ -17,7 +16,7 @@ byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0
 byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
 byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", 5004);
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 // -----------------------------------------------------------------------------
 //
@@ -49,7 +48,8 @@ void setup()
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-
+  AppleMIDI.setHandleError(OnAppleMidiError);
+  
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
@@ -66,7 +66,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if (isConnected && (millis() - t1) > 500)
   {
     //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
     //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
@@ -79,8 +79,8 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-  //  MIDI.sendNoteOn(note, velocity, channel);
-    //   MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
+       MIDI.sendNoteOff(note, velocity, channel);
 
     //   MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
   }
@@ -105,6 +105,14 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 void OnAppleMidiDisconnected(uint32_t ssrc) {
   isConnected = false;
   N_DEBUG_PRINTLN(F("Disconnected"));
+}
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Error occorded during processing
+// -----------------------------------------------------------------------------
+void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
+  N_DEBUG_PRINTLN(F("ERROR"));
+  exit(1);
 }
 
 // -----------------------------------------------------------------------------

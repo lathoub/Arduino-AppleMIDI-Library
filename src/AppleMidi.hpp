@@ -53,6 +53,8 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
             T_DEBUG_PRINTLN(F("control PARSER_NOT_ENOUGH_DATA"));
             break;
         case parserReturn::UnexpectedData:
+            if (NULL != _errorCallback)
+                _errorCallback(ssrc, -2);
             dataBuffer.pop(1);
             break;
         }
@@ -129,7 +131,10 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
             break; // one or the other buffer does not have enough data
         }
 
-		T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
+        if (NULL != _errorCallback)
+            _errorCallback(ssrc, -3);
+
+        T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
 		dataBuffer.pop(1);
     }
 
@@ -170,6 +175,9 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI
         participant = getParticipant(APPLEMIDI_PARTICIPANT_SLOT_FREE);
         if (NULL == participant)
         {
+            if (NULL != _errorCallback)
+                _errorCallback(ssrc, -3);
+
             T_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
             writeInvitation(controlPort, invitation, amInvitationRejected, ssrc);
             return;
@@ -195,6 +203,9 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_In
     auto participant = getParticipant(invitation.ssrc);
     if (NULL == participant)
     {
+        if (NULL != _errorCallback)
+            _errorCallback(ssrc, -4);
+
         N_DEBUG_PRINTLN(F("Not free particiants slot, rejecting invitation"));
         writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
         return;
@@ -424,7 +435,8 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
     // the time at which the events are to be played. Zero means "now." The time stamp
     // applies to the first MIDI byte in the packet.
-    rtp.timestamp = htonl(timestamp);
+//    rtp.timestamp = htonl(timestamp);
+    rtp.timestamp = htonl(0);
     rtp.sequenceNr = htons(sequenceNr);
     port.write((uint8_t *)&rtp, sizeof(rtp));
 

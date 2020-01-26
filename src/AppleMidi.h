@@ -59,8 +59,9 @@ public:
 		_rtpMIDIParser.session = this;
 	};
 
-	void setHandleConnected(void (*fptr)(uint32_t, const char*)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void (*fptr)(uint32_t)) { _disconnectedCallback = fptr; }
+	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
+	void setHandleDisconnected(void (*fptr)(ssrc_t)) { _disconnectedCallback = fptr; }
+    void setHandleError(void (*fptr)(ssrc_t, uint32_t)) { _errorCallback = fptr; }
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -113,6 +114,8 @@ protected:
 			}
 			else
 			{
+                if (NULL != _errorCallback)
+                    _errorCallback(ssrc, -1);
 				F_DEBUG_PRINTLN("buffer to small in write, and it's not sysex!!!");
 			}
 		}
@@ -157,8 +160,9 @@ private:
 	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
 
-	void (*_connectedCallback)(uint32_t, const char *) = NULL;
-	void (*_disconnectedCallback)(uint32_t) = NULL;
+	void (*_connectedCallback)(ssrc_t, const char *) = NULL;
+	void (*_disconnectedCallback)(ssrc_t) = NULL;
+    void (*_errorCallback)(ssrc_t, uint32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
 	RingBuffer<byte, Settings::MaxBufferSize> inMidiBuffer;
