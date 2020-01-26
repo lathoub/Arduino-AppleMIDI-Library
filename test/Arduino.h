@@ -54,6 +54,7 @@ int main()
 #define __attribute__(A) /* do nothing */
 
 #include "../src/utilities/RingBuffer.h"
+#include "../src/utilities/Queue.h"
 
 #include "../src/midi_feat4_4_0/midi_Defs.h"
 

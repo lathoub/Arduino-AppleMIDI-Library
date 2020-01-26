@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utilities/RingBuffer.h"
+#include "utilities/Queue.h"
 #include "endian.h"
 
 #include "rtpMidi_Defs.h"
@@ -122,6 +123,8 @@ public:
         V_DEBUG_PRINT(F("SSRC: "));
         V_DEBUG_PRINTLN(rtp.ssrc);
 
+        session->ReceivedRtp(rtp);
+
 		// Next byte is the flag
 		minimumLen += 1;
 		if (buffer.getLength() < minimumLen)
@@ -133,16 +136,16 @@ public:
         // format.
         
 		/* RTP-MIDI starts with 4 bits of flags... */
-		uint8_t rtpMidiFlags = buffer.peek(i++);
+		uint8_t rtpMidi_Flags = buffer.peek(i++);
 
-        V_DEBUG_PRINT(F("rtpMidiFlags: 0x"));
-        V_DEBUG_PRINTLN(rtpMidiFlags, HEX);
+        V_DEBUG_PRINT(F("rtpMidi_Flags: 0x"));
+        V_DEBUG_PRINTLN(rtpMidi_Flags, HEX);
 
 		// ...followed by a length-field of at least 4 bits
-		uint16_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
+		uint16_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
 		/* see if we have small or large len-field */
-		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_B)
+		if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
 		{
 			minimumLen += 1;
 			if (buffer.getLength() < minimumLen)
@@ -168,7 +171,7 @@ public:
         // flag in the MIDI command section codes the presence of a journal
         // section in the payload.
 
-		if (rtpMidiFlags & RTP_MIDI_CS_FLAG_J)
+		if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
 		{
             auto retVal = decodeJournalSection(buffer, i, minimumLen);
             if (retVal != parserReturn::Processed)
@@ -180,7 +183,7 @@ public:
 
 		// Always a midi section
 		if (commandLength > 0)
-			decodeMidiSection(rtpMidiFlags, buffer, midiPosition);
+			decodeMidiSection(rtpMidi_Flags, buffer, midiPosition);
 
         V_DEBUG_PRINT(F("rtpMidi consumed: "));
         V_DEBUG_PRINT(i);

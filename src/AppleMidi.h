@@ -139,6 +139,8 @@ protected:
 		readDataPackets();
 		readControlPackets();
 
+        manageReceiverFeedback();
+
 		// if any MIDI bytes came in (thru readDtataPackets),
 		// make them available for the read command
 		return inMidiBuffer.getLength();
@@ -180,7 +182,7 @@ private:
 private:
 	void readControlPackets();
 	void readDataPackets();
-
+    
 	// AppleMIDI callbacks from parser
 	void ReceivedInvitation(AppleMIDI_Invitation &, const amPortType &);
 	void ReceivedControlInvitation(AppleMIDI_Invitation &);
@@ -190,14 +192,17 @@ private:
 	void ReceivedEndSession(AppleMIDI_EndSession &);
 
 	// rtpMIDI callback from parser
-	void ReceivedMidi(byte data);
+    void ReceivedRtp(const Rtp_t&);
+    void ReceivedMidi(byte data);
 
 	// Helpers
-	static void writeInvitation(UdpClass &, AppleMIDI_Invitation &, const byte *command, ssrc_t);
+    static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
+    static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
 	static void writeRtpMidiBuffer(UdpClass &, RingBuffer<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t);
 
-	void ManagePendingInvites();
-	void ManageTiming();
+	void managePendingInvites();
+	void manageTiming();
+    void manageReceiverFeedback();
 
 	Participant<Settings> *getParticipant(const ssrc_t ssrc);
 };

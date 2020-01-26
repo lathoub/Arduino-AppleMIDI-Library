@@ -13,6 +13,8 @@ class Participant
 public:
     ssrc_t ssrc;
     char sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
+    unsigned long receiverFeedbackStartTime;
+    uint16_t sequenceNr;
 };
 
 END_APPLEMIDI_NAMESPACE

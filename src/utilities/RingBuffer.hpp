@@ -16,11 +16,6 @@ RingBuffer<DataType, Size>::RingBuffer()
     memset(mData, DataType(0), Size * sizeof(DataType));
 }
 
-template <typename DataType, size_t Size>
-RingBuffer<DataType, Size>::~RingBuffer()
-{
-}
-
 // -----------------------------------------------------------------------------
 
 template <typename DataType, size_t Size>

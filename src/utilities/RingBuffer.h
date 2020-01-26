@@ -12,7 +12,6 @@ private:
 
 public:
     RingBuffer();
-    ~RingBuffer();
 
 public:
     inline size_t getFree() const;

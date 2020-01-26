@@ -1,10 +1,10 @@
-void decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
+void decodeMidiSection(uint8_t rtpMidi_Flags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
 {
     // ...followed by a length-field of at least 4 bits
-    size_t commandLength = rtpMidiFlags & RTP_MIDI_CS_MASK_SHORTLEN;
+    size_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
     /* see if we have small or large len-field */
-    if (rtpMidiFlags & RTP_MIDI_CS_FLAG_B)
+    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
     {
         uint8_t octet = buffer.peek(i++);
         commandLength = (commandLength << 8) | octet;
@@ -22,7 +22,7 @@ void decodeMidiSection(uint8_t rtpMidiFlags, RingBuffer<byte, Settings::MaxBuffe
         {
 
             /* for the first command we only have a delta-time if Z-Flag is set */
-            if ((cmdCount) || (rtpMidiFlags & RTP_MIDI_CS_FLAG_Z))
+            if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
             {
                 auto consumed = decodeTime(buffer, i);
                 commandLength -= consumed;

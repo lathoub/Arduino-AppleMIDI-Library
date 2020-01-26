@@ -23,6 +23,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CCD26B8D23DCD696004A7418 /* EthernetShield_NoteOnOffEverySec.ino */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = EthernetShield_NoteOnOffEverySec.ino; path = ../examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino; sourceTree = "<group>"; };
 		CCE329B523C2037C00A197D1 /* rtpMidi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rtpMidi; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCE329BF23C2040200A197D1 /* NoteOn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NoteOn.cpp; sourceTree = "<group>"; };
 		CCE329C023C2040200A197D1 /* Arduino.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Arduino.h; sourceTree = "<group>"; };
@@ -44,6 +45,7 @@
 		CCE329AC23C2037C00A197D1 = {
 			isa = PBXGroup;
 			children = (
+				CCD26B8D23DCD696004A7418 /* EthernetShield_NoteOnOffEverySec.ino */,
 				CCE329D623C28E9F00A197D1 /* src */,
 				CCE329C023C2040200A197D1 /* Arduino.h */,
 				CCE329C123C2040200A197D1 /* Ethernet.h */,

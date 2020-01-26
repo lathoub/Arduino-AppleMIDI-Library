@@ -83,13 +83,14 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 #if DEBUG >= LOG_LEVEL_TRACE
     if (dataBuffer.getLength() > 0)
     {
+        T_DEBUG_PRINTLN(F("------------------------------"));
         T_DEBUG_PRINT(F("From data socket, Len: "));
         T_DEBUG_PRINTLN(dataBuffer.getLength());
         T_DEBUG_PRINT(F(" 0x"));
         for (auto i = 0; i < dataBuffer.getLength(); i++)
         {
             T_DEBUG_PRINT(dataBuffer.peek(i), HEX);
-            T_DEBUG_PRINT(" ");
+            T_DEBUG_PRINT(", 0x");
         }
         T_DEBUG_PRINTLN();
     }
@@ -132,9 +133,11 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 		dataBuffer.pop(1);
     }
 
+    T_DEBUG_PRINTLN(F("------------------------------"));
+
 #ifdef APPLEMIDI_INITIATOR
-    ManagePendingInvites();
-    ManageTiming();
+    managePendingInvites();
+    manageTiming();
 #endif
 }
 
@@ -304,10 +307,22 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_S
     }
 }
 
+// The recovery journal mechanism requires that the receiver periodically
+// inform the sender of the sequence number of the most recently received packet.
+// This allows the sender to reduce the size of the recovery journal, to
+// encapsulate only those changes to the MIDI stream state occurring after
+// the specified packet number.
+//
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback &receiverFeedback)
 {
     T_DEBUG_PRINTLN(F("ReceivedReceiverFeedback"));
+    T_DEBUG_PRINT(F("senderSSRC: 0x"));
+    T_DEBUG_PRINT(receiverFeedback.ssrc, HEX);
+    T_DEBUG_PRINT(F(", sequence: "));
+    T_DEBUG_PRINTLN(receiverFeedback.sequenceNr);
+    
+    // As we do not keep any recovery journals, no action here
 }
 
 template <class UdpClass, class Settings>
@@ -337,7 +352,7 @@ Participant<Settings> *AppleMidiTransport<UdpClass, Settings>::getParticipant(co
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::writeInvitation(UdpClass &port, AppleMIDI_Invitation &invitation, const byte *command, ssrc_t ssrc)
+void AppleMidiTransport<UdpClass, Settings>::writeInvitation(UdpClass &port, AppleMIDI_Invitation_t &invitation, const byte *command, ssrc_t ssrc)
 {
     T_DEBUG_PRINTLN(F("writeInvitation"));
 
@@ -349,6 +364,21 @@ void AppleMidiTransport<UdpClass, Settings>::writeInvitation(UdpClass &port, App
         invitation.initiatorToken = htonl(invitation.initiatorToken);
         invitation.ssrc = htonl(ssrc);
         port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
+        port.endPacket();
+        port.flush();
+    }
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiTransport<UdpClass, Settings>::writeReceiverFeedback(UdpClass &port, AppleMIDI_ReceiverFeedback_t &receiverFeedback)
+{
+    T_DEBUG_PRINTLN(F("writeReceiverFeedback"));
+
+    if (port.beginPacket(port.remoteIP(), port.remotePort()))
+    {
+        port.write((uint8_t *)amSignature, sizeof(amSignature));
+        port.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
+        port.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
         port.endPacket();
         port.flush();
     }
@@ -432,13 +462,54 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::ManagePendingInvites()
+void AppleMidiTransport<UdpClass, Settings>::managePendingInvites()
 {
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::ManageTiming()
+void AppleMidiTransport<UdpClass, Settings>::manageTiming()
 {
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiTransport<UdpClass, Settings>::manageReceiverFeedback()
+{
+    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+    {
+        if (participants[i].ssrc == APPLEMIDI_PARTICIPANT_SLOT_FREE)
+            continue;
+        
+        if (participants[i].receiverFeedbackStartTime == 0)
+            continue;
+        
+        if ((millis() - participants[i].receiverFeedbackStartTime) > 1000)
+        {
+            AppleMIDI_ReceiverFeedback_t rf;
+            rf.ssrc = htonl(ssrc);
+            rf.sequenceNr = htons(participants[i].sequenceNr); // TODO RF
+            writeReceiverFeedback(controlPort, rf);
+
+            // reset the clock. It is started when we receive MIDI
+            participants[i].receiverFeedbackStartTime = 0;
+        }
+    }
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiTransport<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
+{
+    auto participant = getParticipant(rtp.ssrc);
+    if (NULL != participant)
+    {
+        if (participant->receiverFeedbackStartTime == 0)
+            participant->receiverFeedbackStartTime = millis();
+        participant->sequenceNr = rtp.sequenceNr;
+    }
+    else
+    {
+        W_DEBUG_PRINT(F("Received an RTP packet from an unknown ssrc: 0x"));
+        W_DEBUG_PRINTLN(rtp.ssrc, HEX);
+    }
 }
 
 template <class UdpClass, class Settings>
