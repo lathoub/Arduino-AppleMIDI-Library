@@ -486,7 +486,7 @@ void AppleMidiTransport<UdpClass, Settings>::manageReceiverFeedback()
         {
             AppleMIDI_ReceiverFeedback_t rf;
             rf.ssrc = htonl(ssrc);
-            rf.sequenceNr = htons(participants[i].sequenceNr); // TODO RF
+            rf.sequenceNr = htons(participants[i].sequenceNr);
             writeReceiverFeedback(controlPort, rf);
 
             // reset the clock. It is started when we receive MIDI
