@@ -15,6 +15,7 @@ public:
     void print(unsigned int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
     void print(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
     void print(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
+    void print(size_t a, int = 2) { std::cout << a; };
     void print(double a, int = 2) { std::cout << a; };
     void print(struct tm * timeinfo, const char * format = NULL) {};
 
@@ -25,6 +26,7 @@ public:
     void println(unsigned int a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
     void println(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
     void println(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
+    void println(size_t a, int format = 2) { std::cout << a << "\n"; };
     void println(double a, int format = 2) { std::cout << a << "\n"; };
     void println(struct tm * timeinfo, const char * format = NULL) {};
     void println(void) { std::cout << "\n"; };

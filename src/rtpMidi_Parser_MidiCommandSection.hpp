@@ -32,7 +32,7 @@ void decodeMidiSection(uint8_t rtpMidi_Flags, RingBuffer<byte, Settings::MaxBuff
             if (commandLength > 0)
             {
                 /* Decode a MIDI-command - if 0 is returned something went wrong */
-                size_t consumed = decodeMidi(buffer, i, runningstatus);
+                size_t consumed = decodeMidi(buffer, i, commandLength, runningstatus);
 
                 if (consumed == 0)
                 {
@@ -81,7 +81,7 @@ size_t decodeTime(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
     return consumed;
 }
 
-size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, uint8_t &runningstatus)
+size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t cmd_len, uint8_t &runningstatus)
 {
     size_t consumed = 0;
 
@@ -169,6 +169,24 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, u
     switch (octet)
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
+        while (cmd_len--) {
+            consumed++;
+            octet = buffer.peek(++i);
+            if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
+                return consumed;
+            else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
+                return consumed;
+        }
+        break;
+    case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
+        while (cmd_len--) {
+            consumed++;
+            octet = buffer.peek(++i);
+            if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // End
+                return consumed;
+            else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // middle
+                return consumed;
+        }
         break;
     case MIDI_NAMESPACE::MidiType::TimeCodeQuarterFrame:
         consumed += 1;
@@ -180,8 +198,6 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, u
         consumed += 1;
         break;
     case MIDI_NAMESPACE::MidiType::TuneRequest:
-        break;
-    case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
         break;
     }
 
