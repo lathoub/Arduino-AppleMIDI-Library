@@ -16,14 +16,16 @@ From the Arduino IDE Library Manager, search for AppleMIDI
 ## Basic Usage
 ```
 #include <Ethernet.h>
-#include "AppleMidi.h"
+#include <AppleMidi.h>
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE(); 
 
 void setup()
 {
-  // 
   MIDI.begin(1);
+  
+  // Optional
+  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
 }
 
 void loop()
@@ -33,6 +35,9 @@ void loop()
   
   // Send MIDI note 40 on, velocity 55 on channel 1
   MIDI.sendNoteOn(40, 55, 1);
+}
+
+void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 }
 ```
 More usages in the `examples` folder
