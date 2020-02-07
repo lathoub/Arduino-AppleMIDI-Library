@@ -15,23 +15,24 @@ From the Arduino IDE Library Manager, search for AppleMIDI
 
 ## Basic Usage
 ```
+#include <Ethernet.h>
 #include "AppleMidi.h"
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(); 
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE(); 
 
 void setup()
 {
-  // ...setup ethernet connection
-  AppleMIDI.begin("test"); // 'test' will show up as the session name
+  // 
+  MIDI.begin(1);
 }
 
 void loop()
 {
-  AppleMIDI.run();
-  // ...
+  // Listen to incoming notes
+  MIDI.read();
   
   // Send MIDI note 40 on, velocity 55 on channel 1
-  AppleMIDI.sendNoteOn(40, 55, 1);
+  MIDI.sendNoteOn(40, 55, 1);
 }
 ```
 More usages in the `examples` folder
