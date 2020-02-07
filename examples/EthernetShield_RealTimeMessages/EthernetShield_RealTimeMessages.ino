@@ -9,12 +9,7 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned long t1 = millis();
-bool isConnected = false;
-
-byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
-byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
+bool isConnected;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -49,9 +44,14 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
-  
-  MIDI.setHandleNoteOn(OnMidiNoteOn);
-  MIDI.setHandleNoteOff(OnMidiNoteOff);
+
+  MIDI.setHandleClock(OnMidiClock);
+  MIDI.setHandleStart(OnMidiStart);
+  MIDI.setHandleStop(OnMidiStop);
+  MIDI.setHandleContinue(OnMidiContinue);
+  MIDI.setHandleActiveSensing(OnMidiActiveSensing);
+  MIDI.setHandleSystemReset(OnMidiSystemReset);
+  MIDI.setHandleSongPosition(OnMidiSongPosition);
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
@@ -63,27 +63,6 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
-
-  // send a note every second
-  // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 500)
-  {
-    //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
-    //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
-    //MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-
-    t1 = millis();
-    //   Serial.print(F(".");
-
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-       MIDI.sendNoteOff(note, velocity, channel);
-
-    //   MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-  }
 }
 
 // ====================================================================================
@@ -118,23 +97,63 @@ void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+static void OnMidiClock() {
+  N_DEBUG_PRINTLN(F("Clock"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+static void OnMidiStart() {
+  N_DEBUG_PRINTLN(F("Start"));
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+static void OnMidiStop() {
+  N_DEBUG_PRINTLN(F("Stop"));
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+static void OnMidiContinue() {
+  N_DEBUG_PRINTLN(F("Continue"));
+}
+
+// -----------------------------------------------------------------------------
+// (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+// Active Sensing.
+// This message is intended to be sent repeatedly to tell the receiver that a
+// connection is alive. Use of this message is optional. When initially received,
+// the receiver will expect to receive another Active Sensing message each 300ms (max),
+// and if it does not then it will assume that the connection has been terminated.
+// At termination, the receiver will turn off all voices and return to normal
+// (non- active sensing) operation.
+// -----------------------------------------------------------------------------
+static void OnMidiActiveSensing() {
+  N_DEBUG_PRINTLN(F("ActiveSensing"));
+}
+
+// -----------------------------------------------------------------------------
+// (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+// Reset.
+// Reset all receivers in the system to power-up status. This should be used
+// sparingly, preferably under manual control. In particular, it should not be
+// sent on power-up.
+// -----------------------------------------------------------------------------
+static void OnMidiSystemReset() {
+  N_DEBUG_PRINTLN(F("SystemReset"));
+}
+
+// -----------------------------------------------------------------------------
+// (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
+// Song Position Pointer.
+// This is an internal 14 bit register that holds the number of MIDI beats
+// (1 beat= six MIDI clocks) since the start of the song. l is the LSB, m the MSB.
+// -----------------------------------------------------------------------------
+static void OnMidiSongPosition(unsigned a) {
+  N_DEBUG_PRINT (F("SongPosition: "));
+  N_DEBUG_PRINTLN(a);
 }

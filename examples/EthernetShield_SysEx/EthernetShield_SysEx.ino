@@ -9,12 +9,7 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned long t1 = millis();
-bool isConnected = false;
-
-byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
-byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
+bool isConnected;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -49,9 +44,8 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
-  
-  MIDI.setHandleNoteOn(OnMidiNoteOn);
-  MIDI.setHandleNoteOff(OnMidiNoteOff);
+
+  MIDI.setHandleSystemExclusive(OnMidiSysEx);
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
@@ -63,27 +57,6 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
-
-  // send a note every second
-  // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 500)
-  {
-    //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
-    //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
-    //MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-
-    t1 = millis();
-    //   Serial.print(F(".");
-
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-       MIDI.sendNoteOff(note, velocity, channel);
-
-    //   MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-  }
 }
 
 // ====================================================================================
@@ -118,23 +91,28 @@ void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+void OnMidiSysEx(byte* data, unsigned length) {
+  N_DEBUG_PRINT(F("SYSEX: ("));
+  N_DEBUG_PRINT(getSysExStatus(data, length));
+  N_DEBUG_PRINT(F(", "));
+  N_DEBUG_PRINT(length);
+  N_DEBUG_PRINT(F(" bytes) "));
+  for (uint16_t i = 0; i < length; i++)
+  {
+    N_DEBUG_PRINT(data[i], HEX);
+    N_DEBUG_PRINT(" ");
+  }
+  N_DEBUG_PRINTLN();
 }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+char getSysExStatus(const byte* data, uint16_t length)
+{
+  if (data[0] == 0xF0 && data[length - 1] == 0xF7)
+    return 'F'; // Full SysEx Command
+  else if (data[0] == 0xF0 && data[length - 1] != 0xF7)
+    return 'S'; // Start of SysEx-Segment
+  else if (data[0] != 0xF0 && data[length - 1] != 0xF7)
+    return 'M'; // Middle of SysEx-Segment
+  else
+    return 'E'; // End of SysEx-Segment
 }
