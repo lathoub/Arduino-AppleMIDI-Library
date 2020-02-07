@@ -54,6 +54,35 @@ static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
   N_DEBUG_PRINTLN(velocity);
 }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+char getSysExStatus(const byte* data, uint16_t length)
+{
+    if (data[0] == 0xF0 && data[length - 1] == 0xF7)
+        return 'F'; // Full SysEx Command
+    else if (data[0] == 0xF0 && data[length - 1] != 0xF7)
+        return 'S'; // Start of SysEx-Segment
+    else if (data[0] != 0xF0 && data[length - 1] != 0xF7)
+        return 'M'; // Middle of SysEx-Segment
+    else
+        return 'E'; // End of SysEx-Segment
+}
+
+static void OnAppleMidiSystemExclusive(byte* array, unsigned size) {
+    N_DEBUG_PRINT(F("Incoming SysEx: "));
+    N_DEBUG_PRINT(getSysExStatus(array, size));
+    N_DEBUG_PRINT(F(" 0x"));
+    unsigned i = 0;
+    for (; i < size - 1; i++)
+    {
+        N_DEBUG_PRINT(array[i], HEX);
+        N_DEBUG_PRINT(F(", 0x"));
+    }
+    N_DEBUG_PRINT(array[i], HEX);
+    N_DEBUG_PRINTLN();
+}
+
 void begin()
 {
     V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
@@ -67,9 +96,10 @@ void begin()
     
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-    
+
     MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
     MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+    MIDI.setHandleSystemExclusive(OnAppleMidiSystemExclusive);
 }
 
 void loop()
