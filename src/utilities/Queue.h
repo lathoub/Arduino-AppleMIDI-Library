@@ -5,9 +5,13 @@ class Queue {
   public:
     Queue();
         
-    inline size_t count();
-    void push(const DataType &item);
-    void push(const DataType *inData, size_t inSize);
+    inline size_t getFree() const;
+    inline size_t getLength() const;
+    inline bool isEmpty() const;
+    inline bool isFull() const;
+    
+    void write(const DataType &item);
+    void write(const DataType *inData, size_t inSize);
     DataType peek();
     DataType pop(size_t inNumberOfItems = 1);
     void pop(DataType *outData, size_t inSize);

@@ -13,13 +13,31 @@ Queue<DataType, Size>::Queue()
 }
 
 template <typename DataType, size_t Size>
-inline size_t Queue<DataType, Size>::count()
+inline size_t Queue<DataType, Size>::getFree() const
 {
   return _index;
 }
 
 template <typename DataType, size_t Size>
-void Queue<DataType, Size>::push(const DataType &item)
+inline size_t Queue<DataType, Size>::getLength() const
+{
+  return _index;
+}
+
+template <typename DataType, size_t Size>
+inline bool Queue<DataType, Size>::isEmpty() const
+{
+  return true;
+}
+
+template <typename DataType, size_t Size>
+inline bool Queue<DataType, Size>::isFull() const
+{
+  return true;
+}
+
+template <typename DataType, size_t Size>
+void Queue<DataType, Size>::write(const DataType &item)
 {
   if(_index < Size) { // Drops out when full
     _data[_index++] = item;
@@ -27,7 +45,7 @@ void Queue<DataType, Size>::push(const DataType &item)
 }
 
 template <typename DataType, size_t Size>
-void Queue<DataType, Size>::push(const DataType *inData, size_t inSize)
+void Queue<DataType, Size>::write(const DataType *inData, size_t inSize)
 {
 }
 
