@@ -1,64 +1,37 @@
-void decodeMidiSection(uint8_t rtpMidi_Flags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i)
+void decodeMidiSection(uint8_t rtpMidi_Flags, RingBuffer<byte, Settings::MaxBufferSize> &buffer, uint16_t commandLength, size_t i)
 {
-    // ...followed by a length-field of at least 4 bits
-    size_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
+    int cmdCount = 0;
 
-    /* see if we have small or large len-field */
-    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
+    uint8_t runningstatus = 0;
+
+    /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
+    while (commandLength)
     {
-        uint8_t octet = buffer.peek(i++);
-        commandLength = (commandLength << 8) | octet;
-    }
 
-    /* if we have a command-section -> dissect it */
-    if (commandLength > 0)
-    {
-        int cmdCount = 0;
-
-        uint8_t runningstatus = 0;
-
-        /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
-        while (commandLength)
+        /* for the first command we only have a delta-time if Z-Flag is set */
+        if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
+            auto consumed = decodeTime(buffer, i);
+            commandLength -= consumed;
+            i += consumed;
+        }
 
-            /* for the first command we only have a delta-time if Z-Flag is set */
-            if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
+        if (commandLength > 0)
+        {
+            /* Decode a MIDI-command - if 0 is returned something went wrong */
+            size_t consumed = decodeMidi(buffer, i, commandLength, runningstatus);
+
+            if (consumed == 0)
             {
-                auto consumed = decodeTime(buffer, i);
-                commandLength -= consumed;
-                i += consumed;
+                E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
+                E_DEBUG_PRINT(F("decodeMidi commandLength is "));
+                E_DEBUG_PRINTLN(commandLength);
             }
 
-            if (commandLength > 0)
-            {
-                /* Decode a MIDI-command - if 0 is returned something went wrong */
-                size_t consumed = decodeMidi(buffer, i, commandLength, runningstatus);
+            commandLength -= consumed;
+            i += consumed;
 
-                if (consumed == 0)
-                {
-                    E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
-                    E_DEBUG_PRINT(F("decodeMidi commandLength is "));
-                    E_DEBUG_PRINTLN(commandLength);
-                }
-
-#if DEBUG >= LOG_LEVEL_TRACE
-                T_DEBUG_PRINT(F("MIDI data 0x"));
-                for (auto j = 0; j < consumed; j++)
-                {
-                    T_DEBUG_PRINT(buffer.peek(i + j), HEX);
-                    T_DEBUG_PRINT(" ");
-                }
-                T_DEBUG_PRINTLN();
-#endif
-
-                for (size_t j = 0; j < consumed; j++)
-                    session->ReceivedMidi(buffer.peek(i + j));
-
-                commandLength -= consumed;
-                i += consumed;
-
-                cmdCount++;
-            }
+            cmdCount++;
         }
     }
 }
@@ -85,7 +58,7 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, s
 {
     size_t consumed = 0;
 
-    uint8_t octet = buffer.peek(i);
+    auto octet = buffer.peek(i);
     bool using_rs;
 
     /* midi realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
@@ -169,14 +142,7 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, s
     switch (octet)
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
-        while (cmd_len--) {
-            consumed++;
-            octet = buffer.peek(++i);
-            if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
-                return consumed;
-            else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
-                return consumed;
-        }
+        consumed = decodeMidiSysEx(buffer, i , cmd_len);
         break;
     case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
         while (cmd_len--) {
@@ -201,5 +167,47 @@ size_t decodeMidi(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, s
         break;
     }
 
+#if DEBUG >= LOG_LEVEL_TRACE
+    T_DEBUG_PRINT(F("MIDI data 0x"));
+    for (auto j = 0; j < consumed; j++)
+    {
+        T_DEBUG_PRINT(buffer.peek(i + j), HEX);
+        T_DEBUG_PRINT(" ");
+    }
+    T_DEBUG_PRINTLN();
+#endif
+    
+    for (size_t j = 0; j < consumed; j++)
+        session->ReceivedMidi(buffer.peek(i + j));
+
     return consumed;
+}
+
+size_t decodeMidiSysEx(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t cmd_len)
+{
+    int consumed = 0;
+    auto octet = buffer.peek(++i);
+
+    while (i < buffer.getLength() && cmd_len--) {
+        consumed++;
+        octet = buffer.peek(++i);
+        if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
+            return consumed;
+        else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
+            return consumed;
+    }
+    
+    // TODO: remove from the end
+    for (auto j = 0; j < consumed; j++)
+        buffer.pop();
+    
+    // TODO: replace f0 with f7 sysex begin
+    // TODO: add sysex end
+    // TODO: fix length
+    
+    buffer.write(0xFF);
+    
+    // TODO: return with notEnough
+    
+    return 0;
 }

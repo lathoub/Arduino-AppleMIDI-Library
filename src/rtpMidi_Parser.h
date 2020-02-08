@@ -90,6 +90,17 @@ public:
 		bool extension = RTP_EXTENSION(rtp.vpxcc);
 		uint8_t csrc_count = RTP_CSRC_COUNT(rtp.vpxcc);
 #endif
+        
+        V_DEBUG_PRINTLN(F("RTP"));
+        V_DEBUG_PRINT(F("version: "));
+        V_DEBUG_PRINTLN(version);
+        V_DEBUG_PRINT(F("padding: "));
+        V_DEBUG_PRINTLN(padding);
+        V_DEBUG_PRINT(F("extension: "));
+        V_DEBUG_PRINTLN(extension);
+        V_DEBUG_PRINT(F("csrc_count: "));
+        V_DEBUG_PRINTLN(csrc_count);
+
 		if (2 != version)
 		{
             return parserReturn::UnexpectedData;
@@ -99,6 +110,12 @@ public:
 		bool marker = RTP_MARKER(rtp.mpayload);
 #endif
 		uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
+        
+        V_DEBUG_PRINT(F("marker: "));
+        V_DEBUG_PRINTLN(marker);
+        V_DEBUG_PRINT(F("Payload type: "));
+        V_DEBUG_PRINTLN(payloadType);
+        
 		if (PAYLOADTYPE_RTPMIDI != payloadType)
 		{
             V_DEBUG_PRINT(F("Unexpected Payload: "));
@@ -107,21 +124,15 @@ public:
             return parserReturn::UnexpectedData;
 		}
 
-        V_DEBUG_PRINTLN(F("RTP OK"));
-        V_DEBUG_PRINT(F("version: "));
-        V_DEBUG_PRINTLN(version);
-        V_DEBUG_PRINT(F("padding: "));
-        V_DEBUG_PRINTLN(padding);
-        V_DEBUG_PRINT(F("extension: "));
-        V_DEBUG_PRINTLN(extension);
-        V_DEBUG_PRINT(F("csrc_count: "));
-        V_DEBUG_PRINTLN(csrc_count);
         V_DEBUG_PRINT(F("Sequence Nr: "));
         V_DEBUG_PRINTLN(rtp.sequenceNr);
         V_DEBUG_PRINT(F("Timestamp: "));
         V_DEBUG_PRINTLN(rtp.timestamp);
-        V_DEBUG_PRINT(F("SSRC: "));
-        V_DEBUG_PRINTLN(rtp.ssrc);
+        V_DEBUG_PRINT(F("SSRC: 0x"));
+        V_DEBUG_PRINT(rtp.ssrc, HEX);
+        V_DEBUG_PRINT(F(" ("));
+        V_DEBUG_PRINT(rtp.ssrc);
+        V_DEBUG_PRINTLN(F(")"));
 
         session->ReceivedRtp(rtp);
 
@@ -151,6 +162,7 @@ public:
 			if (buffer.getLength() < minimumLen)
                 return parserReturn::NotEnoughData;
 
+            // long header
 			uint8_t octet = buffer.peek(i++);
 			commandLength = (commandLength << 8) | octet;
 		}
@@ -159,9 +171,11 @@ public:
 		V_DEBUG_PRINTLN(commandLength);
 
 		minimumLen += commandLength;
-		if (buffer.getLength() < minimumLen)
-            return parserReturn::NotEnoughData;
-
+//		if (buffer.getLength() < minimumLen)
+//        {
+//            return parserReturn::NotEnoughData;
+//        }
+        
 		auto midiPosition = i;
 
 		i += commandLength;
@@ -183,8 +197,10 @@ public:
 
 		// Always a midi section
 		if (commandLength > 0)
-			decodeMidiSection(rtpMidi_Flags, buffer, midiPosition);
-
+        {
+			decodeMidiSection(rtpMidi_Flags, buffer, commandLength, midiPosition);
+        }
+        
         V_DEBUG_PRINT(F("rtpMidi consumed: "));
         V_DEBUG_PRINT(i);
         V_DEBUG_PRINTLN(F(" bytes"));
