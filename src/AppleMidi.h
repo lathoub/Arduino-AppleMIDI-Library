@@ -100,17 +100,17 @@ protected:
 	void write(byte byte)
 	{
 		// do we still have place in the buffer for 1 more character?
-		if ((outMidiBuffer.getLength()) + 1 > Settings::MaxBufferSize)
+		if ((outMidiBuffer.size()) + 1 > Settings::MaxBufferSize)
 		{
 			// buffer is almost full, only 1 more character
-			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.peek(0))
+			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.front())
 			{
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
-				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusive);
+				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusive);
 				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
 				// and start again with a fresh continuation of
 				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
-				outMidiBuffer.write(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
+				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 			}
 			else
 			{
@@ -121,7 +121,7 @@ protected:
 		}
 
 		// store in local buffer, as we do *not* know the length of the message prior to sending
-		outMidiBuffer.write(byte);
+		outMidiBuffer.push_back(byte);
 	};
 
 	void endTransmission()
@@ -131,7 +131,9 @@ protected:
 
 	byte read()
 	{
-		return inMidiBuffer.read();
+        auto i = inMidiBuffer.back();
+        inMidiBuffer.pop_back();
+		return i;
 	};
 
 	unsigned available()
@@ -146,7 +148,7 @@ protected:
 
 		// if any MIDI bytes came in (thru readDtataPackets),
 		// make them available for the read command
-		return inMidiBuffer.getLength();
+		return inMidiBuffer.size();
 	};
 
 private:
@@ -165,8 +167,8 @@ private:
     void (*_errorCallback)(ssrc_t, uint32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
-	RingBuffer<byte, Settings::MaxBufferSize> inMidiBuffer;
-	RingBuffer<byte, Settings::MaxBufferSize> outMidiBuffer;
+	Array<byte, Settings::MaxBufferSize> inMidiBuffer;
+	Array<byte, Settings::MaxBufferSize> outMidiBuffer;
 
 	rtpMidi_Clock rtpMidiClock;
 
@@ -202,7 +204,7 @@ private:
 	// Helpers
     static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
     static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
-	static void writeRtpMidiBuffer(UdpClass &, RingBuffer<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
+	static void writeRtpMidiBuffer(UdpClass &, Array<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
 
 	void managePendingInvites();
 	void manageTiming();

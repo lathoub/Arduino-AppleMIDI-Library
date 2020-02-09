@@ -16,7 +16,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
         if (controlBuffer.isFull())
             T_DEBUG_PRINT(F("******** controlBuffer is full, must increase buffer size"));
     #endif
-
+    
     while (packetSize > 0 && !controlBuffer.isFull())
     {
         auto bytesToRead = min( min(packetSize, controlBuffer.getFree()), sizeof(packetBuffer));
@@ -396,19 +396,20 @@ void AppleMidiTransport<UdpClass, Settings>::writeReceiverFeedback(UdpClass &por
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RingBuffer<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
+void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Array<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
 
 #if DEBUG >= LOG_LEVEL_TRACE
-    if (buffer.getLength() > 0)
+    if (buffer.size() > 0)
     {
         T_DEBUG_PRINT(F("to data socket, Len: "));
-        T_DEBUG_PRINT(buffer.getLength());
-        T_DEBUG_PRINT(F(" 0x"));
-        for (auto i = 0; i < buffer.getLength(); i++)
+        T_DEBUG_PRINT(buffer.size());
+        T_DEBUG_PRINTLN(F(" 0x"));
+        
+        for (auto it = buffer.begin(); it != buffer.end(); ++it)
         {
-            T_DEBUG_PRINT(buffer.peek(i), HEX);
+            T_DEBUG_PRINT(*it, HEX);
             T_DEBUG_PRINT(" ");
         }
         T_DEBUG_PRINTLN();
@@ -441,7 +442,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     port.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
-    auto bufferLen = buffer.getLength();
+    auto bufferLen = buffer.size();
 
     RtpMIDI_t rtpMidi;
 
@@ -466,9 +467,9 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     }
 
     // from local buffer onto the network
-    while (!buffer.isEmpty())
-        port.write(buffer.read());
-
+    port.write(buffer.data(), buffer.size());
+    buffer.clear();
+    
     port.endPacket();
     port.flush();
 }
@@ -527,7 +528,7 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::ReceivedMidi(byte data)
 {
-    inMidiBuffer.write(data);
+    inMidiBuffer.push_back(data);
 }
 
 END_APPLEMIDI_NAMESPACE

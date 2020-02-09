@@ -1,7 +1,7 @@
 #pragma once
 
 #include "utilities/RingBuffer.h"
-#include "utilities/Queue.h"
+#include "utilities/Array.h"
 #include "endian.h"
 
 #include "AppleMidi_Defs.h"
