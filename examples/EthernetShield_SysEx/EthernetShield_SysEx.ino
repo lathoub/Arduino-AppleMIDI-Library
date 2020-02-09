@@ -9,7 +9,12 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
+unsigned long t1 = millis();
 bool isConnected;
+
+byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
+byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
+byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -40,7 +45,7 @@ void setup()
   // Create a session and wait for a remote host to connect to us
   MIDI.begin(1);
 
-  // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
+  // check: zien we de connecttion binnenkomen?? Anders terug een ref van makenDw
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
@@ -57,6 +62,14 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
+
+  // send a note every second
+  // (dont cáll delay(1000) as it will stall the pipeline)
+  if (isConnected && (millis() - t1) > 150)
+  {
+       MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
+       t1 = millis();
+  }
 }
 
 // ====================================================================================

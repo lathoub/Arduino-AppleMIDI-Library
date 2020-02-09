@@ -1,7 +1,6 @@
 #pragma once
 
-#include "utilities/RingBuffer.h"
-#include "utilities/Array.h"
+#include "utilities/Deque.h"
 #include "endian.h"
 
 #include "rtpMidi_Defs.h"
@@ -31,12 +30,12 @@ public:
 	//      that were processed. They can be purged safely
 	// - a positive number indicates the amount of valid bytes processed
 	// 
-	parserReturn parse(RingBuffer<byte, Settings::MaxBufferSize> &buffer)
+	parserReturn parse(Deque<byte, Settings::MaxBufferSize> &buffer)
 	{
 		conversionBuffer cb;
         
         T_DEBUG_PRINT("RtpMIDI_Parser::Parser received ");
-        T_DEBUG_PRINT(buffer.getLength());
+        T_DEBUG_PRINT(buffer.size());
         T_DEBUG_PRINTLN(" bytes");
 
         // [RFC3550] provides a complete description of the RTP header fields.
@@ -61,27 +60,27 @@ public:
         // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             
 		auto minimumLen = sizeof(Rtp_t);
-		if (buffer.getLength() < minimumLen)
+		if (buffer.size() < minimumLen)
 			return parserReturn::NotEnoughData;
 
 		size_t i = 0; // todo: rename to consumed
 
 		Rtp_t rtp;
-		rtp.vpxcc = buffer.peek(i++);
-		rtp.mpayload = buffer.peek(i++);
+		rtp.vpxcc    = buffer[i++];
+		rtp.mpayload = buffer[i++];
 		
-		cb.buffer[0] = buffer.peek(i++);
-		cb.buffer[1] = buffer.peek(i++);
+		cb.buffer[0] = buffer[i++];
+		cb.buffer[1] = buffer[i++];
 		rtp.sequenceNr = ntohs(cb.value16);
-		cb.buffer[0] = buffer.peek(i++);
-		cb.buffer[1] = buffer.peek(i++);
-		cb.buffer[2] = buffer.peek(i++);
-		cb.buffer[3] = buffer.peek(i++);
+		cb.buffer[0] = buffer[i++];
+		cb.buffer[1] = buffer[i++];
+		cb.buffer[2] = buffer[i++];
+		cb.buffer[3] = buffer[i++];
 		rtp.timestamp = ntohl(cb.value32);
-		cb.buffer[0] = buffer.peek(i++);
-		cb.buffer[1] = buffer.peek(i++);
-		cb.buffer[2] = buffer.peek(i++);
-		cb.buffer[3] = buffer.peek(i++);
+		cb.buffer[0] = buffer[i++];
+		cb.buffer[1] = buffer[i++];
+		cb.buffer[2] = buffer[i++];
+		cb.buffer[3] = buffer[i++];
 		rtp.ssrc = ntohl(cb.value32);
 
 		uint8_t version = RTP_VERSION(rtp.vpxcc);
@@ -138,7 +137,7 @@ public:
 
 		// Next byte is the flag
 		minimumLen += 1;
-		if (buffer.getLength() < minimumLen)
+		if (buffer.size() < minimumLen)
             return parserReturn::NotEnoughData;
 
         // The payload MUST begin with the MIDI command section. The
@@ -147,7 +146,7 @@ public:
         // format.
         
 		/* RTP-MIDI starts with 4 bits of flags... */
-		uint8_t rtpMidi_Flags = buffer.peek(i++);
+		uint8_t rtpMidi_Flags = buffer[i++];
 
         V_DEBUG_PRINT(F("rtpMidi_Flags: 0x"));
         V_DEBUG_PRINTLN(rtpMidi_Flags, HEX);
@@ -159,11 +158,11 @@ public:
 		if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
 		{
 			minimumLen += 1;
-			if (buffer.getLength() < minimumLen)
+			if (buffer.size() < minimumLen)
                 return parserReturn::NotEnoughData;
 
             // long header
-			uint8_t octet = buffer.peek(i++);
+			uint8_t octet = buffer[i++];
 			commandLength = (commandLength << 8) | octet;
 		}
 
@@ -205,10 +204,11 @@ public:
         V_DEBUG_PRINT(i);
         V_DEBUG_PRINTLN(F(" bytes"));
 
-		buffer.pop(i); // consume all the bytes used so far
+        for (auto j = 0; j < i; j++)
+            buffer.pop_front(); // consume all the bytes used so far
 
         V_DEBUG_PRINT(F("Remaining control bytes "));
-        V_DEBUG_PRINT(buffer.getLength());
+        V_DEBUG_PRINT(buffer.size());
         V_DEBUG_PRINTLN(F(" bytes"));
 
         return parserReturn::Processed;

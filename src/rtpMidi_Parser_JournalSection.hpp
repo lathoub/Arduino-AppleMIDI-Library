@@ -17,25 +17,25 @@
 // o Chapters. Chapters describe recovery information for a single
 //   MIDI command type.
 //
-parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buffer, size_t &i, size_t &minimumLen)
+parserReturn decodeJournalSection(Deque<byte, Settings::MaxBufferSize> &buffer, size_t &i, size_t &minimumLen)
 {
     conversionBuffer cb;
 
     V_DEBUG_PRINTLN(F("Journal section"));
 
     minimumLen += 1;
-    if (buffer.getLength() < minimumLen)
+    if (buffer.size() < minimumLen)
         return parserReturn::NotEnoughData;
 
     /* lets get the main flags from the recovery journal header */
-    uint8_t flags = buffer.peek(i++);
+    uint8_t flags = buffer[i++];
 
     V_DEBUG_PRINT(F("flags: 0x"));
     V_DEBUG_PRINTLN(flags, HEX);
 
     // sequenceNr
     minimumLen += 2;
-    if (buffer.getLength() < minimumLen)
+    if (buffer.size() < minimumLen)
         return parserReturn::NotEnoughData;
 
     if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
@@ -55,8 +55,8 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
     // event if the Checkpoint Packet Seqnum field is less than or equal to
     // one plus the highest RTP sequence number previously received on the
     // stream (modulo 2^16).
-    cb.buffer[0] = buffer.peek(i++);
-    cb.buffer[1] = buffer.peek(i++);
+    cb.buffer[0] = buffer[i++];
+    cb.buffer[1] = buffer[i++];
     uint16_t checkPoint = ntohs(cb.value16);
 
     V_DEBUG_PRINT(F("checkPoint: "));
@@ -90,18 +90,18 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
         V_DEBUG_PRINTLN(F("System journal"));
         
         minimumLen += 2;
-        if (buffer.getLength() < minimumLen)
+        if (buffer.size() < minimumLen)
             return parserReturn::NotEnoughData;
 
-        cb.buffer[0] = buffer.peek(i++);
-        cb.buffer[1] = buffer.peek(i++);
+        cb.buffer[0] = buffer[i++];
+        cb.buffer[1] = buffer[i++];
         uint16_t systemflags = ntohs(cb.value16);
         uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
         
         uint16_t remainingBytes = sysjourlen - 2;
         
         minimumLen += remainingBytes;
-        if (buffer.getLength() < minimumLen)
+        if (buffer.size() < minimumLen)
             return parserReturn::NotEnoughData;
 
         i+=remainingBytes;
@@ -124,13 +124,13 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
         while (totalChannels-- > 0)
         {
             minimumLen += 3;
-            if (buffer.getLength() < minimumLen)
+            if (buffer.size() < minimumLen)
                 return parserReturn::NotEnoughData;
 
             cb.buffer[0] = 0x00;
-            cb.buffer[1] = buffer.peek(i++);
-            cb.buffer[2] = buffer.peek(i++);
-            cb.buffer[3] = buffer.peek(i++);
+            cb.buffer[1] = buffer[i++];
+            cb.buffer[2] = buffer[i++];
+            cb.buffer[3] = buffer[i++];
             uint32_t chanflags = ntohl(cb.value32);
             
             uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
@@ -149,7 +149,7 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("program change chapter"));
 
                 minimumLen += 3;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
             }
 
@@ -171,7 +171,7 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("pitch-wheel chapter"));
 
                 minimumLen += 2;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
             }
 
@@ -181,11 +181,11 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("note on/off chapter"));
 
                 minimumLen += 2;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
 
-                cb.buffer[0] = buffer.peek(j++);
-                cb.buffer[1] = buffer.peek(j++);
+                cb.buffer[0] = buffer[j++];
+                cb.buffer[1] = buffer[j++];
                 const uint16_t header = ntohs(cb.value16);
 
                 uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
@@ -216,18 +216,18 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(logListCount);
 
                 minimumLen += ((logListCount * 2) + offbitCount);
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
 
                 // // Log List
                 //for (auto j = 0; j < logListCount; j++ ) {
-                //     buffer.peek(j++);
-                //     buffer.peek(j++);
+                //     buffer[j++];
+                //     buffer[j++];
                 //}
 
                 // // Offbit Octets
                 //for (auto j = 0; j < offbitCount; j++ ) {
-                //     buffer.peek(j++);
+                //     buffer[j++];
                 //}
             }
 
@@ -237,22 +237,22 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("note command extras chapter"));
 
                 minimumLen += 1;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
 
                 /* first we need to get the flags & length of this chapter */
-                uint8_t header = buffer.peek(i++);
+                uint8_t header = buffer[i++];
                 uint8_t log_count = header & RTP_MIDI_CJ_CHAPTER_E_MASK_LENGTH;
 
                 log_count++;
 
                 minimumLen += (log_count * 2);
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
 
                 //for (auto k = 0; k < log_count; k++ ) {
-                //    uint8_t note = buffer.peek(j++) & 0x7f;
-                //    uint8_t octet = buffer.peek(j++);
+                //    uint8_t note = buffer[j++] & 0x7f;
+                //    uint8_t octet = buffer[j++];
                 //    uint8_t count_vel = octet & 0x7f;
                 //}
             }
@@ -263,7 +263,7 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("channel aftertouch chapter"));
 
                 minimumLen += 1;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
             }
 
@@ -273,19 +273,19 @@ parserReturn decodeJournalSection(RingBuffer<byte, Settings::MaxBufferSize> &buf
                 V_DEBUG_PRINTLN(F("poly aftertouch chapter"));
 
                 minimumLen += 2;
-                if (buffer.getLength() < minimumLen)
+                if (buffer.size() < minimumLen)
                     return parserReturn::NotEnoughData;
 
                 /* first we need to get the flags & length of this chapter */
-                uint8_t flags = buffer.peek(j++);
+                uint8_t flags = buffer[j++];
                 uint8_t log_count = flags & RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH;
 
                 /* count is encoded n+1 */
                 log_count++;
 
                 //for (auto k = 0; k < log_count; k++ ) {
-                //    uint8_t note = buffer.peek(j++);
-                //    uint8_t pressure = buffer.peek(j++);
+                //    uint8_t note = buffer[j++];
+                //    uint8_t pressure = buffer[j++];
                 //}
             }
         }

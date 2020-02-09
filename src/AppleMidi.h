@@ -156,8 +156,8 @@ private:
 	UdpClass dataPort;
 
 	// reading from the network
-	RingBuffer<byte, Settings::MaxBufferSize> controlBuffer;
-	RingBuffer<byte, Settings::MaxBufferSize> dataBuffer;
+	Deque<byte, Settings::MaxBufferSize> controlBuffer;
+	Deque<byte, Settings::MaxBufferSize> dataBuffer;
 
 	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
@@ -167,8 +167,8 @@ private:
     void (*_errorCallback)(ssrc_t, uint32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
-	Array<byte, Settings::MaxBufferSize> inMidiBuffer;
-	Array<byte, Settings::MaxBufferSize> outMidiBuffer;
+	Deque<byte, Settings::MaxBufferSize> inMidiBuffer;
+	Deque<byte, Settings::MaxBufferSize> outMidiBuffer;
 
 	rtpMidi_Clock rtpMidiClock;
 
@@ -204,7 +204,7 @@ private:
 	// Helpers
     static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
     static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
-	static void writeRtpMidiBuffer(UdpClass &, Array<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
+	static void writeRtpMidiBuffer(UdpClass &, Deque<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
 
 	void managePendingInvites();
 	void manageTiming();

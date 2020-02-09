@@ -1,10 +1,11 @@
 #pragma once
+#include <stdio.h>
 
 #include "Arduino.h"
 
 class EthernetUDP
 {
-	APPLEMIDI_NAMESPACE::RingBuffer<byte, 512> _buffer;
+	Deque<byte, 512> _buffer;
 	uint16_t _port;
 
 public:
@@ -23,6 +24,45 @@ public:
 			// AppleMIDI messages
 		}
 
+        Deque<uint8_t, 8> aa;
+        aa.push_front(1);
+        aa.push_front(2);
+        aa.push_front(3);
+
+        for (auto i = 0; i < aa.size(); i++)
+        {
+            Serial.println(aa[i]);
+        }
+        Serial.println("--------");
+
+        Serial.println(aa.front());
+        Serial.println(aa.back());
+
+        Serial.println("--------");
+
+        Deque<uint8_t, 4> bb;
+        bb.push_back(1);
+        bb.push_back(2);
+        bb.push_back(3);
+    
+        Serial.println("======");
+
+        Serial.println(bb.full());
+        bb.push_back(3);
+        Serial.println(bb.full());
+        bb.push_back(3);
+        Serial.println(bb.full());
+        Serial.println("======");
+
+        for (auto i = 0; i < bb.size(); i++)
+        {
+            Serial.println(bb[i]);
+        }
+
+        Serial.println(bb.front());
+        Serial.println(bb.back());
+
+        
 		if (port == 5005 && true)
 		{
 			// rtp-midi and AppleMIDI messages
@@ -59,8 +99,7 @@ public:
                                 0x15, 0xad, 0x5a, 0xdf, 0xa8 // offbit octets
                             };
             
-            for (size_t i = 0; i < sizeof(sysex); i++)
-                write(sysex[i]);
+            write(noteOnOff, sizeof(noteOnOff));
 		}
 
 		if (port == 5005 && true)
@@ -77,33 +116,33 @@ public:
 
 	size_t parsePacket() 
 	{
-		return _buffer.getLength(); 
+		return _buffer.size();
 	};
 
 	size_t read(byte* buffer, size_t size)
 	{
-		size = min(size, _buffer.getLength());
-		
-		for (size_t i = 0; i < size; i++)
-			buffer[i] = _buffer.read();
+		size = min(size, _buffer.size());
+            
+        for (size_t i = 0; i < size; i++)
+            buffer[i] = _buffer.pop_front();
 
 		return size;
 	};
 
 	void write(uint8_t buffer) 
 	{
-		_buffer.write(buffer);
+		_buffer.push_back(buffer);
 	};
 
 	void write(uint8_t* buffer, size_t size)
 	{
 		for (size_t i = 0; i < size; i++)
-			_buffer.write(buffer[i]);
+			_buffer.push_back(buffer[i]);
 	};
 
 	void endPacket() { };
 	void flush() { };
 
-	uint32_t remoteIP() { return 0; }
+	uint32_t remoteIP() { return 1; }
 	uint16_t remotePort() { return _port; }
 };

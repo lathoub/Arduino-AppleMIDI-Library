@@ -13,36 +13,36 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     if (packetSize == 0) return;
 
     #if DEBUG >= LOG_LEVEL_NONE
-        if (controlBuffer.isFull())
+        if (controlBuffer.full())
             T_DEBUG_PRINT(F("******** controlBuffer is full, must increase buffer size"));
     #endif
     
-    while (packetSize > 0 && !controlBuffer.isFull())
+    while (packetSize > 0 && !controlBuffer.full())
     {
-        auto bytesToRead = min( min(packetSize, controlBuffer.getFree()), sizeof(packetBuffer));
+        auto bytesToRead = min( min(packetSize, controlBuffer.free()), sizeof(packetBuffer));
         auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
         for (auto i = 0; i < bytesRead; i++)
-            controlBuffer.write(packetBuffer[i]);
+            controlBuffer.push_back(packetBuffer[i]);
     }
 
 #if DEBUG >= LOG_LEVEL_TRACE
-    if (controlBuffer.getLength() > 0)
+    if (controlBuffer.size() > 0)
     {
         T_DEBUG_PRINT(F("From control socket, Len: "));
-        T_DEBUG_PRINTLN(controlBuffer.getLength());
+        T_DEBUG_PRINTLN(controlBuffer.size());
         T_DEBUG_PRINT(F(" 0x"));
-        for (auto i = 0; i < controlBuffer.getLength(); i++)
+        for (auto i = 0; i < controlBuffer.size(); i++)
         {
-            T_DEBUG_PRINT(controlBuffer.peek(i), HEX);
+            T_DEBUG_PRINT(controlBuffer[i], HEX);
             T_DEBUG_PRINT(" ");
         }
         T_DEBUG_PRINTLN("");
     }
 #endif
 
-    while (controlBuffer.getLength() > 0)
+    while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         switch (retVal)
@@ -55,7 +55,7 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
         case parserReturn::UnexpectedData:
             if (NULL != _errorCallback)
                 _errorCallback(ssrc, -2);
-            dataBuffer.pop(1);
+            dataBuffer.pop_front();
             break;
         }
     }
@@ -68,37 +68,37 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     if (packetSize == 0) return;
     
 #if DEBUG >= LOG_LEVEL_NONE
-    if (dataBuffer.isFull())
+    if (dataBuffer.full())
         T_DEBUG_PRINT(F("******** dataBuffer is full, must increase buffer size"));
 #endif
     
-    while (packetSize > 0 && !dataBuffer.isFull())
+    while (packetSize > 0 && !dataBuffer.full())
     {
-        auto bytesToRead = min( min(packetSize, dataBuffer.getFree()), sizeof(packetBuffer));
+        auto bytesToRead = min( min(packetSize, dataBuffer.free()), sizeof(packetBuffer));
         auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
         for (auto i = 0; i < bytesRead; i++)
-            dataBuffer.write(packetBuffer[i]);
+            dataBuffer.push_back(packetBuffer[i]);
     }
 
 #if DEBUG >= LOG_LEVEL_TRACE
-    if (dataBuffer.getLength() > 0)
+    if (dataBuffer.size() > 0)
     {
         T_DEBUG_PRINTLN(F("------------------------------"));
         T_DEBUG_PRINT(F("From data socket, Len: "));
-        T_DEBUG_PRINTLN(dataBuffer.getLength());
+        T_DEBUG_PRINTLN(dataBuffer.size());
         T_DEBUG_PRINT(F(" 0x"));
-        for (auto i = 0; i < dataBuffer.getLength(); i++)
+        for (auto i = 0; i < dataBuffer.size(); i++)
         {
-            T_DEBUG_PRINT(dataBuffer.peek(i), HEX);
+            T_DEBUG_PRINT(dataBuffer[i], HEX);
             T_DEBUG_PRINT(", 0x");
         }
         T_DEBUG_PRINTLN();
     }
 #endif
 
-    while (dataBuffer.getLength() > 0)
+    while (dataBuffer.size() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
         if (retVal1 == parserReturn::Processed)
@@ -112,7 +112,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 			F_DEBUG_PRINTLN(F("either buffers have enough data"));
 
 			// both have not enough data
-			if (dataBuffer.isFull())
+			if (dataBuffer.full())
 			{
 				// if it is a SysEx, we can chop it up....?
 
@@ -135,7 +135,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
             _errorCallback(ssrc, -3);
 
         T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
-		dataBuffer.pop(1);
+		dataBuffer.pop_front();
     }
 
     T_DEBUG_PRINTLN(F("------------------------------"));
@@ -396,7 +396,7 @@ void AppleMidiTransport<UdpClass, Settings>::writeReceiverFeedback(UdpClass &por
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Array<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
+void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Deque<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
 
@@ -407,9 +407,9 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
         T_DEBUG_PRINT(buffer.size());
         T_DEBUG_PRINTLN(F(" 0x"));
         
-        for (auto it = buffer.begin(); it != buffer.end(); ++it)
+        for (size_t i = 0; i < buffer.size(); ++i)
         {
-            T_DEBUG_PRINT(*it, HEX);
+            T_DEBUG_PRINT(buffer[i], HEX);
             T_DEBUG_PRINT(" ");
         }
         T_DEBUG_PRINTLN();
@@ -467,8 +467,8 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
     }
 
     // from local buffer onto the network
-    port.write(buffer.data(), buffer.size());
-    buffer.clear();
+    while (!buffer.empty())
+        port.write(buffer.pop_front());
     
     port.endPacket();
     port.flush();
