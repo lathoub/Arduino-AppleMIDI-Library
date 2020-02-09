@@ -197,7 +197,9 @@ public:
 		// Always a midi section
 		if (commandLength > 0)
         {
-			decodeMidiSection(rtpMidi_Flags, buffer, commandLength, midiPosition);
+			auto retVal = decodeMidiSection(rtpMidi_Flags, buffer, commandLength, midiPosition);
+            if (retVal != parserReturn::Processed)
+                return retVal;
         }
         
         V_DEBUG_PRINT(F("rtpMidi consumed: "));
