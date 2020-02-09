@@ -12,10 +12,6 @@ byte mac[] = {
 unsigned long t1 = millis();
 bool isConnected = false;
 
-byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
-byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
-
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 // -----------------------------------------------------------------------------
@@ -49,7 +45,7 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
-  
+
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
 
@@ -64,14 +60,10 @@ void loop()
   // Listen to incoming notes
   MIDI.read();
 
-  // send a note every second
+  // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 500)
+  if (isConnected && (millis() - t1) > 1000)
   {
-    //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
-    //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
-    //MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-
     t1 = millis();
     //   Serial.print(F(".");
 
@@ -80,9 +72,7 @@ void loop()
     byte channel = 1;
 
     MIDI.sendNoteOn(note, velocity, channel);
-       MIDI.sendNoteOff(note, velocity, channel);
-
-    //   MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
+    MIDI.sendNoteOff(note, velocity, channel);
   }
 }
 
