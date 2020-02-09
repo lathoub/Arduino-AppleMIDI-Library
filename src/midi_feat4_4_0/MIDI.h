@@ -242,8 +242,8 @@ private:
     Thru::Mode      mThruFilterMode : 7;
     MidiMessage     mMessage;
 
-    unsigned long   mLastSendMessageTime;
-    bool            mActiveSensingActivated;
+    unsigned long   mLastMessageSentTime;
+    bool            mSenderActiveSensingActivated;
 
 private:
     inline StatusByte getStatus(MidiType inType,
