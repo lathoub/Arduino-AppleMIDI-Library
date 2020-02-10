@@ -33,7 +33,7 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
+static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
   N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
   N_DEBUG_PRINT(channel);
   N_DEBUG_PRINT(F(", note: "));
@@ -45,7 +45,7 @@ static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
+static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
   N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
   N_DEBUG_PRINT(channel);
   N_DEBUG_PRINT(F(", note: "));
@@ -69,16 +69,16 @@ char getSysExStatus(const byte* data, uint16_t length)
         return 'E'; // End of SysEx-Segment
 }
 
-static void OnAppleMidiSystemExclusive(byte* array, unsigned size) {
+static void OnMidiSystemExclusive(byte* array, unsigned size) {
     N_DEBUG_PRINT(F("Incoming SysEx: "));
     N_DEBUG_PRINT(getSysExStatus(array, size));
-    N_DEBUG_PRINT(F(" 0x"));
     unsigned i = 0;
     for (; i < size - 1; i++)
     {
+        N_DEBUG_PRINT(F(" 0x"));
         N_DEBUG_PRINT(array[i], HEX);
-        N_DEBUG_PRINT(F(", 0x"));
     }
+    N_DEBUG_PRINT(F(" 0x"));
     N_DEBUG_PRINT(array[i], HEX);
     N_DEBUG_PRINTLN();
 }
@@ -97,9 +97,9 @@ void begin()
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-    MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
-    MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
-    MIDI.setHandleSystemExclusive(OnAppleMidiSystemExclusive);
+    MIDI.setHandleNoteOn(OnMidiNoteOn);
+    MIDI.setHandleNoteOff(OnMidiNoteOff);
+    MIDI.setHandleSystemExclusive(OnMidiSystemExclusive);
 }
 
 void loop()

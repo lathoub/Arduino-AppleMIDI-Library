@@ -131,8 +131,8 @@ protected:
 
 	byte read()
 	{
-        auto i = inMidiBuffer.back();
-        inMidiBuffer.pop_back();
+        auto i = inMidiBuffer.front();
+        inMidiBuffer.pop_front();
 		return i;
 	};
 

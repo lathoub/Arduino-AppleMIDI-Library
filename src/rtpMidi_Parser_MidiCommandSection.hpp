@@ -167,11 +167,13 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t
     }
 
 #if DEBUG >= LOG_LEVEL_TRACE
-    T_DEBUG_PRINT(F("MIDI data 0x"));
+    T_DEBUG_PRINT(F("MIDI data, consumed: "));
+    T_DEBUG_PRINT(consumed);
+    T_DEBUG_PRINT(F(" "));
     for (auto j = 0; j < consumed; j++)
     {
+        T_DEBUG_PRINT(" 0x");
         T_DEBUG_PRINT(buffer[i + j], HEX);
-        T_DEBUG_PRINT(" ");
     }
     T_DEBUG_PRINTLN();
 #endif
@@ -185,31 +187,26 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t
 size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t cmd_len)
 {
     auto oi = i; // original index
-    int consumed = 0;
+    int consumed = 0; // beginning SysEx Token is not counted (as it could remain)
     auto octet = buffer[++i];
 
     while (i < buffer.size() && cmd_len--) {
         consumed++;
         octet = buffer[++i];
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
-            return consumed + 2;
+            return consumed + 1;
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
             return consumed;
     }
     
+    T_DEBUG_PRINT(F("Partial SysEx. Consumed: "));
+    T_DEBUG_PRINTLN(consumed);
+
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,
     // remove the byes, modify the length and indicate
     // not-enough data, so we buffer gets filled with the remaining bytes.
     
-    T_DEBUG_PRINT(F("MIDI data 0x"));
-    for (auto j = 0; j < buffer.size(); j++)
-    {
-        T_DEBUG_PRINT(buffer[i + j], HEX);
-        T_DEBUG_PRINT(" ");
-    }
-    T_DEBUG_PRINTLN();
-
     // send midi data
     for (auto j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[oi + j]);
@@ -218,35 +215,28 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, s
     // Remove the bytes that were submitted
     for (auto j = 0; j < consumed; j++)
         buffer.pop_back();
-    buffer.pop_back(); // this is the starting sysex token, remove it
     buffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 
-    // TODO: Substract consumed from the length
-    // ...followed by a length-field of at least 4 bits
-    
+    // Recalc CommandLength: Substract consumed from the length
+    uint8_t rtpMidi_Flags = buffer[12];
+    uint16_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
+    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
     {
-        uint8_t rtpMidi_Flags = buffer[12];
-        uint16_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
-        if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
-        {
-            uint8_t octet = buffer[13];
-            commandLength = (commandLength << 8) | octet;
-        }
-        
-        commandLength -= consumed;
-        
-        buffer[12] = (commandLength >> (1 * 8)) & 0xFF;
-        buffer[13] = (commandLength >> (0 * 8)) & 0xFF;
-        
-        // set 1st bit on
-        buffer[12] |= 1UL << 7;
+        uint8_t octet = buffer[13];
+        commandLength = (commandLength << 8) | octet;
     }
+    
+    commandLength -= consumed;
+    
+    buffer[12] = (commandLength >> (1 * 8)) & 0xFF;
+    buffer[13] = (commandLength >> (0 * 8)) & 0xFF;
+    buffer[12] |= 1UL << 7; // set 1st bit (RTP_MIDI_CS_FLAG_B) on, to indicate long address
                       
-    T_DEBUG_PRINT(F("MIDI data 0x"));
+    T_DEBUG_PRINT(F("MIDI data "));
     for (auto j = 0; j < buffer.size(); j++)
     {
+        T_DEBUG_PRINT(" 0x");
         T_DEBUG_PRINT(buffer[i + j], HEX);
-        T_DEBUG_PRINT(" ");
     }
     T_DEBUG_PRINTLN();
     

@@ -32,11 +32,10 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     {
         T_DEBUG_PRINT(F("From control socket, Len: "));
         T_DEBUG_PRINTLN(controlBuffer.size());
-        T_DEBUG_PRINT(F(" 0x"));
         for (auto i = 0; i < controlBuffer.size(); i++)
         {
+            T_DEBUG_PRINT(F(" 0x"));
             T_DEBUG_PRINT(controlBuffer[i], HEX);
-            T_DEBUG_PRINT(" ");
         }
         T_DEBUG_PRINTLN("");
     }
@@ -88,11 +87,10 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         T_DEBUG_PRINTLN(F("------------------------------"));
         T_DEBUG_PRINT(F("From data socket, Len: "));
         T_DEBUG_PRINTLN(dataBuffer.size());
-        T_DEBUG_PRINT(F(" 0x"));
         for (auto i = 0; i < dataBuffer.size(); i++)
         {
+            T_DEBUG_PRINT(" 0x");
             T_DEBUG_PRINT(dataBuffer[i], HEX);
-            T_DEBUG_PRINT(", 0x");
         }
         T_DEBUG_PRINTLN();
     }
