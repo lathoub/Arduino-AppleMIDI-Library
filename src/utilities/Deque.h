@@ -22,10 +22,17 @@ class Deque {
     void push_back(const T &);
     T pop_front();
     T pop_back();
+    
     T& operator[](size_t);
     const T& operator[](size_t) const;
+    T& at(size_t);
+    const T& at(size_t) const;
+
     void clear();
-    
+        
+    void erase(size_t);
+    void erase(size_t, size_t);
+
     bool empty() const {
         return size() == 0;
     }
@@ -134,6 +141,31 @@ T Deque<T, Size>::pop_back() {
 }
 
 template<typename T, size_t Size>
+void Deque<T, Size>::erase(size_t position) {
+    if (position >= size()) // out-of-range!
+        return; // do nothing.
+    for (size_t i = position; i < size() - 1; i++){
+        at(i) = at(i + 1);
+    }
+    pop_back();
+}
+
+template<typename T, size_t Size>
+void Deque<T, Size>::erase(size_t first, size_t last) {
+    if (first > last // invalid arguments
+    || first >= size()) // out-of-range
+        return; //do nothing.
+    
+    size_t tgt = first;
+    for (size_t i = last + 1; i < size(); i++){
+        at(tgt++) = at(i);
+    }
+    for (size_t i = first; i <= last; i++){
+        pop_back();
+    }
+}
+
+template<typename T, size_t Size>
 T& Deque<T, Size>::operator[](size_t index)
 {
     auto i = _tail + index;
@@ -144,6 +176,24 @@ T& Deque<T, Size>::operator[](size_t index)
 
 template<typename T, size_t Size>
 const T& Deque<T, Size>::operator[](size_t index) const
+{
+    auto i = _tail + index;
+    if (i >= Size)
+        i %= Size;
+    return _data[i];
+}
+
+template<typename T, size_t Size>
+T& Deque<T, Size>::at(size_t index)
+{
+    auto i = _tail + index;
+    if (i >= Size)
+        i %= Size;
+    return _data[i];
+}
+
+template<typename T, size_t Size>
+const T& Deque<T, Size>::at(size_t index) const
 {
     auto i = _tail + index;
     if (i >= Size)
