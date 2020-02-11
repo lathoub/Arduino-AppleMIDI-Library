@@ -14,7 +14,10 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 
     #if DEBUG >= LOG_LEVEL_NONE
         if (controlBuffer.full())
+        {
             T_DEBUG_PRINT(F("******** controlBuffer is full, must increase buffer size"));
+            exit(1);
+        }
     #endif
     
     while (packetSize > 0 && !controlBuffer.full())
@@ -68,7 +71,10 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     
 #if DEBUG >= LOG_LEVEL_NONE
     if (dataBuffer.full())
+    {
         T_DEBUG_PRINT(F("******** dataBuffer is full, must increase buffer size"));
+        exit(1);
+    }
 #endif
     
     while (packetSize > 0 && !dataBuffer.full())

@@ -138,17 +138,19 @@ protected:
 
 	unsigned available()
 	{
-		// read packets from both UDP sockets and send the
-		// bytes to the parsers. Valid MIDI data will be placed
-		// in the inMidiBuffer buffer
-		readDataPackets();
-		readControlPackets();
+        if (inMidiBuffer.size() > 0)
+            return true;
+        
+        // read packets from both UDP sockets and send the
+        // bytes to the parsers. Valid MIDI data will be placed
+        // in the inMidiBuffer buffer
+        readDataPackets();
+        
+        readControlPackets();
 
         manageReceiverFeedback();
 
-		// if any MIDI bytes came in (thru readDtataPackets),
-		// make them available for the read command
-		return inMidiBuffer.size();
+        return false;
 	};
 
 private:

@@ -169,7 +169,7 @@ public:
 		V_DEBUG_PRINT(F("MIDI Command length: "));
 		V_DEBUG_PRINTLN(commandLength);
 
-		minimumLen += commandLength;
+//		minimumLen += commandLength;
 //		if (buffer.getLength() < minimumLen)
 //        {
 //            return parserReturn::NotEnoughData;
@@ -177,19 +177,7 @@ public:
         
 		auto midiPosition = i;
 
-		i += commandLength;
-
-		// The payload MAY also contain a journal section. The journal section
-        // provides resiliency by coding the recent history of the stream. A
-        // flag in the MIDI command section codes the presence of a journal
-        // section in the payload.
-
-		if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
-		{
-            auto retVal = decodeJournalSection(buffer, i, minimumLen);
-            if (retVal != parserReturn::Processed)
-                return retVal;
-		}
+		//i += commandLength;
 
 		// OK we have parsed all the data
 		// and we know the final length of this message (in i)
@@ -200,8 +188,24 @@ public:
 			auto retVal = decodeMidiSection(rtpMidi_Flags, buffer, commandLength, midiPosition);
             if (retVal != parserReturn::Processed)
                 return retVal;
+            
+            // shift the indexes
+            //i -= commandLength;
+            //minimumLen -= commandLength;
         }
-        
+  
+        // The payload MAY also contain a journal section. The journal section
+        // provides resiliency by coding the recent history of the stream. A
+        // flag in the MIDI command section codes the presence of a journal
+        // section in the payload.
+
+        if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
+        {
+            auto retVal = decodeJournalSection(buffer, i, minimumLen);
+            if (retVal != parserReturn::Processed)
+                return retVal;
+        }
+
         V_DEBUG_PRINT(F("rtpMidi consumed: "));
         V_DEBUG_PRINT(i);
         V_DEBUG_PRINTLN(F(" bytes"));
