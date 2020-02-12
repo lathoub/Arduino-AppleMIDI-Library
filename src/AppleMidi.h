@@ -100,7 +100,7 @@ protected:
 	void write(byte byte)
 	{
 		// do we still have place in the buffer for 1 more character?
-		if ((outMidiBuffer.size()) + 1 > Settings::MaxBufferSize)
+		if ((outMidiBuffer.size()) + 2 > Settings::MaxBufferSize)
 		{
 			// buffer is almost full, only 1 more character
 			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.front())
@@ -145,7 +145,6 @@ protected:
         // bytes to the parsers. Valid MIDI data will be placed
         // in the inMidiBuffer buffer
         readDataPackets();
-        
         readControlPackets();
 
         manageReceiverFeedback();

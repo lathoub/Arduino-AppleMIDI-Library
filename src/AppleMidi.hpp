@@ -9,8 +9,9 @@ static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 {
-    auto packetSize = controlPort.parsePacket();
-    if (packetSize == 0) return;
+    size_t packetSize = controlPort.available();
+    if (packetSize == 0)
+        packetSize = controlPort.parsePacket();
 
     #if DEBUG >= LOG_LEVEL_NONE
         if (controlBuffer.full())
@@ -66,9 +67,10 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 {
-    auto packetSize = dataPort.parsePacket();
-    if (packetSize == 0) return;
-    
+    size_t packetSize = dataPort.available();
+    if (packetSize == 0)
+        packetSize = dataPort.parsePacket();
+
 #if DEBUG >= LOG_LEVEL_NONE
     if (dataBuffer.full())
     {
@@ -113,7 +115,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 
         if ((retVal1 == parserReturn::NotEnoughData) && (retVal2 == parserReturn::NotEnoughData))
 		{
-			F_DEBUG_PRINTLN(F("either buffers have enough data"));
+			F_DEBUG_PRINTLN(F("both buffers have enough data"));
 
 			// both have not enough data
 			if (dataBuffer.full())
@@ -141,8 +143,6 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
 		dataBuffer.pop_front();
     }
-
-    T_DEBUG_PRINTLN(F("------------------------------"));
 
 #ifdef APPLEMIDI_INITIATOR
     managePendingInvites();
@@ -400,10 +400,10 @@ void AppleMidiTransport<UdpClass, Settings>::writeReceiverFeedback(UdpClass &por
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Deque<byte, Settings::MaxBufferSize> &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
+void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RtpBuffer_t &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
-
+    
 #if DEBUG >= LOG_LEVEL_TRACE
     if (buffer.size() > 0)
     {

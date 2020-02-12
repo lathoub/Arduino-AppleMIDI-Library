@@ -1,10 +1,8 @@
-parserReturn decodeMidiSection(uint8_t rtpMidi_Flags, Deque<byte, Settings::MaxBufferSize> &buffer, uint16_t commandLength, size_t i)
+parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
 {
     int cmdCount = 0;
 
     uint8_t runningstatus = 0;
-
-    printBuffer(buffer);
     
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
     while (commandLength)
@@ -13,25 +11,21 @@ parserReturn decodeMidiSection(uint8_t rtpMidi_Flags, Deque<byte, Settings::MaxB
         /* for the first command we only have a delta-time if Z-Flag is set */
         if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
-            auto consumed = decodeTime(buffer, i);
-
-            buffer.erase(i, i + consumed - 1);
+            auto consumed = decodeTime(buffer);
 
             commandLength -= consumed;
-            updateCommandLength(buffer, commandLength);
-  
-            printBuffer(buffer);
-            
-            if (commandLength > 0 && i >= buffer.size())
+
+            while (consumed--)
+                buffer.pop_front();
+              
+            if (commandLength > 0 && 0 >= buffer.size())
                 return parserReturn::NotEnoughData;
         }
 
         if (commandLength > 0)
         {
-      //      assert(i < buffer.size());
-            
             /* Decode a MIDI-command - if 0 is returned something went wrong */
-            size_t consumed = decodeMidi(buffer, i, commandLength, runningstatus);
+            size_t consumed = decodeMidi(buffer, runningstatus);
             if (consumed == 0)
             {
                 E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
@@ -43,17 +37,13 @@ parserReturn decodeMidiSection(uint8_t rtpMidi_Flags, Deque<byte, Settings::MaxB
                 // sysex split in decodeMidi
                 return parserReturn::NotEnoughData;
             }
-            
-            buffer.erase(i, i + consumed - 1);
-            
-          //  assert(consumed <= commandLength); // can't consume more than given
-            
+
             commandLength -= consumed;
-            updateCommandLength(buffer, commandLength);
 
-            printBuffer(buffer);
+            while (consumed--)
+                buffer.pop_front();
 
-            if (commandLength > 0 && i >= buffer.size())
+            if (commandLength > 0 && 0 >= buffer.size())
                 return parserReturn::NotEnoughData;
 
             cmdCount++;
@@ -63,7 +53,7 @@ parserReturn decodeMidiSection(uint8_t rtpMidi_Flags, Deque<byte, Settings::MaxB
     return parserReturn::Processed;
 }
 
-size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i)
+size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer)
 {
     uint8_t consumed = 0;
     uint32_t deltatime = 0;
@@ -71,7 +61,7 @@ size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i)
     /* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
     for (uint8_t j = 0; j < 4; j++)
     {
-        uint8_t octet = buffer[i + consumed];
+        uint8_t octet = buffer[consumed];
         deltatime = (deltatime << 7) | (octet & RTP_MIDI_DELTA_TIME_OCTET_MASK);
         consumed++;
 
@@ -81,11 +71,11 @@ size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i)
     return consumed;
 }
 
-size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t cmd_len, uint8_t &runningstatus)
+size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &runningstatus)
 {
     size_t consumed = 0;
 
-    auto octet = buffer[i];
+    auto octet = buffer[0];
     bool using_rs;
 
     /* midi realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
@@ -169,13 +159,13 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t
             for (auto j = 0; j < consumed; j++)
             {
                 T_DEBUG_PRINT(" 0x");
-                T_DEBUG_PRINT(buffer[i + j], HEX);
+                T_DEBUG_PRINT(buffer[j], HEX);
             }
             T_DEBUG_PRINTLN();
         #endif
             
         for (size_t j = 0; j < consumed; j++)
-            session->ReceivedMidi(buffer[i + j]);
+            session->ReceivedMidi(buffer[j]);
 
         return consumed;
     }
@@ -185,7 +175,7 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
     case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
-        consumed = decodeMidiSysEx(buffer, i, cmd_len);
+        consumed = decodeMidiSysEx(buffer);
         if (consumed > buffer.max_size())
             return consumed;
         break;
@@ -209,28 +199,29 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t
     for (auto j = 0; j < consumed; j++)
     {
         T_DEBUG_PRINT(" 0x");
-        T_DEBUG_PRINT(buffer[i + j], HEX);
+        T_DEBUG_PRINT(buffer[j], HEX);
     }
     T_DEBUG_PRINTLN();
 #endif
     
     for (size_t j = 0; j < consumed; j++)
-        session->ReceivedMidi(buffer[i + j]);
+        session->ReceivedMidi(buffer[j]);
 
     return consumed;
 }
 
-size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, size_t cmd_len)
+size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
 {
-    auto oi = i; // original index
     int consumed = 1; // beginning SysEx Token is not counted (as it could remain)
+    int i = 0;
     auto octet = buffer[++i];
 
-    while (i < buffer.size() && cmd_len--) {
+    while (i < buffer.size())
+    {
         consumed++;
-        octet = buffer[++i];
+        octet = buffer[i++];
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
-            return consumed + 1;
+            return consumed;
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
             return consumed;
     }
@@ -243,135 +234,38 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer, size_t i, s
     // remove the byes, modify the length and indicate
     // not-enough data, so we buffer gets filled with the remaining bytes.
     
+    // to compensate for adding the sysex at the end.
+    consumed--;
+    
     // send midi data
     for (auto j = 0; j < consumed; j++)
-        session->ReceivedMidi(buffer[oi + j]);
+        session->ReceivedMidi(buffer[j]);
     session->ReceivedMidi(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
     
     // Remove the bytes that were submitted
     for (auto j = 0; j < consumed; j++)
-        buffer.pop_back();
-    buffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
+        buffer.pop_front();
+    buffer.push_front(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 
-    // Recalc CommandLength: Substract consumed from the length
-    uint8_t rtpMidi_Flags = buffer[12];
-    uint16_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
-    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
-    {
-        uint8_t octet = buffer[13];
-        commandLength = (commandLength << 8) | octet;
-    }
-    
     commandLength -= consumed;
     commandLength += 1; // adding the manual SysEx SystemExclusiveEnd
-
-    updateCommandLength(buffer, commandLength);
-                      
-    printBuffer(buffer);
-    
+                          
     // indicates split SysEx
     return buffer.max_size() + 1;
 }
 
-void updateCommandLength(Deque<byte, Settings::MaxBufferSize> &buffer, uint16_t value)
-{
-    uint8_t rtpMidi_Flags = buffer[12];
-    
-    const byte mask = 0x0F;
-    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
-    {
-        buffer[12] = (buffer[12] & ~mask) | (((value >> (1 * 8)) & 0xFF) & mask);
-        buffer[13] = (value >> (0 * 8)) & 0xFF;
-    }
-    else
-        buffer[12] = (buffer[12] & ~mask) | (((value >> (0 * 8)) & 0xFF) & mask);
-}
-
 void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
 {
-    uint8_t i = 0;
-    
-    conversionBuffer cb;
-
-    Rtp_t rtp;
-    rtp.vpxcc    = buffer[i++];
-    rtp.mpayload = buffer[i++];
-    
-    cb.buffer[0] = buffer[i++];
-    cb.buffer[1] = buffer[i++];
-    rtp.sequenceNr = ntohs(cb.value16);
-    cb.buffer[0] = buffer[i++];
-    cb.buffer[1] = buffer[i++];
-    cb.buffer[2] = buffer[i++];
-    cb.buffer[3] = buffer[i++];
-    rtp.timestamp = ntohl(cb.value32);
-    cb.buffer[0] = buffer[i++];
-    cb.buffer[1] = buffer[i++];
-    cb.buffer[2] = buffer[i++];
-    cb.buffer[3] = buffer[i++];
-    rtp.ssrc = ntohl(cb.value32);
-            
-    V_DEBUG_PRINT(F("Buffer: "));
-        
-    V_DEBUG_PRINT(F("Sequence Nr: "));
-    V_DEBUG_PRINT(rtp.sequenceNr);
-    
-    /* RTP-MIDI starts with 4 bits of flags... */
-    uint8_t rtpMidi_Flags = buffer[i++];
-
-    // ...followed by a length-field of at least 4 bits
-    uint16_t commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
-
-    /* see if we have small or large len-field */
-    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
-    {
-        // long header
-        uint8_t octet = buffer[i++];
-        commandLength = (commandLength << 8) | octet;
-    }
-
-    V_DEBUG_PRINT(F(" Buffer Size: "));
-    V_DEBUG_PRINTLN(buffer.size());
-
-    size_t j = 0;
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    T_DEBUG_PRINTLN(buffer[j++], HEX);
-
-    T_DEBUG_PRINT(" 0x");
-    T_DEBUG_PRINT(buffer[j++], HEX);
-    if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
-        T_DEBUG_PRINT(buffer[j++], HEX);
-    V_DEBUG_PRINT(F(" (Command length: "));
-    V_DEBUG_PRINT(commandLength);
-    T_DEBUG_PRINT(")");
-    T_DEBUG_PRINTLN();
-    T_DEBUG_PRINT("\t");
+    T_DEBUG_PRINT(F("Buffer Size: "));
+    T_DEBUG_PRINTLN(buffer.size());
 
     size_t column = 0;
-    for (; j < buffer.size(); j++)
+    for (size_t i = 0; i < buffer.size(); i++)
     {
         T_DEBUG_PRINT(" 0x");
-        T_DEBUG_PRINT(buffer[j], HEX);
+        T_DEBUG_PRINT(buffer[i], HEX);
         if (++column % 10 == 0)
-        {
             T_DEBUG_PRINTLN();
-            T_DEBUG_PRINT("\t");
-        }
     }
     T_DEBUG_PRINTLN();
 }

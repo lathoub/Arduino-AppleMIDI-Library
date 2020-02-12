@@ -33,10 +33,7 @@ public:
 
 		size_t minimumLen = (sizeof(signature) + sizeof(command)); // Signature + Command
 		if (buffer.size() < minimumLen)
-		{
-			W_DEBUG_PRINT("PARSER_NOT_ENOUGH_DATA");
 			return parserReturn::NotEnoughData;
-		}
 
 		size_t i = 0; // TODO: rename to consumed
 

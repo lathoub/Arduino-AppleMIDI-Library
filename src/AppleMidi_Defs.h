@@ -19,6 +19,9 @@ typedef uint64_t timestamp_t;
 
 #define APPLEMIDI_PARTICIPANT_SLOT_FREE 0
 
+#define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
+#define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
+
 const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24; // TODO: change with APPLEMIDI_SESSION_NAME_MAX_LEN
 
 #define APPLEMIDI_LISTENER

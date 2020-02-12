@@ -17,8 +17,11 @@
 // o Chapters. Chapters describe recovery information for a single
 //   MIDI command type.
 //
-parserReturn decodeJournalSection(Deque<byte, Settings::MaxBufferSize> &buffer, size_t &i, size_t &minimumLen)
+parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 {
+    size_t minimumLen = 0;
+    size_t i = 0;
+
     conversionBuffer cb;
 
     V_DEBUG_PRINTLN(F("Journal section"));
@@ -210,10 +213,10 @@ parserReturn decodeJournalSection(Deque<byte, Settings::MaxBufferSize> &buffer, 
                     // offbitCount should be 0 (empty)
                 }
 
-                V_DEBUG_PRINT(F("offbitCount: "));
-                V_DEBUG_PRINTLN(offbitCount);
                 V_DEBUG_PRINT(F("logListCount: "));
                 V_DEBUG_PRINTLN(logListCount);
+                V_DEBUG_PRINT(F("offbitCount: "));
+                V_DEBUG_PRINTLN(offbitCount);
 
                 minimumLen += ((logListCount * 2) + offbitCount);
                 if (buffer.size() < minimumLen)
@@ -291,5 +294,8 @@ parserReturn decodeJournalSection(Deque<byte, Settings::MaxBufferSize> &buffer, 
         }
     }
 
+    while (i--)
+        buffer.pop_front();
+    
     return parserReturn::Processed;
 }
