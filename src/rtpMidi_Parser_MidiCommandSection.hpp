@@ -156,7 +156,7 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &running
             T_DEBUG_PRINT(F("MIDI data, consumed: "));
             T_DEBUG_PRINT(consumed);
             T_DEBUG_PRINT(F(" "));
-            for (auto j = 0; j < consumed; j++)
+            for (size_t j = 0; j < consumed; j++)
             {
                 T_DEBUG_PRINT(" 0x");
                 T_DEBUG_PRINT(buffer[j], HEX);
@@ -196,7 +196,7 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &running
     T_DEBUG_PRINT(F("MIDI data, consumed: "));
     T_DEBUG_PRINT(consumed);
     T_DEBUG_PRINT(F(" "));
-    for (auto j = 0; j < consumed; j++)
+    for (size_t j = 0; j < consumed; j++)
     {
         T_DEBUG_PRINT(" 0x");
         T_DEBUG_PRINT(buffer[j], HEX);
@@ -212,8 +212,8 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &running
 
 size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
 {
-    int consumed = 1; // beginning SysEx Token is not counted (as it could remain)
-    int i = 0;
+    size_t consumed = 1; // beginning SysEx Token is not counted (as it could remain)
+    size_t i = 0;
     auto octet = buffer[++i];
 
     while (i < buffer.size())
@@ -238,12 +238,12 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
     consumed--;
     
     // send midi data
-    for (auto j = 0; j < consumed; j++)
+    for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
     session->ReceivedMidi(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
     
     // Remove the bytes that were submitted
-    for (auto j = 0; j < consumed; j++)
+    for (size_t j = 0; j < consumed; j++)
         buffer.pop_front();
     buffer.push_front(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 

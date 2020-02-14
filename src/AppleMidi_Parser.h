@@ -169,7 +169,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (auto j = 0; j < i; j++)
+            for (size_t j = 0; j < i; j++)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedEndSession(endSession);
@@ -232,7 +232,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (auto j = 0; j < i; j++)
+            for (size_t j = 0; j < i; j++)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedSynchronization(synchronization);
@@ -271,7 +271,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (auto j = 0; j < i; j++)
+            for (size_t j = 0; j < i; j++)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedReceiverFeedback(receiverFeedback);

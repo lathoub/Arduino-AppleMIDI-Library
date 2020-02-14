@@ -52,7 +52,7 @@ public:
 		strncpy(this->bonjourName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #endif
 
-		for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+		for (uint8_t i = 0; i < Settings::MaxNumberOfParticipants; i++)
 			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
 		_appleMIDIParser.session = this;

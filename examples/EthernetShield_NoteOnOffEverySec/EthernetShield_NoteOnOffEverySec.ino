@@ -1,6 +1,5 @@
 #include <Ethernet.h>
-
-#define DEBUG 7
+//#define DEBUG 7
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
