@@ -42,6 +42,22 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 ```
 More usages in the `examples` folder
 
+## Migrating from 1* to 2*
+
+Version 2 of this library is not backward compatible with the API from the previous version.
+Both MIDI and rtpMIDI have been separated, and that has implications on how the code is called.
+For consistency, this library uses the same calling syntax as the 47effects Arduino MIDI library, making porting application from Serial MIDI to rtpMIDI more easy.
+
+`APPLEMIDI_CREATE_DEFAULT_INSTANCE();` => `APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();`
+
+`AppleMIDI.begin("test");` => `MIDI.begin(1);`
+
+`AppleMIDI.read();` => `MIDI.read();`
+
+`AppleMIDI.OnConnected(OnAppleMidiConnected);` => `AppleMIDI.setHandleConnected(OnAppleMidiConnected);`
+
+`AppleMIDI.sendNoteOn(note, velocity, channel);` => `MIDI.sendNoteOn(note, velocity, channel);`
+
 ## Hardware
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
