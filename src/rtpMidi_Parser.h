@@ -68,7 +68,7 @@ public:
         {
             auto minimumLen = sizeof(Rtp_t);
             if (buffer.size() < minimumLen)
-                return parserReturn::NotEnoughData;
+                return parserReturn::NotSureGiveMeMoreData;
 
             size_t i = 0; // todo: rename to consumed
 
@@ -145,7 +145,7 @@ public:
             // Next byte is the flag
             minimumLen += 1;
             if (buffer.size() < minimumLen)
-                return parserReturn::NotEnoughData;
+                return parserReturn::NotSureGiveMeMoreData;
 
             // The payload MUST begin with the MIDI command section. The
             // MIDI command section codes a (possibly empty) list of timestamped
@@ -166,7 +166,7 @@ public:
             {
                 minimumLen += 1;
                 if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
+                    return parserReturn::NotSureGiveMeMoreData;
                 
                 // long header
                 uint8_t octet = buffer[i++];

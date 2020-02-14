@@ -48,18 +48,11 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        switch (retVal)
+        if (retVal == parserReturn::UnexpectedData)
         {
-        case parserReturn::Processed:
-            break;
-        case parserReturn::NotEnoughData:
-            T_DEBUG_PRINTLN(F("control PARSER_NOT_ENOUGH_DATA"));
-            break;
-        case parserReturn::UnexpectedData:
             if (NULL != _errorCallback)
                 _errorCallback(ssrc, -2);
             dataBuffer.pop_front();
-            break;
         }
     }
 }
@@ -97,7 +90,7 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         T_DEBUG_PRINTLN(dataBuffer.size());
         for (auto i = 0; i < dataBuffer.size(); i++)
         {
-            T_DEBUG_PRINT(" 0x");
+            T_DEBUG_PRINT(", 0x");
             T_DEBUG_PRINT(dataBuffer[i], HEX);
         }
         T_DEBUG_PRINTLN();
@@ -107,13 +100,16 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     while (dataBuffer.size() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
-        if (retVal1 == parserReturn::Processed)
+        if (retVal1 == parserReturn::Processed
+        ||  retVal1 == parserReturn::NotEnoughData)
             break;
         auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
-        if (retVal2 == parserReturn::Processed)
+        if (retVal2 == parserReturn::Processed
+        ||  retVal2 == parserReturn::NotEnoughData)
             break;
 
-        if ((retVal1 == parserReturn::NotEnoughData) && (retVal2 == parserReturn::NotEnoughData))
+        if (retVal1 == parserReturn::NotSureGiveMeMoreData
+        &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
 		{
 			F_DEBUG_PRINTLN(F("both buffers have enough data"));
 
@@ -130,7 +126,8 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 			break;
 		}
 
-        if (retVal1 == parserReturn::NotEnoughData || retVal2 == parserReturn::NotEnoughData)
+        if (retVal1 == parserReturn::NotSureGiveMeMoreData
+        ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
         {
             T_DEBUG_PRINTLN(F("data PARSER_NOT_ENOUGH_DATA"));
 

@@ -16,6 +16,7 @@ struct DefaultSettings
 enum parserReturn: uint8_t
 {
     Processed,
+    NotSureGiveMeMoreData,
     NotEnoughData,
     UnexpectedData,
 };

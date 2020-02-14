@@ -33,7 +33,7 @@ public:
 
 		size_t minimumLen = (sizeof(signature) + sizeof(command)); // Signature + Command
 		if (buffer.size() < minimumLen)
-			return parserReturn::NotEnoughData;
+            return parserReturn::NotSureGiveMeMoreData;
 
 		size_t i = 0; // TODO: rename to consumed
 

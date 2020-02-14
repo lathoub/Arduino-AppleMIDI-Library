@@ -143,157 +143,19 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             V_DEBUG_PRINT(F("Journal Length: "));
             V_DEBUG_PRINTLN(chanjourlen);
 
-            auto j = i;
-            i += (chanjourlen - 3); // -3 as the chanflags are included already
+            // We have the most important bit of information - the length of the channel information
+            // no more need to further parse.
             
-            /* Do we have a program change chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_P)
-            {
-                V_DEBUG_PRINTLN(F("program change chapter"));
+            minimumLen += (chanjourlen - 3); // 3 is length of channel flags
+            if (buffer.size() < minimumLen)
+                return parserReturn::NotEnoughData;
 
-                minimumLen += 3;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-            }
-
-            /* Do we have a control chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_C)
-            {
-                V_DEBUG_PRINTLN(F("control chapter"));
-            }
-
-            /* Do we have a parameter changes? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_M)
-            {
-                V_DEBUG_PRINTLN(F("parameter changes"));
-            }
-
-            /* Do we have a pitch-wheel chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_W)
-            {
-                V_DEBUG_PRINTLN(F("pitch-wheel chapter"));
-
-                minimumLen += 2;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-            }
-
-            /* Do we have a note on/off chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_N)
-            {
-                V_DEBUG_PRINTLN(F("note on/off chapter"));
-
-                minimumLen += 2;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-
-                cb.buffer[0] = buffer[j++];
-                cb.buffer[1] = buffer[j++];
-                const uint16_t header = ntohs(cb.value16);
-
-                uint8_t logListCount = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LENGTH) >> 8;
-                const uint8_t low = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_LOW) >> 4;
-                const uint8_t high = (header & RTP_MIDI_CJ_CHAPTER_N_MASK_HIGH);
-
-                // how many offbits octets do we have?
-                uint8_t offbitCount = 0;
-                if (low <= high)
-                    offbitCount = high - low + 1;
-                else if ((low == 15) && (high == 0))
-                    offbitCount = 0;
-                else if ((low == 15) && (high == 1))
-                    offbitCount = 0;
-                else
-                    return parserReturn::UnexpectedData;
-
-                // special case -> no offbit octets, but 128 note-logs
-                if ((logListCount == 127) && (low == 15) && (high == 0))
-                {
-                    logListCount = 128;
-                    // offbitCount should be 0 (empty)
-                }
-
-                V_DEBUG_PRINT(F("logListCount: "));
-                V_DEBUG_PRINTLN(logListCount);
-                V_DEBUG_PRINT(F("offbitCount: "));
-                V_DEBUG_PRINTLN(offbitCount);
-
-                minimumLen += ((logListCount * 2) + offbitCount);
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-
-                // // Log List
-                //for (auto j = 0; j < logListCount; j++ ) {
-                //     buffer[j++];
-                //     buffer[j++];
-                //}
-
-                // // Offbit Octets
-                //for (auto j = 0; j < offbitCount; j++ ) {
-                //     buffer[j++];
-                //}
-            }
-
-            /* Do we have a note command extras chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_E)
-            {
-                V_DEBUG_PRINTLN(F("note command extras chapter"));
-
-                minimumLen += 1;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-
-                /* first we need to get the flags & length of this chapter */
-                uint8_t header = buffer[i++];
-                uint8_t log_count = header & RTP_MIDI_CJ_CHAPTER_E_MASK_LENGTH;
-
-                log_count++;
-
-                minimumLen += (log_count * 2);
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-
-                //for (auto k = 0; k < log_count; k++ ) {
-                //    uint8_t note = buffer[j++] & 0x7f;
-                //    uint8_t octet = buffer[j++];
-                //    uint8_t count_vel = octet & 0x7f;
-                //}
-            }
-
-            /* Do we have channel aftertouch chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_T)
-            {
-                V_DEBUG_PRINTLN(F("channel aftertouch chapter"));
-
-                minimumLen += 1;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-            }
-
-            /* Do we have a poly aftertouch chapter? */
-            if (chanflags & RTP_MIDI_CJ_FLAG_A)
-            {
-                V_DEBUG_PRINTLN(F("poly aftertouch chapter"));
-
-                minimumLen += 2;
-                if (buffer.size() < minimumLen)
-                    return parserReturn::NotEnoughData;
-
-                /* first we need to get the flags & length of this chapter */
-                uint8_t flags = buffer[j++];
-                uint8_t log_count = flags & RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH;
-
-                /* count is encoded n+1 */
-                log_count++;
-
-                //for (auto k = 0; k < log_count; k++ ) {
-                //    uint8_t note = buffer[j++];
-                //    uint8_t pressure = buffer[j++];
-                //}
-            }
+            // advance the pointer
+            i+= (chanjourlen - 3);
         }
     }
 
+    // purge front of the buffer
     while (i--)
         buffer.pop_front();
     
