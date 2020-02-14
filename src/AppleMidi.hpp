@@ -12,14 +12,6 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
     size_t packetSize = controlPort.available();
     if (packetSize == 0)
         packetSize = controlPort.parsePacket();
-
-    #if DEBUG >= LOG_LEVEL_NONE
-        if (controlBuffer.full())
-        {
-            T_DEBUG_PRINT(F("******** controlBuffer is full, must increase buffer size"));
-            exit(1);
-        }
-    #endif
     
     while (packetSize > 0 && !controlBuffer.full())
     {
@@ -30,20 +22,6 @@ void AppleMidiTransport<UdpClass, Settings>::readControlPackets()
         for (auto i = 0; i < bytesRead; i++)
             controlBuffer.push_back(packetBuffer[i]);
     }
-
-#if DEBUG >= LOG_LEVEL_TRACE
-    if (controlBuffer.size() > 0)
-    {
-        T_DEBUG_PRINT(F("From control socket, Len: "));
-        T_DEBUG_PRINTLN(controlBuffer.size());
-        for (auto i = 0; i < controlBuffer.size(); i++)
-        {
-            T_DEBUG_PRINT(F(" 0x"));
-            T_DEBUG_PRINT(controlBuffer[i], HEX);
-        }
-        T_DEBUG_PRINTLN("");
-    }
-#endif
 
     while (controlBuffer.size() > 0)
     {
@@ -63,14 +41,6 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
     size_t packetSize = dataPort.available();
     if (packetSize == 0)
         packetSize = dataPort.parsePacket();
-
-#if DEBUG >= LOG_LEVEL_NONE
-    if (dataBuffer.full())
-    {
-        T_DEBUG_PRINT(F("******** dataBuffer is full, must increase buffer size"));
-        exit(1);
-    }
-#endif
     
     while (packetSize > 0 && !dataBuffer.full())
     {
@@ -81,21 +51,6 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
         for (auto i = 0; i < bytesRead; i++)
             dataBuffer.push_back(packetBuffer[i]);
     }
-
-#if DEBUG >= LOG_LEVEL_TRACE
-    if (dataBuffer.size() > 0)
-    {
-        T_DEBUG_PRINTLN(F("------------------------------"));
-        T_DEBUG_PRINT(F("From data socket, Len: "));
-        T_DEBUG_PRINTLN(dataBuffer.size());
-        for (auto i = 0; i < dataBuffer.size(); i++)
-        {
-            T_DEBUG_PRINT(", 0x");
-            T_DEBUG_PRINT(dataBuffer[i], HEX);
-        }
-        T_DEBUG_PRINTLN();
-    }
-#endif
 
     while (dataBuffer.size() > 0)
     {
@@ -110,27 +65,12 @@ void AppleMidiTransport<UdpClass, Settings>::readDataPackets()
 
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
-		{
-			F_DEBUG_PRINTLN(F("both buffers have enough data"));
-
-			// both have not enough data
-			if (dataBuffer.full())
-			{
-				// if it is a SysEx, we can chop it up....?
-
-				F_DEBUG_PRINTLN(F("Not enough buffer space to read entire message."));
-				F_DEBUG_PRINT(F("Increase the current size in MaxBufferSize from "));
-				F_DEBUG_PRINT(Settings::MaxBufferSize);
-				F_DEBUG_PRINTLN(F(" to (at least) the next Power-of-Two in Settings"));
-			}
 			break;
-		}
 
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
         {
             T_DEBUG_PRINTLN(F("data PARSER_NOT_ENOUGH_DATA"));
-
             break; // one or the other buffer does not have enough data
         }
 
@@ -400,23 +340,7 @@ template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RtpBuffer_t &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
-    
-#if DEBUG >= LOG_LEVEL_TRACE
-    if (buffer.size() > 0)
-    {
-        T_DEBUG_PRINT(F("to data socket, Len: "));
-        T_DEBUG_PRINT(buffer.size());
-        T_DEBUG_PRINTLN(F(" 0x"));
         
-        for (size_t i = 0; i < buffer.size(); ++i)
-        {
-            T_DEBUG_PRINT(buffer[i], HEX);
-            T_DEBUG_PRINT(" ");
-        }
-        T_DEBUG_PRINTLN();
-    }
-#endif
-
     T_DEBUG_PRINT(" sequenceNr: ");
     T_DEBUG_PRINTLN(sequenceNr);
 

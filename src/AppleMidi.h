@@ -100,18 +100,20 @@ protected:
 	void write(byte byte)
 	{
 		// do we still have place in the buffer for 1 more character?
-		if ((outMidiBuffer.size()) + 2 > Settings::MaxBufferSize)
+		if ((outMidiBuffer.size()) + 2 > outMidiBuffer.max_size())
 		{
 			// buffer is almost full, only 1 more character
 			if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.front())
 			{
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
-				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusive);
+				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
+                
 				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
 				// and start again with a fresh continuation of
 				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
+                outMidiBuffer.clear();
 				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
-			}
+            }
 			else
 			{
                 if (NULL != _errorCallback)
@@ -131,9 +133,7 @@ protected:
 
 	byte read()
 	{
-        auto i = inMidiBuffer.front();
-        inMidiBuffer.pop_front();
-		return i;
+		return inMidiBuffer.pop_front();
 	};
 
 	unsigned available()
@@ -228,3 +228,4 @@ private:
 END_APPLEMIDI_NAMESPACE
 
 #include "AppleMidi.hpp"
+
