@@ -66,12 +66,12 @@ Previously `APPLEMIDI_CREATE_DEFAULT_INSTANCE();` created an instance called `Ap
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
-The code has been pseudo optimized to minimize the memory footprint.
-Internal buffers also use valuable memory space. The biggest buffer `PACKET_MAX_SIZE` is set to 350 by default in `AppleMidi_Settings.h`. Albeit this number is somewhat arbitratry (large enough to receive full SysEx messages), it can be reduced significantly if you do not have to receive large messages.
+This library is not using any dynamic memory allocation methiods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file.
 
-On an Arduino, 2 sessions can be active at once (W5100 can have max 4 sockets open at the same time, each session needs 2 UDP sockets). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes).
+The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it higher will make sending larger SysEx messages more efficiant (larg SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed).
 
-Save memory (about 2000 bytes) when the device does not initiate sessions by `#undef APPLEMIDI_REMOTE_SESSIONS` in `AppleMidi_Settings.h`. See the `EthernetShield_NoteOnOffEverySec.ino` example
+`MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
+Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
  
 ## Network Shields
 * Arduino Ethernet shield (Wiznet W5100)
