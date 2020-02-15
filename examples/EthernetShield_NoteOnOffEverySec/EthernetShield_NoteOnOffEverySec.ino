@@ -37,14 +37,15 @@ void setup()
   V_DEBUG_PRINTLN(F("Then press the Connect button"));
   V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
-  // Create a session and wait for a remote host to connect to us
+  // Listen for MIDI messages on channel 1
   MIDI.begin(1);
 
-  // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
+  // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
 
+  // and let us know ehen notes come in
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
 
@@ -61,7 +62,7 @@ void loop()
 
   // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 500)
+  if (isConnected && (millis() - t1) > 1000)
   {
     t1 = millis();
     //   Serial.print(F(".");
