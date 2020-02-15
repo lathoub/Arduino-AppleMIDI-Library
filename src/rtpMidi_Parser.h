@@ -1,11 +1,11 @@
 #pragma once
 
 #include "utilities/Deque.h"
-#include "endian.h"
+#include "utilities/endian.h"
+#include "utilities/midi_feat4_4_0/midi_Defs.h"
 
 #include "rtpMidi_Defs.h"
 #include "rtp_Defs.h"
-#include "midi_feat4_4_0/midi_Defs.h"
 
 #include "AppleMidi_Settings.h"
 

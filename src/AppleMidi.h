@@ -6,7 +6,8 @@
 
 // this is an exported and stripped down version of the MIDI library by  47 blabla
 // feat 4.4.0 summer 2019
-#include "midi_feat4_4_0/MIDI.h"
+#include "utilities/midi_feat4_4_0/MIDI.h"
+#include "utilities/endian.h"
 
 #include "AppleMidi_Defs.h"
 #include "AppleMidi_Settings.h"
@@ -19,8 +20,6 @@
 
 #include "AppleMidi_Parser.h"
 #include "rtpMidi_Parser.h"
-
-#include "endian.h"
 
 #include "AppleMidi_Namespace.h"
 
