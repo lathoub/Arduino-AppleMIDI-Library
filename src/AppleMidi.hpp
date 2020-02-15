@@ -147,7 +147,7 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_In
         if (NULL != _errorCallback)
             _errorCallback(ssrc, -4);
 
-        N_DEBUG_PRINTLN(F("Not free particiants slot, rejecting invitation"));
+        T_DEBUG_PRINTLN(F("Not free particiants slot, rejecting invitation"));
         writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
         return;
     }

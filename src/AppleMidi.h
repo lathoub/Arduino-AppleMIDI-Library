@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AppleMidi_Debug.h"
+#include "utilities/Logging.h"
 
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 

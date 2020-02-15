@@ -58,7 +58,7 @@ public:
 #ifdef APPLEMIDI_LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			N_DEBUG_PRINTLN("received Invitation");
+			T_DEBUG_PRINTLN("received Invitation");
 
 			byte protocolVersion[4];
 
@@ -75,12 +75,12 @@ public:
 			protocolVersion[3] = buffer[i++];
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
 			{
-				// N_DEBUG_PRINT("Wrong protocolVersion: 0x");
-				// N_DEBUG_PRINT(protocolVersion[0], HEX);
-				// N_DEBUG_PRINT(protocolVersion[1], HEX);
-				// N_DEBUG_PRINT(protocolVersion[2], HEX);
-				// N_DEBUG_PRINT(protocolVersion[3], HEX);
-				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
+				// T_DEBUG_PRINT("Wrong protocolVersion: 0x");
+				// T_DEBUG_PRINT(protocolVersion[0], HEX);
+				// T_DEBUG_PRINT(protocolVersion[1], HEX);
+				// T_DEBUG_PRINT(protocolVersion[2], HEX);
+				// T_DEBUG_PRINT(protocolVersion[3], HEX);
+				// T_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
 			}
 
@@ -178,7 +178,7 @@ public:
 		}
 		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
-			N_DEBUG_PRINTLN("received Syncronization");
+			T_DEBUG_PRINTLN("received Syncronization");
 
 			AppleMIDI_Synchronization synchronization;
 
@@ -241,7 +241,7 @@ public:
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			//N_DEBUG_PRINTLN("received ReceiverFeedback");
+			//T_DEBUG_PRINTLN("received ReceiverFeedback");
 
 			AppleMIDI_ReceiverFeedback receiverFeedback;
 
