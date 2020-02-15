@@ -63,6 +63,9 @@ public:
     void setHandleError(void (*fptr)(ssrc_t, uint32_t)) { _errorCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
 
+    const char* getName() { return this->localName; };
+    const uint16_t getPort() { return this->port; };
+
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
