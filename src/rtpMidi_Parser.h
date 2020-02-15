@@ -1,8 +1,8 @@
 #pragma once
 
-#include "utilities/Deque.h"
-#include "utilities/endian.h"
-#include "utilities/midi_feat4_4_0/midi_Defs.h"
+#include "utility/Deque.h"
+#include "utility/endian.h"
+#include "utility/midi_feat4_4_0/midi_Defs.h"
 
 #include "rtpMidi_Defs.h"
 #include "rtp_Defs.h"

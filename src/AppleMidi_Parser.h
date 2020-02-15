@@ -1,7 +1,7 @@
 #pragma once
 
-#include "utilities/Deque.h"
-#include "utilities/endian.h"
+#include "utility/Deque.h"
+#include "utility/endian.h"
 
 #include "AppleMidi_Defs.h"
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "utilities/Logging.h"
+#include "utility/Logging.h"
 
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 // this is an exported and stripped down version of the MIDI library by  47 blabla
 // feat 4.4.0 summer 2019
-#include "utilities/midi_feat4_4_0/MIDI.h"
-#include "utilities/endian.h"
+#include "utility/midi_feat4_4_0/MIDI.h"
+#include "utility/endian.h"
 
 #include "AppleMidi_Defs.h"
 #include "AppleMidi_Settings.h"
