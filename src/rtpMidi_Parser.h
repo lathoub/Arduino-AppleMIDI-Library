@@ -21,7 +21,9 @@ class rtpMIDIParser
 {
 private:
     bool _rtpHeadersComplete = false;
-    uint16_t commandLength = UINT16_MAX;
+    bool _journalSectionComplete = false;
+    uint16_t midiCommandLength;
+    uint8_t _journalTotalChannels;
     uint8_t rtpMidi_Flags = 0;
 
 public:
@@ -159,7 +161,7 @@ public:
             V_DEBUG_PRINTLN(rtpMidi_Flags, HEX);
 
             // ...followed by a length-field of at least 4 bits
-            commandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
+            midiCommandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
 
             /* see if we have small or large len-field */
             if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_B)
@@ -170,7 +172,7 @@ public:
                 
                 // long header
                 uint8_t octet = buffer[i++];
-                commandLength = (commandLength << 8) | octet;
+                midiCommandLength = (midiCommandLength << 8) | octet;
             }
 
             while (i--)
@@ -179,13 +181,15 @@ public:
             _rtpHeadersComplete = true;
             
             V_DEBUG_PRINT(F("MIDI Command length: "));
-            V_DEBUG_PRINTLN(commandLength);
+            V_DEBUG_PRINTLN(midiCommandLength);
+            
+            // initialize the Journal Section
+            _journalSectionComplete = false;
+            _journalTotalChannels = 0;
         }
   
-        printBuffer(buffer);
-
 		// Always a midi section
-		if (commandLength > 0)
+		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMidiSection(buffer);
             if (retVal != parserReturn::Processed)

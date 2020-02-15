@@ -5,7 +5,7 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
     uint8_t runningstatus = 0;
     
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
-    while (commandLength)
+    while (midiCommandLength)
     {
 
         /* for the first command we only have a delta-time if Z-Flag is set */
@@ -13,16 +13,16 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
         {
             auto consumed = decodeTime(buffer);
 
-            commandLength -= consumed;
+            midiCommandLength -= consumed;
 
             while (consumed--)
                 buffer.pop_front();
               
-            if (commandLength > 0 && 0 >= buffer.size())
+            if (midiCommandLength > 0 && 0 >= buffer.size())
                 return parserReturn::NotEnoughData;
         }
 
-        if (commandLength > 0)
+        if (midiCommandLength > 0)
         {
             /* Decode a MIDI-command - if 0 is returned something went wrong */
             size_t consumed = decodeMidi(buffer, runningstatus);
@@ -30,7 +30,7 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
             {
                 E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
                 E_DEBUG_PRINT(F("decodeMidi commandLength is "));
-                E_DEBUG_PRINTLN(commandLength);
+                E_DEBUG_PRINTLN(midiCommandLength);
             }
             else if (consumed > buffer.size())
             {
@@ -38,12 +38,12 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
                 return parserReturn::NotEnoughData;
             }
 
-            commandLength -= consumed;
+            midiCommandLength -= consumed;
 
             while (consumed--)
                 buffer.pop_front();
 
-            if (commandLength > 0 && 0 >= buffer.size())
+            if (midiCommandLength > 0 && 0 >= buffer.size())
                 return parserReturn::NotEnoughData;
 
             cmdCount++;
@@ -247,8 +247,8 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
         buffer.pop_front();
     buffer.push_front(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 
-    commandLength -= consumed;
-    commandLength += 1; // adding the manual SysEx SystemExclusiveEnd
+    midiCommandLength -= consumed;
+    midiCommandLength += 1; // adding the manual SysEx SystemExclusiveEnd
                           
     // indicates split SysEx
     return buffer.max_size() + 1;

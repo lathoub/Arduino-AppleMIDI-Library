@@ -135,5 +135,5 @@ void loop()
      //  MIDI.sendNoteOff(note, velocity, channel);
 
      }
-    MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
+ //   MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
 }
