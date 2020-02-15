@@ -391,9 +391,11 @@ void AppleMidiTransport<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, 
         port.write((uint8_t)(bufferLen));
     }
 
-    // from local buffer onto the network
+    // MIDI Section
     while (!buffer.empty())
         port.write(buffer.pop_front());
+    
+    // *No* journal section
     
     port.endPacket();
     port.flush();
