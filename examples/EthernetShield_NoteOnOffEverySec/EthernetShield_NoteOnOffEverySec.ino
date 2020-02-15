@@ -1,5 +1,5 @@
 #include <Ethernet.h>
-//#define DEBUG 7
+#define DEBUG LOG_LEVEL_NOTICE
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -27,7 +27,7 @@ void setup()
     for (;;);
   }
 
-  N_DEBUG_PRINT("IP address is ");
+  N_DEBUG_PRINT(F("IP address is "));
   N_DEBUG_PRINTLN(Ethernet.localIP());
 
   V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
@@ -44,6 +44,7 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
+  AppleMIDI.setHandleReceivedMidi(OnAppleMidiReceivedByte);
 
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
@@ -61,7 +62,7 @@ void loop()
 
   // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if (isConnected && (millis() - t1) > 500)
   {
     t1 = millis();
     //   Serial.print(F(".");
@@ -107,8 +108,15 @@ void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
+void OnAppleMidiReceivedByte(uint32_t ssrc, byte data) {
+  N_DEBUG_PRINTLN(data, HEX);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
+  N_DEBUG_PRINT(F("Incoming NoteOn  from channel: "));
   N_DEBUG_PRINT(channel);
   N_DEBUG_PRINT(F(", note: "));
   N_DEBUG_PRINT(note);

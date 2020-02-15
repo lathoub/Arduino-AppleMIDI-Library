@@ -453,6 +453,9 @@ void AppleMidiTransport<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
 template <class UdpClass, class Settings>
 void AppleMidiTransport<UdpClass, Settings>::ReceivedMidi(byte data)
 {
+    if (NULL != _receivedMidiByteCallback)
+        _receivedMidiByteCallback(0, data);
+
     inMidiBuffer.push_back(data);
 }
 

@@ -48,6 +48,14 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
+void OnAppleMidiByte(uint32_t ssrc, byte data) {
+  N_DEBUG_PRINT(F("MIDI: "));
+  N_DEBUG_PRINTLN(data);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
   N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
   N_DEBUG_PRINT(channel);
@@ -111,6 +119,7 @@ void begin()
     
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+    AppleMIDI.setHandleReceivedMidi(OnAppleMidiByte);
 
     MIDI.setHandleNoteOn(OnMidiNoteOn);
     MIDI.setHandleNoteOff(OnMidiNoteOff);

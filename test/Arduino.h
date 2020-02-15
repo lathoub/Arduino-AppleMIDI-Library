@@ -53,9 +53,9 @@ int main()
 
 #define __attribute__(A) /* do nothing */
 
-#include "../src/utilities/Deque.h"
+#include "../src/utility/Deque.h"
 
-#include "../src/midi_feat4_4_0/midi_Defs.h"
+#include "../src/utility/midi_feat4_4_0/midi_Defs.h"
 
 float analogRead(int pin)
 {

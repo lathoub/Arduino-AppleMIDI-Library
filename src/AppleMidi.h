@@ -61,6 +61,7 @@ public:
 	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(ssrc_t)) { _disconnectedCallback = fptr; }
     void setHandleError(void (*fptr)(ssrc_t, uint32_t)) { _errorCallback = fptr; }
+    void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -162,7 +163,8 @@ private:
 	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
 
-	void (*_connectedCallback)(ssrc_t, const char *) = NULL;
+    void (*_connectedCallback)(ssrc_t, const char *) = NULL;
+    void (*_receivedMidiByteCallback)(ssrc_t, byte) = NULL;
 	void (*_disconnectedCallback)(ssrc_t) = NULL;
     void (*_errorCallback)(ssrc_t, uint32_t) = NULL;
 
