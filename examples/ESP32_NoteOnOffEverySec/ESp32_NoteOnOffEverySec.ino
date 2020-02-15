@@ -2,9 +2,10 @@
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 
-#include "config.h"
+const char* ssid     = "yourssid";
+const char* password = "yourpasswd";
 
-#define DEBUG 7
+#define DEBUG 4
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -105,7 +106,7 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
+  N_DEBUG_PRINT(F("Incoming NoteOn  from channel: "));
   N_DEBUG_PRINT(channel);
   N_DEBUG_PRINT(F(", note: "));
   N_DEBUG_PRINT(note);
