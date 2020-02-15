@@ -42,11 +42,11 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 ```
 More usages in the `examples` folder
 
-## Migrating from 1* to 2*
+## Migrating from 1.* to 2.*
 
-Version 2 of this library is not backward compatible with the API from the previous version.
-Both MIDI and rtpMIDI have been separated, and that has implications on how the code is called.
-For consistency, this library uses the same calling syntax as the 47effects Arduino MIDI library, making porting application from Serial MIDI to rtpMIDI more easy.
+Version 2 of this library is not backward compatible with the API from the previous version, as I wanted to use the same calling syntax as the 47effect Arduino MIDI library. Another reason is that MIDI and rtpMIDI/AppleMIDI are separate modules; in fact: rtpMIDI/AppleMIDI is just another transport mechanism for the MIDI protocol, just like USB, BT or the default serial. 
+
+Previously `APPLEMIDI_CREATE_DEFAULT_INSTANCE();` created an instance called `AppleMIDI` and the session name was given in the begin part of the sketch. The new version create 2 objects: `AppleMIDI` and `MIDI`, respectively dealing with the AppleMIDI protocol and MIDI protocol. The session name defaults to  `Arduino`. Just like with any other MIDI application, the channel is given during the initialisation. If you would like to change the session name (or default UDP port), use `APPLEMIDI_CREATE_DEFAULT_INSTANCE`.
 
 `APPLEMIDI_CREATE_DEFAULT_INSTANCE();` => `APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();`
 
