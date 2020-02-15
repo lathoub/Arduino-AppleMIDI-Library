@@ -44,11 +44,12 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
+  AppleMIDI.setHandleReceivedMidi(OnAppleMidiReceivedByte);
 
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
 
-  N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
+  N_DEBUG_PRINTLN(F("Waiting for incoming MIDI messages"));
 }
 
 // -----------------------------------------------------------------------------
@@ -58,21 +59,6 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
-
-  // send note on/off every second
-  // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 500)
-  {
-    t1 = millis();
-    //   Serial.print(F(".");
-
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
-  }
 }
 
 // ====================================================================================
@@ -102,6 +88,13 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
   N_DEBUG_PRINTLN(F("ERROR"));
   exit(1);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+void OnAppleMidiReceivedByte(uint32_t ssrc, byte data) {
+  N_DEBUG_PRINTLN(data, HEX);
 }
 
 // -----------------------------------------------------------------------------
