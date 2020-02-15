@@ -10,7 +10,7 @@ struct DefaultSettings
 
     /* The MaxNumberOfParticipants constant is typically the amount
     of sockets in the system divided by 2 */
-    static const uint8_t MaxNumberOfParticipants = 4 / 2;
+    static const uint8_t MaxNumberOfParticipants = 1;
 };
 
 enum parserReturn: uint8_t
