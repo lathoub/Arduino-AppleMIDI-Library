@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-#define DEBUG 4
+#define DEBUG 7
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -16,11 +16,7 @@ byte mac[] = {
 unsigned long t0 = millis();
 bool isConnected = false;
 
-byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
-byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
-byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
-
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "Arduino");
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "Arduino", 5004);
 
 // -----------------------------------------------------------------------------
 //
@@ -37,7 +33,7 @@ void setup()
     Serial.print(F("."));
   }
 
-  N_DEBUG_PRINT("IP address is ");
+  N_DEBUG_PRINT("\nIP address is ");
   N_DEBUG_PRINTLN(WiFi.localIP());
 
   V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
@@ -72,10 +68,6 @@ void loop()
   // (dont cáll delay(1000) as it will stall the pipeline)
   if (isConnected && (millis() - t0) > 1000)
   {
-    //MIDI.sendSysEx(sizeof(sysex14), sysex14, true);
-    //MIDI.sendSysEx(sizeof(sysex15), sysex15, true);
-    MIDI.sendSysEx(sizeof(sysex16), sysex16, true);
-
     t0 = millis();
     //   Serial.print(F(".");
 
