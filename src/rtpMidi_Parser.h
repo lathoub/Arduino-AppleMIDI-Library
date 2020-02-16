@@ -14,7 +14,7 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class Settings>
-class AppleMidiTransport;
+class AppleMidiSession;
 
 template <class UdpClass, class Settings>
 class rtpMIDIParser
@@ -27,7 +27,7 @@ private:
     uint8_t rtpMidi_Flags = 0;
 
 public:
-	AppleMidiTransport<UdpClass, Settings> * session;
+	AppleMidiSession<UdpClass, Settings> * session;
     
 	//  Parse the incoming string
 	// return:

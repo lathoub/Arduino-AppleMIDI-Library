@@ -1,6 +1,7 @@
 #include <Ethernet.h>
+#include <EthernetBonjour.h>
 
-#define DEBUG 4
+#define DEBUG LOG_LEVEL_NOTICE
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -41,6 +42,31 @@ void setup()
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
 
+  // Initialize the Bonjour/MDNS library. You can now reach or ping this
+  // Arduino via the host name "arduino.local", provided that your operating
+  // system is Bonjour-enabled (such as MacOS X).
+  // Always call this before any other method!
+  EthernetBonjour.begin(AppleMIDI.getName());
+
+    // Now let's register the service we're offering (a web service) via Bonjour!
+  // To do so, we call the addServiceRecord() method. The first argument is the
+  // name of our service instance and its type, separated by a dot. In this
+  // case, the service type is _http. There are many other service types, use
+  // google to look up some common ones, but you can also invent your own
+  // service type, like _mycoolservice - As long as your clients know what to
+  // look for, you're good to go.
+  // The second argument is the port on which the service is running. This is
+  // port 80 here, the standard HTTP port.
+  // The last argument is the protocol type of the service, either TCP or UDP.
+  // Of course, our service is a TCP service.
+  // With the service registered, it will show up in a Bonjour-enabled web
+  // browser. As an example, if you are using Apple's Safari, you will now see
+  // the service under Bookmarks -> Bonjour (Provided that you have enabled
+  // Bonjour in the "Bookmarks" preferences in Safari).
+  EthernetBonjour.addServiceRecord("Arduino._apple-midi",
+                                   AppleMIDI.getPort(),
+                                   MDNSServiceUDP);
+                                   
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
@@ -61,6 +87,10 @@ void loop()
   // Listen to incoming notes
   MIDI.read();
 
+  // This actually runs the Bonjour module. YOU HAVE TO CALL THIS PERIODICALLY,
+  // OR NOTHING WILL WORK! Preferably, call it once per loop().
+  EthernetBonjour.run();
+  
   // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
   if (isConnected && (millis() - t1) > 1000)

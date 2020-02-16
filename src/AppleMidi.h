@@ -9,6 +9,8 @@
 #include "utility/midi_feat4_4_0/MIDI.h"
 #include "utility/endian.h"
 
+#include "IPAddress.h"
+
 #include "AppleMidi_Defs.h"
 #include "AppleMidi_Settings.h"
 
@@ -30,7 +32,7 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class _Settings = DefaultSettings>
-class AppleMidiTransport
+class AppleMidiSession
 {
 	typedef _Settings Settings;
 
@@ -38,11 +40,12 @@ class AppleMidiTransport
 	// to avoid access by the .ino to internal messages
 	friend class AppleMIDIParser<UdpClass, Settings>;
 	friend class rtpMIDIParser<UdpClass, Settings>;
-	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiTransport<UdpClass>>;
+	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiSession<UdpClass>>;
 
 public:
-	AppleMidiTransport(const char *name, const uint16_t port = CONTROL_PORT)
+	AppleMidiSession(const char *name, const uint16_t port = CONTROL_PORT)
 	{
+        // Pseudo randomize
 		randomSeed(analogRead(0));
 
 		this->port = port;
@@ -51,6 +54,7 @@ public:
 		strncpy(this->bonjourName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #endif
 
+        // initialise
 		for (uint8_t i = 0; i < Settings::MaxNumberOfParticipants; i++)
 			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
@@ -63,7 +67,7 @@ public:
     void setHandleError(void (*fptr)(ssrc_t, uint32_t)) { _errorCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
 
-    const char* getName() { return this->localName; };
+    const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
 
 protected:
@@ -73,7 +77,7 @@ protected:
 		// number and RTP timestamp space.
 		// this is our SSRC
         //
-        // NOTE: random(1, UINT32_MAX) doesn't seem to work!
+        // NOTE: max for randon is a signed
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		// In an RTP MIDI stream, the 16-bit sequence number field is
@@ -175,6 +179,8 @@ private:
 	Deque<byte, Settings::MaxBufferSize> inMidiBuffer;
 	Deque<byte, Settings::MaxBufferSize> outMidiBuffer;
 
+    // Session Information
+    
 	rtpMidi_Clock rtpMidiClock;
 
 	ssrc_t ssrc = 0;
@@ -190,6 +196,9 @@ private:
 
 	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
 
+public:
+    bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
+
 private:
 	void readControlPackets();
 	void readDataPackets();
@@ -202,12 +211,14 @@ private:
 	void ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback &);
 	void ReceivedEndSession(AppleMIDI_EndSession &);
 
+    void SendInvitation(AppleMIDI_Invitation &, const amPortType &);
+    
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t&);
     void ReceivedMidi(byte data);
 
 	// Helpers
-    static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
+    static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t, const byte *command, ssrc_t);
     static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
 	static void writeRtpMidiBuffer(UdpClass &, Deque<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
 
@@ -222,7 +233,7 @@ private:
 	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
-	typedef APPLEMIDI_NAMESPACE::AppleMidiTransport<Type> __amt;   \
+	typedef APPLEMIDI_NAMESPACE::AppleMidiSession<Type> __amt;   \
 	__amt AppleMIDI(sessionName, port);                        \
 	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 

@@ -12,13 +12,13 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class Settings>
-class AppleMidiTransport;
+class AppleMidiSession;
 
 template <class UdpClass, class Settings>
 class AppleMIDIParser
 {
 public:
-	AppleMidiTransport<UdpClass, Settings> *session;
+	AppleMidiSession<UdpClass, Settings> *session;
 
 	parserReturn parse(Deque<byte, Settings::MaxBufferSize> &buffer, const amPortType &portType)
 	{
@@ -126,7 +126,7 @@ public:
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
-			N_DEBUG_PRINTLN("received EndSession");
+			V_DEBUG_PRINTLN("received EndSession");
 
 			byte protocolVersion[4];
 
@@ -141,12 +141,12 @@ public:
 			protocolVersion[3] = buffer[i++];
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
 			{
-				// N_DEBUG_PRINT("Wrong protocolVersion: 0x");
-				// N_DEBUG_PRINT(protocolVersion[0], HEX);
-				// N_DEBUG_PRINT(protocolVersion[1], HEX);
-				// N_DEBUG_PRINT(protocolVersion[2], HEX);
-				// N_DEBUG_PRINT(protocolVersion[3], HEX);
-				// N_DEBUG_PRINTLN(" was expecting 0x00000002");
+				// V_DEBUG_PRINT("Wrong protocolVersion: 0x");
+				// V_DEBUG_PRINT(protocolVersion[0], HEX);
+				// V_DEBUG_PRINT(protocolVersion[1], HEX);
+				// V_DEBUG_PRINT(protocolVersion[2], HEX);
+				// V_DEBUG_PRINT(protocolVersion[3], HEX);
+				// V_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
 			}
 

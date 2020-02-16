@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:/Users/bart/Documents/Arduino/libraries/Arduino-AppleMIDI-Library/test/IPAddress.h">
+   </FileRef>
+   <FileRef
       location = "self:rtpMidi.xcodeproj">
    </FileRef>
 </Workspace>

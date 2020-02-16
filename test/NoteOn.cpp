@@ -120,7 +120,7 @@ void begin()
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
     AppleMIDI.setHandleReceivedMidi(OnAppleMidiByte);
-
+    
     MIDI.setHandleNoteOn(OnMidiNoteOn);
     MIDI.setHandleNoteOff(OnMidiNoteOff);
     MIDI.setHandleSystemExclusive(OnMidiSystemExclusive);

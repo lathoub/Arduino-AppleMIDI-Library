@@ -111,10 +111,11 @@ enum amPortType : uint8_t
 // and session listeners. Session initiators are in charge of inviting the session listeners,
 // and are responsible of the clock synchronization sequence. Session initiators can generally
 // be session listeners, but some devices, such as iOS devices, can be session listeners only.
-enum SessionController : uint8_t
+enum SessionKind : uint8_t
 {
 	Listener,
 	Initiator,
+    Idle
 };
 
 #ifdef APPLEMIDI_INITIATOR

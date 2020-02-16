@@ -23,6 +23,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CC1A7D5F23F9378200206908 /* IPAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IPAddress.h; path = "/Users/bart/Documents/Arduino/libraries/Arduino-AppleMIDI-Library/test/IPAddress.h"; sourceTree = "<absolute>"; };
 		CCD26B8D23DCD696004A7418 /* EthernetShield_NoteOnOffEverySec.ino */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = EthernetShield_NoteOnOffEverySec.ino; path = ../examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino; sourceTree = "<group>"; };
 		CCE329B523C2037C00A197D1 /* rtpMidi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rtpMidi; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCE329BF23C2040200A197D1 /* NoteOn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NoteOn.cpp; sourceTree = "<group>"; };
@@ -49,6 +50,7 @@
 				CCE329D623C28E9F00A197D1 /* src */,
 				CCE329C023C2040200A197D1 /* Arduino.h */,
 				CCE329C123C2040200A197D1 /* Ethernet.h */,
+				CC1A7D5F23F9378200206908 /* IPAddress.h */,
 				CCE329BF23C2040200A197D1 /* NoteOn.cpp */,
 				CCE329B623C2037C00A197D1 /* Products */,
 			);
