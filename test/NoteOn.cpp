@@ -129,6 +129,7 @@ void begin()
 void loop()
 {
 	MIDI.read();
+    
     // send a note every second
      // (dont cáll delay(1000) as it will stall the pipeline)
      if (isConnected && (millis() - t0) > 10000)
@@ -140,8 +141,8 @@ void loop()
        byte velocity = 55;
        byte channel = 1;
 
-     //  MIDI.sendNoteOn(note, velocity, channel);
-     //  MIDI.sendNoteOff(note, velocity, channel);
+       MIDI.sendNoteOn(note, velocity, channel);
+       MIDI.sendNoteOff(note, velocity, channel);
 
      }
  //   MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);

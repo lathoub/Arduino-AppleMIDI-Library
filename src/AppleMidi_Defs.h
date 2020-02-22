@@ -11,8 +11,6 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 #define CONTROL_PORT 5004
 
-#undef OPTIONAL_MDNS
-
 typedef uint32_t ssrc_t;
 typedef uint32_t initiatorToken_t;
 typedef uint64_t timestamp_t;
@@ -22,10 +20,11 @@ typedef uint64_t timestamp_t;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24; // TODO: change with APPLEMIDI_SESSION_NAME_MAX_LEN
+const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
 
 #define APPLEMIDI_LISTENER
-//#define APPLEMIDI_INITIATOR
+#undef APPLEMIDI_INITIATOR
+#undef KEEP_SESSION_NAME
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000

@@ -125,9 +125,11 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
             V_DEBUG_PRINT(F("totalChannels: "));
             V_DEBUG_PRINTLN(_journalTotalChannels);
+            
+            // do channel reading below, so we can already purge bytes here
         }
         
-        while (i-- > 0)
+        while (i-- > 0) // is that the same as while (i--) ??
             buffer.pop_front();
                 
         _journalSectionComplete = true;
@@ -150,8 +152,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
         // We have the most important bit of information - the length of the channel information
         // no more need to further parse.
-
-        printBuffer(buffer);
 
         if (buffer.size() < chanjourlen)
         {

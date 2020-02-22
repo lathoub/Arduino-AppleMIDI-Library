@@ -30,6 +30,7 @@ void AppleMidiSession<UdpClass, Settings>::readControlPackets()
         {
             if (NULL != _errorCallback)
                 _errorCallback(ssrc, -2);
+            
             dataBuffer.pop_front();
         }
     }
@@ -58,22 +59,24 @@ void AppleMidiSession<UdpClass, Settings>::readDataPackets()
         if (retVal1 == parserReturn::Processed
         ||  retVal1 == parserReturn::NotEnoughData)
             break;
+        
         auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
         if (retVal2 == parserReturn::Processed
         ||  retVal2 == parserReturn::NotEnoughData)
             break;
 
+        //  // both don't have data to determine protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
 			break;
 
+        // one or the other don't have enough data to determine the protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
-        {
-            T_DEBUG_PRINTLN(F("data PARSER_NOT_ENOUGH_DATA"));
             break; // one or the other buffer does not have enough data
-        }
 
+        // TODO can we ever get here???
+        
         if (NULL != _errorCallback)
             _errorCallback(ssrc, -3);
 
@@ -104,9 +107,13 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_I
     T_DEBUG_PRINT(invitation.initiatorToken, HEX);
     T_DEBUG_PRINT(", senderSSRC: 0x");
     T_DEBUG_PRINT(invitation.ssrc, HEX);
+#ifdef KEEP_SESSION_NAME
     T_DEBUG_PRINT(", sessionName: ");
-    T_DEBUG_PRINTLN(invitation.sessionName);
+    T_DEBUG_PRINT(invitation.sessionName);
+#endif
+    T_DEBUG_PRINTLN();
 
+    // advertise our own session name
     strncpy(invitation.sessionName, localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
     invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
 
@@ -125,7 +132,9 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_I
         }
         
         participant->ssrc = invitation.ssrc;
+#ifdef KEEP_SESSION_NAME
         strncpy(participant->sessionName, invitation.sessionName, APPLEMIDI_SESSION_NAME_MAX_LEN);
+#endif
     }
     else
     {
@@ -143,8 +152,11 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
     T_DEBUG_PRINT(invitation.initiatorToken, HEX);
     T_DEBUG_PRINT(", senderSSRC: 0x");
     T_DEBUG_PRINT(invitation.ssrc, HEX);
+#ifdef KEEP_SESSION_NAME
     T_DEBUG_PRINT(", sessionName: ");
-    T_DEBUG_PRINTLN(invitation.sessionName);
+    T_DEBUG_PRINT(invitation.sessionName);
+#endif
+    T_DEBUG_PRINTLN();
 
     auto participant = getParticipant(invitation.ssrc);
     if (NULL == participant)
@@ -157,11 +169,16 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
         return;
     }
 
+    // writeInvitation will alter the values of the invitation,
+    // in order to safe memory and computing cycles its easier to make a copy
+    // of the ssrc here.
+    auto ssrc_ = invitation.ssrc;
+    
     writeInvitation(dataPort, invitation, amInvitationAccepted, ssrc);
 
     // Inform that we have an established connection
     if (NULL != _connectedCallback)
-        _connectedCallback(invitation.ssrc, invitation.sessionName);
+        _connectedCallback(ssrc_, invitation.sessionName);
 }
 
 /*! \brief .
@@ -254,9 +271,10 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK2"));
         // each party can estimate the offset between the two clocks using the following formula
-        auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
-        auto diff            = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
-                        diff = synchronization.timestamps[2] + diff - now;
+      //  auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
+        // or
+      //  auto diff            = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
+     //                   diff = synchronization.timestamps[2] + diff - now;
  //       N_DEBUG_PRINT((uint32_t)(diff << 32));
  //       N_DEBUG_PRINTLN((uint32_t)(diff));
         break;
@@ -331,47 +349,46 @@ Participant<Settings> *AppleMidiSession<UdpClass, Settings>::getParticipant(cons
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, AppleMIDI_Invitation_t invitation, const byte *command, ssrc_t ssrc)
+void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, AppleMIDI_Invitation_t & invitation, const byte *command, ssrc_t ssrc)
 {
     T_DEBUG_PRINTLN(F("writeInvitation"));
 
     if (port.beginPacket(port.remoteIP(), port.remotePort()))
     {
         port.write((uint8_t *)amSignature, sizeof(amSignature));
-        port.write((uint8_t *)command, sizeof(amInvitationRejected));
-        port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
-        invitation.initiatorToken = htonl(invitation.initiatorToken);
-        invitation.ssrc = htonl(ssrc);
-        port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
+        
+            port.write((uint8_t *)command, sizeof(amInvitationRejected));
+            port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
+            invitation.initiatorToken = htonl(invitation.initiatorToken);
+            invitation.ssrc = htonl(ssrc);
+            port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
+        
         port.endPacket();
         port.flush();
-
-        invitation.initiatorToken = htonl(invitation.initiatorToken);
     }
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(UdpClass &port, AppleMIDI_ReceiverFeedback_t &receiverFeedback)
+void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(UdpClass &port, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
     T_DEBUG_PRINTLN(F("writeReceiverFeedback"));
 
     if (port.beginPacket(port.remoteIP(), port.remotePort()))
     {
         port.write((uint8_t *)amSignature, sizeof(amSignature));
-        port.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
-        port.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
+        
+            port.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
+            port.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
+        
         port.endPacket();
         port.flush();
     }
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, RtpBuffer_t &buffer, uint16_t sequenceNr, ssrc_t ssrc, uint32_t timestamp)
+void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
-        
-    T_DEBUG_PRINT(" sequenceNr: ");
-    T_DEBUG_PRINTLN(sequenceNr);
 
     if (!port.beginPacket(port.remoteIP(), port.remotePort()))
     {
@@ -382,10 +399,16 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Rt
         return;
     }
 
+    sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
+    
+    T_DEBUG_PRINT(" sequenceNr: ");
+    T_DEBUG_PRINTLN(sequenceNr);
+
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
     rtp.ssrc = htonl(ssrc);
+    
     // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
     // the time at which the events are to be played. Zero means "now." The time stamp
@@ -401,19 +424,19 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Rt
     // prepared to defer rendering the messages until the proper time.)
     //
     rtp.timestamp = htonl(0); // now
-  //  rtp.timestamp = htonl(timestamp);
+  //  rtp.timestamp = htonl(rtpMidiClock.Now());
     rtp.sequenceNr = htons(sequenceNr);
     port.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
-    auto bufferLen = buffer.size();
+    auto bufferLen = outMidiBuffer.size();
 
     RtpMIDI_t rtpMidi;
 
     if (bufferLen <= 0x0F)
     { // Short header
         rtpMidi.flags = (uint8_t)bufferLen;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_B;
+        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_B; // TODO: set or clear these flags (no journal)
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
@@ -422,7 +445,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Rt
     else
     { // Long header
         rtpMidi.flags = (uint8_t)(bufferLen >> 8);
-        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B;
+        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
@@ -431,13 +454,18 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port, Rt
     }
 
     // MIDI Section
-    while (!buffer.empty())
-        port.write(buffer.pop_front());
+    while (!outMidiBuffer.empty())
+        port.write(outMidiBuffer.pop_front());
     
-    // *No* journal section
+    // *No* journal section (Not supported)
     
     port.endPacket();
     port.flush();
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::manageTiming()
+{
 }
 
 template <class UdpClass, class Settings>
@@ -450,8 +478,6 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
         
         if (millis() - participants[i].lastInviteSentTime <  1000)
         {
-            // timeout
-            
             participants[i].lastInviteSentTime = millis();
 
            // this->SendInvitation()
@@ -460,11 +486,13 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
     }
 }
 
-template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::manageTiming()
-{
-}
-
+// The recovery journal mechanism requires that the receiver
+// periodically inform the sender of the sequence number of the most
+// recently received packet. This allows the sender to reduce the size
+// of the recovery journal, to encapsulate only those changes to the
+// MIDI stream state occurring after the specified packet number.
+//
+// This message is sent on the control port.
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
 {
@@ -503,6 +531,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
     {
         W_DEBUG_PRINT(F("Received an RTP packet from an unknown ssrc: 0x"));
         W_DEBUG_PRINTLN(rtp.ssrc, HEX);
+        // TODO??? re-connect?
     }
 }
 
@@ -513,6 +542,12 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedMidi(byte value)
         _receivedMidiByteCallback(0, value);
 
     inMidiBuffer.push_back(value);
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::SendInvitation(AppleMIDI_Invitation &, const amPortType &)
+{
+    sessionKind = Initiator;
 }
 
 END_APPLEMIDI_NAMESPACE

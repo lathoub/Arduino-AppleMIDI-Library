@@ -35,7 +35,7 @@ public:
 		if (buffer.size() < minimumLen)
             return parserReturn::NotSureGiveMeMoreData;
 
-		size_t i = 0; // TODO: rename to consumed
+		size_t i = 0;
 
 		signature[0] = buffer[i++];
 		signature[1] = buffer[i++];
@@ -105,11 +105,15 @@ public:
 			V_DEBUG_PRINT("senderSSRC: 0x");
 			V_DEBUG_PRINTLN(invitation.ssrc, HEX);
 
+#ifdef KEEP_SESSION_NAME
 			uint16_t bi = 0;
 			while ((i < buffer.size()) && (buffer[i] != 0x00) && (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN))
 				invitation.sessionName[bi++] = buffer[i++];
 			invitation.sessionName[bi++] = '\0';
-
+#else
+            while ((i < buffer.size()) && (buffer[i] != 0x00))
+                i++;
+#endif
 			if (i == buffer.size() || buffer[i++] != 0x00)
                 return parserReturn::NotEnoughData;
 
@@ -117,7 +121,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (auto j = 0; j < i; j++)
+            while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedInvitation(invitation, portType);
@@ -158,6 +162,7 @@ public:
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
 			endSession.initiatorToken = ntohl(cb.value32);
+            
 			// The sender's synchronization source identifier.
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
@@ -169,7 +174,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (size_t j = 0; j < i; j++)
+            while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedEndSession(endSession);
@@ -232,7 +237,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (size_t j = 0; j < i; j++)
+            while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedSynchronization(synchronization);
@@ -271,7 +276,7 @@ public:
             V_DEBUG_PRINT(i);
             V_DEBUG_PRINTLN(" bytes");
 
-            for (size_t j = 0; j < i; j++)
+            while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedReceiverFeedback(receiverFeedback);

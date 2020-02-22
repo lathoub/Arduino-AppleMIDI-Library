@@ -204,7 +204,7 @@ public:
                 0x46, // flag
                 0x80, 0x3f, 0x00, // note off 63 on channel 1,
                 0x00, // delta time
-                0x3d, 0x00, // note 61
+                0x3d, 0x00, // note off note 61 on channel 1 (note the running status)
                 // Journal Section (17 bytes)
                 0x20, // journal flag
                 0x27, 0x34, // sequence nr

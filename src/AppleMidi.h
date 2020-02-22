@@ -50,10 +50,7 @@ public:
 
 		this->port = port;
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
-#ifdef OPTIONAL_MDNS
-		strncpy(this->bonjourName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
-#endif
-
+        
         // initialise
 		for (uint8_t i = 0; i < Settings::MaxNumberOfParticipants; i++)
 			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
@@ -77,7 +74,8 @@ protected:
 		// number and RTP timestamp space.
 		// this is our SSRC
         //
-        // NOTE: max for randon is a signed
+        // NOTE: Arduino random only goes to INT32_MAX (not UINT32_MAX)
+        
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		// In an RTP MIDI stream, the 16-bit sequence number field is
@@ -85,18 +83,40 @@ protected:
 		// (modulo 2^16) for each packet sent in the stream.
 		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
         //
-        // NOTE: random(1, UINT32_MAX) doesn't seem to work!
-		this->sequenceNr = random(1, INT16_MAX) * 2;
+		this->sequenceNr = random(1, UINT16_MAX);
 
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
 
 		uint32_t initialTimestamp = rtpMidiClock.Now();
 		rtpMidiClock.Init(initialTimestamp, MIDI_SAMPLING_RATE_DEFAULT);
-	}
+    }
 
 	bool beginTransmission()
 	{
+        // All MIDI commands queued up in the same cycle (during 1 loop execution)
+        // are send in a single MIDI packet
+        // (The actual sending happen in the available() method, called at the start of the
+        // event loop() method.
+        //
+        // http://www.rfc-editor.org/rfc/rfc4696.txt
+        //
+        // 4.1.  Queuing and Coding Incoming MIDI Data
+        // ...
+        // More sophisticated sending algorithms
+        // [GRAME] improve efficiency by coding small groups of commands into a
+        // single packet, at the expense of increasing the sender queuing
+        // latency.
+        //
+        if (!outMidiBuffer.empty())
+        {
+            // Check if there is still room for more - like for 3 bytes or so)
+            if ((outMidiBuffer.size() + 1 + 3) > outMidiBuffer.max_size())
+                writeRtpMidiBuffer(dataPort);
+            else
+                outMidiBuffer.push_back(0x00); // zero timestamp
+        }
+        
 		// We can't start the writing process here, as we do not know the length
 		// of what we are to send (The RtpMidi protocol start with writing the
 		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
@@ -115,7 +135,7 @@ protected:
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
 				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
                 
-				writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
+                writeRtpMidiBuffer(dataPort);
 				// and start again with a fresh continuation of
 				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
                 outMidiBuffer.clear();
@@ -135,16 +155,18 @@ protected:
 
 	void endTransmission()
 	{
-		writeRtpMidiBuffer(dataPort, outMidiBuffer, sequenceNr++, ssrc, rtpMidiClock.Now());
 	};
 
-	byte read()
-	{
-		return inMidiBuffer.pop_front();
-	};
-
+    // first things MIDI.read() calls in this method
+    // MIDI-read() must be called at the start of loop()
 	unsigned available()
 	{
+        // All MIDI commands queued up in the same cycle (during 1 loop execution)
+        // are send in a single MIDI packet
+        if (outMidiBuffer.size() > 0)
+            writeRtpMidiBuffer(dataPort);
+        // assert(outMidiBuffer.size() == 0); // must be empty
+        
         if (inMidiBuffer.size() > 0)
             return true;
         
@@ -158,6 +180,11 @@ protected:
 
         return false;
 	};
+
+    byte read()
+    {
+        return inMidiBuffer.pop_front();
+    };
 
 private:
 	UdpClass controlPort;
@@ -178,24 +205,23 @@ private:
 	// buffer for incoming and outgoing midi messages
 	Deque<byte, Settings::MaxBufferSize> inMidiBuffer;
 	Deque<byte, Settings::MaxBufferSize> outMidiBuffer;
-
-    // Session Information
     
 	rtpMidi_Clock rtpMidiClock;
+    
+    // Session Information
 
+    SessionKind sessionKind = Listener;
+    
 	ssrc_t ssrc = 0;
 
 	uint16_t sequenceNr = 0; // counter for outgoing messages
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
-#ifdef OPTIONAL_MDNS
-	char bonjourName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
-#endif
     
-	uint16_t port = 5004;
+	uint16_t port = CONTROL_PORT;
 
 	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
-
+            
 public:
     bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
@@ -218,14 +244,15 @@ private:
     void ReceivedMidi(byte data);
 
 	// Helpers
-    static void writeInvitation(UdpClass &, AppleMIDI_Invitation_t, const byte *command, ssrc_t);
-    static void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
-	static void writeRtpMidiBuffer(UdpClass &, Deque<byte, Settings::MaxBufferSize> &, uint16_t, ssrc_t, uint32_t);
+    void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
+    void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
+    void writeRtpMidiBuffer(UdpClass &);
 
-	void managePendingInvites();
-	void manageTiming();
     void manageReceiverFeedback();
-
+   
+    void managePendingInvites();
+    void manageTiming();
+        
 	Participant<Settings> *getParticipant(const ssrc_t ssrc);
 };
 
@@ -238,7 +265,7 @@ private:
 	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
-	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", 5004);
+	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", CONTROL_PORT);
 
 END_APPLEMIDI_NAMESPACE
 

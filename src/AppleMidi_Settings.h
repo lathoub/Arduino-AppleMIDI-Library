@@ -7,9 +7,9 @@ BEGIN_APPLEMIDI_NAMESPACE
 struct DefaultSettings
 {
     static const size_t MaxBufferSize = 64;
+    
+    static const size_t MaxSessionNameLen = 24; // todo: not used for the moment - because of use in _Defs
 
-    /* The MaxNumberOfParticipants constant is typically the amount
-    of sockets in the system divided by 2 */
     static const uint8_t MaxNumberOfParticipants = 1;
 };
 

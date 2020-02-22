@@ -7,7 +7,6 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
     while (midiCommandLength)
     {
-
         /* for the first command we only have a delta-time if Z-Flag is set */
         if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
@@ -123,9 +122,6 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &running
     if (octet < 0xf0)
     {
         uint8_t type = (octet & 0xf0);
-#ifdef DEBUG
-        uint8_t channel = (octet & 0x0f) + 1;
-#endif
         
         switch (type)
         {
@@ -254,6 +250,7 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
     return buffer.max_size() + 1;
 }
 
+#if DEBUG > LOG_LEVEL_NONE
 void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
 {
     T_DEBUG_PRINT(F("Buffer Size: "));
@@ -269,3 +266,7 @@ void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
     }
     T_DEBUG_PRINTLN();
 }
+#else
+void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
+{}
+#endif
