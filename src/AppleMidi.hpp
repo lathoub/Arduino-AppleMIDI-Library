@@ -214,8 +214,6 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     T_DEBUG_PRINT(F("received Synchronization for ssrc 0x"));
     T_DEBUG_PRINTLN(synchronization.ssrc, HEX);
 
-    auto now = rtpMidiClock.Now(); // units of 100 microseconds
-
     auto participant = getParticipant(synchronization.ssrc);
     if (NULL == participant)
     {
@@ -263,7 +261,8 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK0"));
         synchronization.count = SYNC_CK1;
-        synchronization.timestamps[synchronization.count] = now;
+        synchronization.timestamps[synchronization.count] = rtpMidiClock.Now();
+        _kind = Listener;
         break;
     case SYNC_CK1: // From session responder
         V_DEBUG_PRINTLN(F("SYNC_CK1 n/a for the moments"));
@@ -271,12 +270,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK2"));
         // each party can estimate the offset between the two clocks using the following formula
-      //  auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
-        // or
-      //  auto diff            = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
-     //                   diff = synchronization.timestamps[2] + diff - now;
- //       N_DEBUG_PRINT((uint32_t)(diff << 32));
- //       N_DEBUG_PRINTLN((uint32_t)(diff));
+        auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
         break;
     }
 
@@ -297,6 +291,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
             dataPort.endPacket();
             dataPort.flush();
         }
+        _lastSyncExchangeTime = millis();
         break;
     case SYNC_CK0:
     case SYNC_CK2:
@@ -471,7 +466,7 @@ void AppleMidiSession<UdpClass, Settings>::manageTiming()
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
 {
-    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+/*    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
     {
         if (participants[i].ssrc == APPLEMIDI_PARTICIPANT_SLOT_FREE)
             continue;
@@ -483,6 +478,29 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
            // this->SendInvitation()
             participants[i].connectionAttempts++;
         }
+    }
+ */
+}
+
+// https://en.wikipedia.org/wiki/RTP-MIDI#Synchronization_sequence
+// A partner not answering multiple CK0 messages shall consider
+// that the remote partner is disconnected.
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::manageSyncExchange()
+{
+    if (Unknown == _kind)
+        return;
+    
+    if (Listener == _kind)
+    {
+        if (millis() - _lastSyncExchangeTime > 60000)
+        {
+            // sender Quit
+        //    controlPort.stop();
+        //    dataPort.stop();
+            _kind = Unknown;
+        }
+        return;
     }
 }
 
@@ -547,7 +565,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedMidi(byte value)
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::SendInvitation(AppleMIDI_Invitation &, const amPortType &)
 {
-    sessionKind = Initiator;
+    _kind = Initiator;
 }
 
 END_APPLEMIDI_NAMESPACE

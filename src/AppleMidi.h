@@ -55,6 +55,9 @@ public:
 		for (uint8_t i = 0; i < Settings::MaxNumberOfParticipants; i++)
 			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
 
+        _lastSyncExchangeTime = 0;
+        _kind = Unknown;
+
 		_appleMIDIParser.session = this;
 		_rtpMIDIParser.session = this;
 	};
@@ -176,6 +179,7 @@ protected:
         readDataPackets();
         readControlPackets();
 
+        manageSyncExchange();
         manageReceiverFeedback();
 
         return false;
@@ -210,7 +214,9 @@ private:
     
     // Session Information
 
-    SessionKind sessionKind = Listener;
+    SessionKind _kind = Unknown;
+    
+    unsigned long _lastSyncExchangeTime = 0;
     
 	ssrc_t ssrc = 0;
 
@@ -248,6 +254,7 @@ private:
     void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
     void writeRtpMidiBuffer(UdpClass &);
 
+    void manageSyncExchange();
     void manageReceiverFeedback();
    
     void managePendingInvites();

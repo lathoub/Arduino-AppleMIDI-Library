@@ -114,7 +114,7 @@ enum SessionKind : uint8_t
 {
 	Listener,
 	Initiator,
-    Idle
+    Unknown
 };
 
 #ifdef APPLEMIDI_INITIATOR
