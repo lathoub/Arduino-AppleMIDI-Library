@@ -10,7 +10,7 @@ struct DefaultSettings
     
     static const size_t MaxSessionNameLen = 24; // todo: not used for the moment - because of use in _Defs
 
-    static const uint8_t MaxNumberOfParticipants = 1;
+    static const uint8_t MaxNumberOfParticipants = 2;
 };
 
 enum parserReturn: uint8_t

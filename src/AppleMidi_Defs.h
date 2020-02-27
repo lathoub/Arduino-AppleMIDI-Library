@@ -23,8 +23,8 @@ typedef uint64_t timestamp_t;
 const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
 
 #define APPLEMIDI_LISTENER
-#undef APPLEMIDI_INITIATOR
-#undef KEEP_SESSION_NAME
+#define APPLEMIDI_INITIATOR
+#define KEEP_SESSION_NAME
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
@@ -110,23 +110,21 @@ enum amPortType : uint8_t
 // and session listeners. Session initiators are in charge of inviting the session listeners,
 // and are responsible of the clock synchronization sequence. Session initiators can generally
 // be session listeners, but some devices, such as iOS devices, can be session listeners only.
-enum SessionKind : uint8_t
+enum ParticipantKind : uint8_t
 {
 	Listener,
 	Initiator,
     Unknown
 };
 
-#ifdef APPLEMIDI_INITIATOR
-enum SessionInviteStatus : uint8_t
+enum InviteStatus : uint8_t
 {
-	None,
-	SendControlInvite,
-	ReceiveControlInvitation,
-	WaitingForControlInvitationAccepted,
-	SendContentInvite,
-	WaitingForContentInvitationAccepted,
+	Initiating,
+    AwaitingControlInvitationAccepted,
+    ControlInvitationAccepted,
+    AwaitingDataInvitationAccepted,
+    DataInvitationAccepted,
+    Connected
 };
-#endif
 
 END_APPLEMIDI_NAMESPACE

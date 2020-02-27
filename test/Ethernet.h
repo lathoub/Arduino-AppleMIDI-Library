@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 
+
 class EthernetUDP
 {
     Deque<byte, 4096> _buffer;
@@ -41,9 +42,6 @@ public:
                 0x4e, 0xd4, 0xc5, 0xb1, 0x54, 0x00, 0x42, 0xd0, 0x30, 0x20, 0xcc, 0x4a, 0x00, 0x0a, 0x18, 0x8,
                 0x40, 0x81, 0xf1, 0x90, 0x40, 0x2d
             };
-            
-            
-            
             
             byte sysexJournalMalformed[] = {
                 0x80, 0x61, 0x99, 0xc6, 0x1e, 0x90, 0x97, 0xc4, 0xc8, 0x86, 0x76, 0xf9,
@@ -280,7 +278,7 @@ public:
             
             byte slecht[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
             
-            write(aaa, sizeof(aaa));
+     //       write(noteOnOff, sizeof(noteOnOff));
         }
 
         
@@ -293,6 +291,11 @@ public:
     };
 
     bool beginPacket(uint32_t, uint16_t)
+    {
+        return true;
+    }
+
+    bool beginPacket(IPAddress, uint16_t)
     {
         return true;
     }
@@ -329,8 +332,71 @@ public:
     };
 
     void endPacket() { };
-    void flush() { };
-    void stop() { };
+    void flush()
+    {
+        if (_port == 5004)
+        {
+            if (_buffer[0] == 0xff && _buffer[1] == 0xff && _buffer[2] == 'I' &&_buffer[3] == 'N')
+            {
+                _buffer.clear();
+
+                
+                byte u[] = {
+                    0xff, 0xff,
+                    0x4f, 0x4b,
+                    0x00, 0x00, 0x00, 0x02,
+                    0xb7, 0x06, 0x20, 0x30,
+                    0xda, 0x8d, 0xc5, 0x8a,
+                    0x4d, 0x61, 0x63, 0x62, 0x6f, 0x6f, 0x6b, 0x20, 0x50, 0x72, 0x6f, 0x20, 0x66, 0x72, 0x6f, 0x6d, 0x20, 0x53, 0x61, 0x6e, 0x64, 0x72, 0x61, 0x20, 0x56, 0x65, 0x72, 0x62, 0x65, 0x6b, 0x65, 0x6e, 0x20, 0x28, 0x32, 0x29, 0x00 };
+                
+                
+                
+                
+                
+                byte r[] = { 0xff, 0xff,
+                                      0x4f, 0x4b,
+                                      0x00, 0x0, 0x00, 0x02,
+                                      0xb7, 0x06, 0x20, 0x30,
+                                      0xda, 0x8d, 0xc5, 0x8a,
+                                      0x53, 0x65, 0x73, 0x73, 0x69, 0x6, 0x6e, 0x31, 0x2d, 0x42, 0x00 };
+                write(u, sizeof(u));
+            }
+        }
+        if (_port == 5005)
+        {
+            if (_buffer[0] == 0xff && _buffer[1] == 0xff && _buffer[2] == 'I' &&_buffer[3] == 'N')
+            {
+                _buffer.clear();
+                byte r[] = { 0xff, 0xff,
+                                      0x4f, 0x4b,
+                                      0x00, 0x0, 0x00, 0x02,
+                                      0xb7, 0x06, 0x20, 0x30,
+                                      0xda, 0x8d, 0xc5, 0x8a,
+                                      0x53, 0x65, 0x73, 0x73, 0x69, 0x6, 0x6e, 0x31, 0x2d, 0x42, 0x00 };
+                write(r, sizeof(r));
+            }
+            else if (_buffer[0] == 0xff && _buffer[1] == 0xff && _buffer[2] == 'C' &&_buffer[3] == 'K')
+            {
+                if (_buffer[8] == 0x00)
+                {
+                    _buffer.clear();
+                    byte r[] = { 0xff, 0xff,
+                                 0x43, 0x4b,
+                                 0xda, 0x8d, 0xc5, 0x8a,
+                                 0x01,
+                                 0x65, 0x73, 0x73,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x34,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x6c, 0x83,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+                    write(r, sizeof(r));
+                }
+                else
+                    _buffer.clear();
+            }
+        }
+    };
+
+    void stop() { _buffer.clear(); };
 
     uint32_t remoteIP() { return 1; }
     uint16_t remotePort() { return _port; }

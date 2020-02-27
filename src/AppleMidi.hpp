@@ -86,7 +86,7 @@ void AppleMidiSession<UdpClass, Settings>::readDataPackets()
 
 #ifdef APPLEMIDI_INITIATOR
     managePendingInvites();
-    manageTiming();
+    manageSynchronization();
 #endif
 }
 
@@ -120,28 +120,29 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_I
     auto participant = getParticipant(invitation.ssrc);
     if (NULL == participant)
     {
-        participant = getParticipant(APPLEMIDI_PARTICIPANT_SLOT_FREE);
+        participant = getFreeParticipantSlot();
         if (NULL == participant)
         {
             if (NULL != _errorCallback)
                 _errorCallback(ssrc, -3);
 
             T_DEBUG_PRINTLN(F("Not free slot found, rejecting"));
-            writeInvitation(controlPort, invitation, amInvitationRejected, ssrc);
+            writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected, ssrc);
             return;
         }
         
         participant->ssrc = invitation.ssrc;
+        participant->remoteIP   = controlPort.remoteIP();
+        participant->remotePort = controlPort.remotePort();
+
 #ifdef KEEP_SESSION_NAME
         strncpy(participant->sessionName, invitation.sessionName, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #endif
     }
     else
-    {
         T_DEBUG_PRINTLN(F("Received Invitation from unknown ssrc"));
-    }
     
-    writeInvitation(controlPort, invitation, amInvitationAccepted, ssrc);
+    writeInvitation(controlPort, participant->remoteIP, participant->remotePort, invitation, amInvitationAccepted, ssrc);
 }
 
 template <class UdpClass, class Settings>
@@ -165,7 +166,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
             _errorCallback(ssrc, -4);
 
         T_DEBUG_PRINTLN(F("Not free particiants slot, rejecting invitation"));
-        writeInvitation(dataPort, invitation, amInvitationRejected, ssrc);
+        writeInvitation(dataPort, dataPort.remoteIP(), dataPort.remotePort(), invitation, amInvitationRejected, ssrc);
         return;
     }
 
@@ -174,11 +175,81 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
     // of the ssrc here.
     auto ssrc_ = invitation.ssrc;
     
-    writeInvitation(dataPort, invitation, amInvitationAccepted, ssrc);
+    writeInvitation(dataPort, participant->remoteIP, participant->remotePort + 1, invitation, amInvitationAccepted, ssrc);
 
+    participant->kind = Listener;
+    
     // Inform that we have an established connection
     if (NULL != _connectedCallback)
         _connectedCallback(ssrc_, invitation.sessionName);
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_Invitation &invitationAccepted, const amPortType &portType)
+{
+    if (portType == amPortType::Control)
+        ReceivedControlInvitationAccepted(invitationAccepted);
+    else
+        ReceivedDataInvitationAccepted(invitationAccepted);
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(AppleMIDI_Invitation &invitationAccepted)
+{
+    T_DEBUG_PRINTLN(F("Received Control InvitationAccepted"));
+    T_DEBUG_PRINT("initiator: 0x");
+    T_DEBUG_PRINT(invitationAccepted.initiatorToken, HEX);
+    T_DEBUG_PRINT(", senderSSRC: 0x");
+    T_DEBUG_PRINT(invitationAccepted.ssrc, HEX);
+#ifdef KEEP_SESSION_NAME
+    T_DEBUG_PRINT(", sessionName: ");
+    T_DEBUG_PRINT(invitationAccepted.sessionName);
+#endif
+    T_DEBUG_PRINTLN();
+    
+    auto participant = this->getParticipantUsingToken(invitationAccepted.initiatorToken);
+    if (NULL == participant)
+    {
+        T_DEBUG_PRINTLN("Participant not found using initiatorToken");
+        // TODO: should not end up here
+        return;
+    }
+    
+    participant->ssrc               = invitationAccepted.ssrc;
+    participant->lastInviteSentTime = millis() - 1000; // forces invite to be send
+    participant->connectionAttempts = 0;
+    participant->status             = ControlInvitationAccepted; // step it up
+#ifdef KEEP_SESSION_NAME
+    strncpy(participant->sessionName, invitationAccepted.sessionName, APPLEMIDI_SESSION_NAME_MAX_LEN);
+    participant->sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
+#endif
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitationAccepted(AppleMIDI_Invitation &invitationAccepted)
+{
+    T_DEBUG_PRINTLN(F("Received Data Invitation"));
+    T_DEBUG_PRINT("initiator: 0x");
+    T_DEBUG_PRINT(invitationAccepted.initiatorToken, HEX);
+    T_DEBUG_PRINT(", senderSSRC: 0x");
+    T_DEBUG_PRINT(invitationAccepted.ssrc, HEX);
+#ifdef KEEP_SESSION_NAME
+    T_DEBUG_PRINT(", sessionName: ");
+    T_DEBUG_PRINT(invitationAccepted.sessionName);
+#endif
+    T_DEBUG_PRINTLN();
+    
+    auto participant = this->getParticipantUsingToken(invitationAccepted.initiatorToken);
+    if (NULL == participant)
+    {
+        T_DEBUG_PRINTLN("Participant not found using initiatorToken");
+        // TODO: should not end up here
+        return;
+    }
+    
+    T_DEBUG_PRINTLN(F("Fully setup"));
+
+    participant->status = DataInvitationAccepted;
 }
 
 /*! \brief .
@@ -217,7 +288,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     auto participant = getParticipant(synchronization.ssrc);
     if (NULL == participant)
     {
-        participant = getParticipant(APPLEMIDI_PARTICIPANT_SLOT_FREE);
+        participant = getFreeParticipantSlot();
         if (NULL == participant)
         {
             V_DEBUG_PRINTLN(F("participant not found, no more space on stack"));
@@ -260,41 +331,31 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     {
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK0"));
+        synchronization.timestamps[1] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK1;
-        synchronization.timestamps[synchronization.count] = rtpMidiClock.Now();
-        _kind = Listener;
+        writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
         break;
-    case SYNC_CK1: // From session responder
-        V_DEBUG_PRINTLN(F("SYNC_CK1 n/a for the moments"));
+    case SYNC_CK1: /* From session LISTENER */
+        V_DEBUG_PRINTLN(F("SYNC_CK1"));
+        synchronization.timestamps[2] = rtpMidiClock.Now();
+        synchronization.count = SYNC_CK2;
+        writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
+        participant->doSynchronization = true;
         break;
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK2"));
         // each party can estimate the offset between the two clocks using the following formula
         auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
+        synchronization.count = SYNC_CK2;
         break;
     }
 
     switch (synchronization.count)
     {
-    case SYNC_CK1:
-        if (dataPort.beginPacket(dataPort.remoteIP(), dataPort.remotePort()))
-        {
-            dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
-            dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
-            synchronization.ssrc = htonl(ssrc);
-            
-            synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
-            synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
-            synchronization.timestamps[2] = htonll(synchronization.timestamps[2]);
-            dataPort.write(reinterpret_cast<uint8_t *>(&synchronization), sizeof(synchronization));
-            
-            dataPort.endPacket();
-            dataPort.flush();
-        }
-        _lastSyncExchangeTime = millis();
-        break;
     case SYNC_CK0:
+    case SYNC_CK1:
     case SYNC_CK2:
+        _lastSyncExchangeTime = millis();
         break;
     }
 }
@@ -328,14 +389,23 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedEndSession(AppleMIDI_EndSessi
 
     auto participant = getParticipant(endSession.ssrc);
     if (participant)
-        participant->ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
+        participant->kind = Unknown; // End this session
 
     if (NULL != _disconnectedCallback)
         _disconnectedCallback(endSession.ssrc);
 }
 
 template <class UdpClass, class Settings>
-Participant<Settings> *AppleMidiSession<UdpClass, Settings>::getParticipant(const ssrc_t ssrc)
+Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getFreeParticipantSlot()
+{
+    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+        if (Unknown == participants[i].kind)
+            return &participants[i];
+    return NULL;
+}
+
+template <class UdpClass, class Settings>
+Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipant(const ssrc_t ssrc)
 {
     for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
         if (ssrc == participants[i].ssrc)
@@ -344,11 +414,20 @@ Participant<Settings> *AppleMidiSession<UdpClass, Settings>::getParticipant(cons
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, AppleMIDI_Invitation_t & invitation, const byte *command, ssrc_t ssrc)
+Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipantUsingToken(const uint32_t initiatorToken)
+{
+    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+        if (initiatorToken == participants[i].initiatorToken)
+            return &participants[i];
+    return NULL;
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, IPAddress remoteIP, uint16_t remotePort, AppleMIDI_Invitation_t & invitation, const byte *command, ssrc_t ssrc)
 {
     T_DEBUG_PRINTLN(F("writeInvitation"));
 
-    if (port.beginPacket(port.remoteIP(), port.remotePort()))
+    if (port.beginPacket(remoteIP, remotePort))
     {
         port.write((uint8_t *)amSignature, sizeof(amSignature));
         
@@ -361,36 +440,70 @@ void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, Apple
         port.endPacket();
         port.flush();
     }
+    else
+        T_DEBUG_PRINT(F("beginPacket error"));
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(UdpClass &port, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
+void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
     T_DEBUG_PRINTLN(F("writeReceiverFeedback"));
 
-    if (port.beginPacket(port.remoteIP(), port.remotePort()))
+    if (controlPort.beginPacket(remoteIP, remotePort))
     {
-        port.write((uint8_t *)amSignature, sizeof(amSignature));
+        controlPort.write((uint8_t *)amSignature, sizeof(amSignature));
         
-            port.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
-            port.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
+            controlPort.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
+            controlPort.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
         
-        port.endPacket();
-        port.flush();
+        controlPort.endPacket();
+        controlPort.flush();
+    }
+    else
+        T_DEBUG_PRINT(F("beginPacket error"));
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::writeSynchronization(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_Synchronization &synchronization)
+{
+    if (dataPort.beginPacket(remoteIP, remotePort))
+    {
+        dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
+        dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
+        synchronization.ssrc = htonl(this->ssrc);
+
+        synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
+        synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
+        synchronization.timestamps[2] = htonll(synchronization.timestamps[2]);
+        dataPort.write(reinterpret_cast<uint8_t *>(&synchronization), sizeof(synchronization));
+        
+        dataPort.endPacket();
+        dataPort.flush();
+    }
+    else
+        T_DEBUG_PRINT(F("beginPacket error"));
+}
+
+template <class UdpClass, class Settings>
+void AppleMidiSession<UdpClass, Settings>::writeRtpMidiToAllParticipants()
+{
+    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+    {
+        if (participants[i].kind == Unknown)
+            continue;
+
+        writeRtpMidiBuffer(participants[i].remoteIP, participants[i].remotePort);
     }
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port)
+void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& remoteIP, const uint16_t& remotePort)
 {
     T_DEBUG_PRINT(F("writeRtpMidiBuffer "));
-
-    if (!port.beginPacket(port.remoteIP(), port.remotePort()))
+    
+    if (!dataPort.beginPacket(remoteIP, remotePort))
     {
-        E_DEBUG_PRINT(F("Error port.beginPacket host: "));
-        E_DEBUG_PRINT(port.remoteIP());
-        E_DEBUG_PRINT(F(", port: "));
-        E_DEBUG_PRINTLN(port.remotePort());
+        E_DEBUG_PRINT(F("Error dataPort.beginPacket "));
         return;
     }
 
@@ -421,7 +534,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port)
     rtp.timestamp = htonl(0); // now
   //  rtp.timestamp = htonl(rtpMidiClock.Now());
     rtp.sequenceNr = htons(sequenceNr);
-    port.write((uint8_t *)&rtp, sizeof(rtp));
+    dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
     auto bufferLen = outMidiBuffer.size();
@@ -435,7 +548,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port)
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
-        port.write(rtpMidi.flags);
+        dataPort.write(rtpMidi.flags);
     }
     else
     { // Long header
@@ -444,42 +557,130 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(UdpClass &port)
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
         // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
-        port.write(rtpMidi.flags);
-        port.write((uint8_t)(bufferLen));
+        dataPort.write(rtpMidi.flags);
+        dataPort.write((uint8_t)(bufferLen));
     }
 
     // MIDI Section
     while (!outMidiBuffer.empty())
-        port.write(outMidiBuffer.pop_front());
+        dataPort.write(outMidiBuffer.pop_front());
     
     // *No* journal section (Not supported)
     
-    port.endPacket();
-    port.flush();
+    dataPort.endPacket();
+    dataPort.flush();
 }
 
+//
+// The initiator of the session polls if remote station is still alive.
+//
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::manageTiming()
+void AppleMidiSession<UdpClass, Settings>::manageSynchronization()
 {
+   for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+   {
+       if (participants[i].kind == Unknown
+       ||  participants[i].kind == Listener)
+           continue;
+
+       if (participants[i].status != Connected)
+           continue;
+
+       if (!participants[i].doSynchronization)
+           continue;
+     
+       bool doSyncronize = false;
+       if (participants[i].syncronizationCount < 2)
+       {
+           if (millis() - participants[i].lastInviteSentTime >  500) // 2 x every 0.5 seconds
+           {
+               participants[i].syncronizationCount++;
+               doSyncronize = true;
+           }
+       }
+       else if (participants[i].syncronizationCount < 7)
+       {
+           if (millis() - participants[i].lastInviteSentTime >  1500) // 5 x every 1.5 seconds
+           {
+               participants[i].syncronizationCount++;
+               doSyncronize = true;
+           }
+       }
+       else if (millis() - participants[i].lastInviteSentTime >  10000)
+       {
+           doSyncronize = true;
+       }
+
+       if (!doSyncronize)
+           continue;
+     
+       participants[i].lastInviteSentTime = millis();
+       participants[i].doSynchronization = false;
+       
+       AppleMIDI_Synchronization synchronization;
+       synchronization.timestamps[0] = rtpMidiClock.Now();
+       synchronization.timestamps[1] = 0;
+       synchronization.timestamps[2] = 0;
+       synchronization.count = 0;
+
+       writeSynchronization(participants[i].remoteIP, participants[i].remotePort, synchronization);
+   }
 }
 
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
 {
-/*    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
+    for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
     {
-        if (participants[i].ssrc == APPLEMIDI_PARTICIPANT_SLOT_FREE)
+        if (participants[i].kind == Unknown
+        ||  participants[i].kind == Listener)
             continue;
-        
-        if (millis() - participants[i].lastInviteSentTime <  1000)
-        {
-            participants[i].lastInviteSentTime = millis();
 
-           // this->SendInvitation()
+        if (participants[i].status == DataInvitationAccepted)
+        {
+            participants[i].status = Connected;
+            
+            // Inform that we have an established connection
+            if (NULL != _connectedCallback)
+                _connectedCallback(participants[i].ssrc, participants[i].sessionName);
+
+            participants[i].doSynchronization = true;
+        }
+
+        if (participants[i].status == Connected)
+            continue;
+
+        // Only for Initiators
+        if (millis() - participants[i].lastInviteSentTime >  1000)
+        {
+            if (participants[i].connectionAttempts >= 10)
+            {
+                 // too many attempts, give up - indicate this participant slot is free
+                participants[i].kind = Unknown;
+                continue;
+            }
+            
+            participants[i].lastInviteSentTime = millis();
             participants[i].connectionAttempts++;
+
+            AppleMIDI_Invitation invitation;
+            invitation.ssrc = this->ssrc;
+            invitation.initiatorToken = participants[i].initiatorToken;
+            strncpy(invitation.sessionName, this->localName, APPLEMIDI_SESSION_NAME_MAX_LEN);
+            invitation.sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN] = '\0';
+
+            if (participants[i].status == Initiating)
+            {
+                writeInvitation(controlPort, participants[i].remoteIP, participants[i].remotePort, invitation, amInvitation, ssrc);
+                participants[i].status = AwaitingControlInvitationAccepted;
+            }
+            else if (participants[i].status == ControlInvitationAccepted)
+            {
+                writeInvitation(dataPort, participants[i].remoteIP, participants[i].remotePort + 1, invitation, amInvitation, ssrc);
+                participants[i].status = AwaitingDataInvitationAccepted;
+            }
         }
     }
- */
 }
 
 // https://en.wikipedia.org/wiki/RTP-MIDI#Synchronization_sequence
@@ -488,20 +689,16 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::manageSyncExchange()
 {
-    if (Unknown == _kind)
-        return;
-    
-    if (Listener == _kind)
+    // This routine is only for listeners
+/*
+    if (millis() - _lastSyncExchangeTime > 60000)
     {
-        if (millis() - _lastSyncExchangeTime > 60000)
-        {
-            // sender Quit
-        //    controlPort.stop();
-        //    dataPort.stop();
-            _kind = Unknown;
-        }
-        return;
+        // sender Quit
+    //    controlPort.stop();
+    //    dataPort.stop();
+        _kind = Unknown;
     }
+ */
 }
 
 // The recovery journal mechanism requires that the receiver
@@ -516,18 +713,18 @@ void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
 {
     for (auto i = 0; i < Settings::MaxNumberOfParticipants; i++)
     {
-        if (participants[i].ssrc == APPLEMIDI_PARTICIPANT_SLOT_FREE)
+        if (participants[i].kind == Unknown)
             continue;
-        
+
         if (participants[i].receiverFeedbackStartTime == 0)
             continue;
-        
+
         if ((millis() - participants[i].receiverFeedbackStartTime) > 1000)
         {
             AppleMIDI_ReceiverFeedback_t rf;
             rf.ssrc = htonl(ssrc);
             rf.sequenceNr = htons(participants[i].sequenceNr);
-            writeReceiverFeedback(controlPort, rf);
+            writeReceiverFeedback(participants[i].remoteIP, participants[i].remotePort, rf);
 
             // reset the clock. It is started when we receive MIDI
             participants[i].receiverFeedbackStartTime = 0;
@@ -536,9 +733,32 @@ void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
 }
 
 template <class UdpClass, class Settings>
+bool AppleMidiSession<UdpClass, Settings>::sendInvite(IPAddress ip, uint16_t port)
+{
+    W_DEBUG_PRINTLN(F("sendInvite"));
+
+    auto participant = getFreeParticipantSlot();
+    if (NULL == participant)
+        return false;
+    
+    // setup particpants as an initiator
+    participant->kind = Initiator;
+    participant->remoteIP = ip;
+    participant->remotePort = port;
+    participant->lastInviteSentTime = millis() - 1000; // forces invite to be send immediately
+    participant->connectionAttempts = 0;
+    participant->status = Initiating;
+    participant->syncronizationCount = 0;
+    participant->initiatorToken = 0xb7062030; //random(1, INT32_MAX) * 2;
+    
+    return true;
+}
+
+template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
 {
     auto participant = getParticipant(rtp.ssrc);
+    
     if (NULL != participant)
     {
         if (participant->receiverFeedbackStartTime == 0)
@@ -560,12 +780,6 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedMidi(byte value)
         _receivedMidiByteCallback(0, value);
 
     inMidiBuffer.push_back(value);
-}
-
-template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::SendInvitation(AppleMIDI_Invitation &, const amPortType &)
-{
-    _kind = Initiator;
 }
 
 END_APPLEMIDI_NAMESPACE

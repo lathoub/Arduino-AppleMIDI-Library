@@ -53,10 +53,9 @@ public:
         
         // initialise
 		for (uint8_t i = 0; i < Settings::MaxNumberOfParticipants; i++)
-			participants[i].ssrc = APPLEMIDI_PARTICIPANT_SLOT_FREE;
+			participants[i].kind = Unknown; // initialisation
 
         _lastSyncExchangeTime = 0;
-        _kind = Unknown;
 
 		_appleMIDIParser.session = this;
 		_rtpMIDIParser.session = this;
@@ -69,6 +68,8 @@ public:
 
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
+
+    bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -115,7 +116,7 @@ protected:
         {
             // Check if there is still room for more - like for 3 bytes or so)
             if ((outMidiBuffer.size() + 1 + 3) > outMidiBuffer.max_size())
-                writeRtpMidiBuffer(dataPort);
+                writeRtpMidiToAllParticipants();
             else
                 outMidiBuffer.push_back(0x00); // zero timestamp
         }
@@ -138,9 +139,9 @@ protected:
 				// Add Sysex at the end of this partial SysEx (in the last availble slot) ...
 				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
                 
-                writeRtpMidiBuffer(dataPort);
+                writeRtpMidiToAllParticipants();
 				// and start again with a fresh continuation of
-				// a next SysEx block. (writeRtpMidiBuffer empties the buffer!)
+				// a next SysEx block.
                 outMidiBuffer.clear();
 				outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
             }
@@ -167,7 +168,7 @@ protected:
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         if (outMidiBuffer.size() > 0)
-            writeRtpMidiBuffer(dataPort);
+            writeRtpMidiToAllParticipants();
         // assert(outMidiBuffer.size() == 0); // must be empty
         
         if (inMidiBuffer.size() > 0)
@@ -213,8 +214,6 @@ private:
 	rtpMidi_Clock rtpMidiClock;
     
     // Session Information
-
-    SessionKind _kind = Unknown;
     
     unsigned long _lastSyncExchangeTime = 0;
     
@@ -228,9 +227,6 @@ private:
 
 	Participant<Settings> participants[Settings::MaxNumberOfParticipants];
             
-public:
-    bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
-
 private:
 	void readControlPackets();
 	void readDataPackets();
@@ -243,24 +239,31 @@ private:
 	void ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback &);
 	void ReceivedEndSession(AppleMIDI_EndSession &);
 
-    void SendInvitation(AppleMIDI_Invitation &, const amPortType &);
+    void ReceivedInvitationAccepted(AppleMIDI_Invitation &, const amPortType &);
+    void ReceivedControlInvitationAccepted(AppleMIDI_Invitation &);
+    void ReceivedDataInvitationAccepted(AppleMIDI_Invitation &);
     
 	// rtpMIDI callback from parser
-    void ReceivedRtp(const Rtp_t&);
+    void ReceivedRtp(const Rtp_t &);
     void ReceivedMidi(byte data);
 
 	// Helpers
-    void writeInvitation(UdpClass &, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
-    void writeReceiverFeedback(UdpClass &, AppleMIDI_ReceiverFeedback_t &);
-    void writeRtpMidiBuffer(UdpClass &);
+    void writeInvitation(UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
+    void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
+    void writeSynchronization(const IPAddress &, const uint16_t &, AppleMIDI_Synchronization &);
+
+    void writeRtpMidiToAllParticipants();
+    void writeRtpMidiBuffer(const IPAddress& remoteIP, const uint16_t& remotePort);
 
     void manageSyncExchange();
     void manageReceiverFeedback();
    
     void managePendingInvites();
-    void manageTiming();
-        
-	Participant<Settings> *getParticipant(const ssrc_t ssrc);
+    void manageSynchronization();
+            
+    Participant<Settings>* getParticipant(const ssrc_t ssrc);
+    Participant<Settings>* getParticipantUsingToken(const uint32_t initiatorToken);
+    Participant<Settings>* getFreeParticipantSlot();
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <chrono>
 #include <iostream>
+
+#include "IPAddress.h"
 
 #define HEX 0
 #define DEC 1
@@ -64,16 +67,18 @@ float analogRead(int pin)
 
 void randomSeed(float)
 {
+    srand(static_cast<unsigned int>(time(0)));
 }
 
-int millis()
+unsigned long millis()
 {
-	return 1000;
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return (unsigned long)now;
 }
 
-int random(int a, int)
+int random(int min, int max)
 {
-	return a;
+	return RAND_MAX % std::rand() % (max-min) + min;
 }
 
 template <class T> const T& min(const T& a, const T& b) {

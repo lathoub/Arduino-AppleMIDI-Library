@@ -124,6 +124,9 @@ void begin()
     MIDI.setHandleNoteOn(OnMidiNoteOn);
     MIDI.setHandleNoteOff(OnMidiNoteOff);
     MIDI.setHandleSystemExclusive(OnMidiSystemExclusive);
+    
+    IPAddress remote(192, 168, 1, 156);
+    AppleMIDI.sendInvite(remote);
 }
 
 void loop()
