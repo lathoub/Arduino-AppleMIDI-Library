@@ -126,7 +126,7 @@ void begin()
     MIDI.setHandleSystemExclusive(OnMidiSystemExclusive);
     
     IPAddress remote(192, 168, 1, 156);
-    AppleMIDI.sendInvite(remote);
+  //  AppleMIDI.sendInvite(remote);
 }
 
 void loop()

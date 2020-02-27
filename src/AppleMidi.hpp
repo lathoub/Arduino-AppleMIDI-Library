@@ -179,6 +179,8 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
         _connectedCallback(ssrc_, invitation.sessionName);
 }
 
+#ifdef APPLEMIDI_INITIATOR
+
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_Invitation &invitationAccepted, const amPortType &portType)
 {
@@ -246,6 +248,8 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitationAccepted(AppleM
 
     participant->status = DataInvitationAccepted;
 }
+
+#endif
 
 /*! \brief .
 
@@ -329,11 +333,13 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
         writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
         break;
     case SYNC_CK1: /* From session LISTENER */
+#ifdef APPLEMIDI_INITIATOR
         V_DEBUG_PRINTLN(F("SYNC_CK1"));
         synchronization.timestamps[2] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK2;
         writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
         participant->doSynchronization = true;
+#endif
         break;
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         V_DEBUG_PRINTLN(F("SYNC_CK2"));
@@ -558,6 +564,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& r
     dataPort.flush();
 }
 
+#ifdef APPLEMIDI_INITIATOR
 //
 // The initiator of the session polls if remote station is still alive.
 //
@@ -673,6 +680,8 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
     }
 }
 
+#endif
+
 // https://en.wikipedia.org/wiki/RTP-MIDI#Synchronization_sequence
 // A partner not answering multiple CK0 messages shall consider
 // that the remote partner is disconnected.
@@ -720,6 +729,7 @@ void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
     }
 }
 
+#ifdef APPLEMIDI_INITIATOR
 template <class UdpClass, class Settings>
 bool AppleMidiSession<UdpClass, Settings>::sendInvite(IPAddress ip, uint16_t port)
 {
@@ -742,6 +752,8 @@ bool AppleMidiSession<UdpClass, Settings>::sendInvite(IPAddress ip, uint16_t por
 
     return true;
 }
+
+#endif
 
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
