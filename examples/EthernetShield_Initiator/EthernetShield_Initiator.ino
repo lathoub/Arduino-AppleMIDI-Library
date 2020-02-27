@@ -1,6 +1,7 @@
 #include <Ethernet.h>
 
 #define DEBUG 4
+#define APPLEMIDI_INITIATOR
 #include <AppleMidi.h>
 
 // Enter a MAC address for your controller below.
@@ -52,7 +53,7 @@ void setup()
 
   // Initiate the session
   IPAddress remote(192, 168, 1, 156);
- // AppleMIDI.sendInvite(remote); // port is 5004 by default
+  AppleMIDI.sendInvite(remote); // port is 5004 by default
  // AppleMIDI.sendInvite(remote, 5004); // port is 5004 by default
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
