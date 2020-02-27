@@ -59,7 +59,7 @@ public:
 
 	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(ssrc_t)) { _disconnectedCallback = fptr; }
-    void setHandleError(void (*fptr)(ssrc_t, uint32_t)) { _errorCallback = fptr; }
+    void setHandleError(void (*fptr)(ssrc_t, int32_t)) { _errorCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
 
     const char*    getName() { return this->localName; };
@@ -201,7 +201,7 @@ private:
     void (*_connectedCallback)(ssrc_t, const char *) = NULL;
     void (*_receivedMidiByteCallback)(ssrc_t, byte) = NULL;
 	void (*_disconnectedCallback)(ssrc_t) = NULL;
-    void (*_errorCallback)(ssrc_t, uint32_t) = NULL;
+    void (*_errorCallback)(ssrc_t, int32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
 	Deque<byte, Settings::MaxBufferSize> inMidiBuffer;

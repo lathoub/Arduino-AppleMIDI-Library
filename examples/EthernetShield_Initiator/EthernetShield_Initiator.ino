@@ -1,6 +1,6 @@
 #include <Ethernet.h>
 
-#define DEBUG 4
+#define DEBUG 5
 #define APPLEMIDI_INITIATOR
 #include <AppleMidi.h>
 
@@ -32,12 +32,12 @@ void setup()
   N_DEBUG_PRINT(F("IP address is "));
   N_DEBUG_PRINTLN(Ethernet.localIP());
 
-  V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  V_DEBUG_PRINT(Ethernet.localIP());
-  V_DEBUG_PRINTLN(F(":5004"));
-  V_DEBUG_PRINTLN(F("Then press the Connect button"));
-  V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  T_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  T_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
+  T_DEBUG_PRINT(Ethernet.localIP());
+  T_DEBUG_PRINTLN(F(":5004"));
+  T_DEBUG_PRINTLN(F("Then press the Connect button"));
+  T_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
@@ -110,8 +110,9 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Error occorded during processing
 // -----------------------------------------------------------------------------
-void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
-  N_DEBUG_PRINTLN(F("ERROR"));
+void OnAppleMidiError(uint32_t ssrc, int32_t errorCode) {
+  N_DEBUG_PRINT(F("ERROR "));
+  N_DEBUG_PRINTLN(errorCode);
   exit(1);
 }
 

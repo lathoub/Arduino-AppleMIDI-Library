@@ -41,9 +41,9 @@ public:
 	{
 		conversionBuffer cb;
         
-        T_DEBUG_PRINT("RtpMIDI_Parser::Parser received ");
-        T_DEBUG_PRINT(buffer.size());
-        T_DEBUG_PRINTLN(" bytes");
+        V_DEBUG_PRINT("RtpMIDI_Parser::Parser received ");
+        V_DEBUG_PRINT(buffer.size());
+        V_DEBUG_PRINTLN(" bytes");
 
         // [RFC3550] provides a complete description of the RTP header fields.
         // In this section, we clarify the role of a few RTP header fields for

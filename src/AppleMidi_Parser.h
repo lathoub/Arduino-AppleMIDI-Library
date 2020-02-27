@@ -24,9 +24,9 @@ public:
 	{
 		conversionBuffer cb;
 
-		T_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
-		T_DEBUG_PRINT(buffer.size());
-		T_DEBUG_PRINTLN(" bytes");
+		V_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
+		V_DEBUG_PRINT(buffer.size());
+		V_DEBUG_PRINTLN(" bytes");
 
 		byte signature[2]; // Signature "Magic Value" for Apple network MIDI session establishment
 		byte command[2];   // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
@@ -58,7 +58,7 @@ public:
 #ifdef APPLEMIDI_LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			T_DEBUG_PRINTLN("received Invitation");
+			V_DEBUG_PRINTLN("received Invitation");
 
 			byte protocolVersion[4];
 
@@ -101,8 +101,8 @@ public:
 			invitation.ssrc = ntohl(cb.value32);
 
 			V_DEBUG_PRINT("initiator: 0x");
-			V_DEBUG_PRINTLN(invitation.initiatorToken, HEX);
-			V_DEBUG_PRINT("senderSSRC: 0x");
+			V_DEBUG_PRINT(invitation.initiatorToken, HEX);
+			V_DEBUG_PRINT(" ssrc: 0x");
 			V_DEBUG_PRINTLN(invitation.ssrc, HEX);
 
 #ifdef KEEP_SESSION_NAME
@@ -187,7 +187,7 @@ public:
 		}
 		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
-			T_DEBUG_PRINTLN("received Syncronization");
+			V_DEBUG_PRINTLN("received Syncronization");
 
 			AppleMIDI_Synchronization synchronization;
 
@@ -250,7 +250,7 @@ public:
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			//T_DEBUG_PRINTLN("received ReceiverFeedback");
+			//V_DEBUG_PRINTLN("received ReceiverFeedback");
 
 			AppleMIDI_ReceiverFeedback receiverFeedback;
 
@@ -291,7 +291,7 @@ public:
 #ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amInvitationAccepted, sizeof(amInvitationAccepted)))
 		{
-            T_DEBUG_PRINTLN("received Invitation Accepted");
+            V_DEBUG_PRINTLN("received Invitation Accepted");
 
             byte protocolVersion[4];
 
@@ -334,8 +334,8 @@ public:
             invitationAccepted.ssrc = ntohl(cb.value32);
 
             V_DEBUG_PRINT("initiator: 0x");
-            V_DEBUG_PRINTLN(invitationAccepted.initiatorToken, HEX);
-            V_DEBUG_PRINT("senderSSRC: 0x");
+            V_DEBUG_PRINT(invitationAccepted.initiatorToken, HEX);
+            V_DEBUG_PRINT(" ssrc: 0x");
             V_DEBUG_PRINTLN(invitationAccepted.ssrc, HEX);
 
 #ifdef KEEP_SESSION_NAME

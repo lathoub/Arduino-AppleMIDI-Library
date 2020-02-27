@@ -59,7 +59,6 @@ typedef struct __attribute__((packed)) AppleMIDI_Invitation
 	{
 		return sizeof(AppleMIDI_Invitation) - (APPLEMIDI_SESSION_NAME_MAX_LEN) + strlen(sessionName);
 	}
-
 } AppleMIDI_Invitation_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
