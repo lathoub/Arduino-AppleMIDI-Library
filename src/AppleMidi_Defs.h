@@ -114,9 +114,9 @@ enum ParticipantKind : uint8_t
 {
 	Listener,
 	Initiator,
-    Unknown
 };
 
+#ifdef APPLEMIDI_INITIATOR
 enum InviteStatus : uint8_t
 {
 	Initiating,
@@ -126,5 +126,6 @@ enum InviteStatus : uint8_t
     DataInvitationAccepted,
     Connected
 };
+#endif
 
 END_APPLEMIDI_NAMESPACE
