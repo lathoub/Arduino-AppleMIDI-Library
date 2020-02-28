@@ -13,19 +13,19 @@ struct Participant
     ssrc_t          ssrc;
     IPAddress       remoteIP;
     uint16_t        remotePort;
-
-#ifdef APPLEMIDI_LISTENER
-    unsigned long   receiverFeedbackStartTime;
-    uint16_t        sequenceNr;
-#endif
     
+    unsigned long   receiverFeedbackStartTime;
+    bool            doReceiverFeedback = false;
+    uint16_t        sequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+    unsigned long   lastSyncExchangeTime;
+
 #ifdef APPLEMIDI_INITIATOR
-    uint8_t         connectionAttempts;
+    uint8_t         connectionAttempts = 0;
     unsigned long   lastInviteSentTime;
-    InviteStatus    status;
+    InviteStatus    status = Initiating;
     uint32_t        initiatorToken;
-    uint8_t         syncronizationCount;
-    bool            doSynchronization;
+    uint8_t         syncronizationCount = 0;
+    bool            doSynchronization = false;
 #endif
     
 #ifdef KEEP_SESSION_NAME

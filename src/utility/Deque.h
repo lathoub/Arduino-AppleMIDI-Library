@@ -1,7 +1,5 @@
 #pragma once
 
-class iterator;
-
 template<typename T, size_t Size>
 class Deque {
   private:

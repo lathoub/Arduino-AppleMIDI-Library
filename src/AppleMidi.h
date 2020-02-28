@@ -51,8 +51,6 @@ public:
 		this->port = port;
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
         
-        _lastSyncExchangeTime = 0;
-
 		_appleMIDIParser.session = this;
 		_rtpMIDIParser.session = this;
 	};
@@ -77,13 +75,6 @@ protected:
         // NOTE: Arduino random only goes to INT32_MAX (not UINT32_MAX)
         
 		this->ssrc = random(1, INT32_MAX) * 2;
-
-		// In an RTP MIDI stream, the 16-bit sequence number field is
-		// initialized to a randomly chosen value and is incremented by one
-		// (modulo 2^16) for each packet sent in the stream.
-		// http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
-        //
-		this->sequenceNr = random(1, UINT16_MAX);
 
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
@@ -121,7 +112,7 @@ protected:
 		// of what we are to send (The RtpMidi protocol start with writing the
 		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
 		// and actually serialize for real in the endTransmission method
-		return (dataPort.remoteIP() != 0);
+		return (dataPort.remoteIP() != 0 && participants.size() > 0);
 	};
 
 	void write(byte byte)
@@ -210,12 +201,8 @@ private:
 	rtpMidi_Clock rtpMidiClock;
     
     // Session Information
-    
-    unsigned long _lastSyncExchangeTime = 0;
-    
+        
 	ssrc_t ssrc = 0;
-
-	uint16_t sequenceNr = 0; // counter for outgoing messages
 
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
     
@@ -248,7 +235,7 @@ private:
     void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization &);
 
     void writeRtpMidiToAllParticipants();
-    void writeRtpMidiBuffer(const IPAddress& remoteIP, const uint16_t& remotePort);
+    void writeRtpMidiBuffer(Participant<Settings>*);
 
     void manageSyncExchange();
     void manageReceiverFeedback();
@@ -256,8 +243,8 @@ private:
     void managePendingInvites();
     void manageSynchronization();
     
-    Participant<Settings>* getParticipant(const ssrc_t ssrc);
-    Participant<Settings>* getParticipantUsingToken(const uint32_t initiatorToken);
+    Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
+    Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \

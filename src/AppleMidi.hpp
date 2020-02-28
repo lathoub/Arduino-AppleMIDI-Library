@@ -102,7 +102,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitation(AppleMIDI_Invitati
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_Invitation &invitation)
 {
-    T_DEBUG_PRINTLN(F("Received Control Invitation"));
+    T_DEBUG_PRINT(F("Received Control Invitation. "));
     T_DEBUG_PRINT("initiator: 0x");
     T_DEBUG_PRINT(invitation.initiatorToken, HEX);
     T_DEBUG_PRINT(", ssrc: 0x");
@@ -130,9 +130,12 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_I
     }
     
     Participant<Settings> participant;
+    participant.kind = Listener;
     participant.ssrc = invitation.ssrc;
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
+    participant.lastSyncExchangeTime = millis();
+    participant.sequenceNr = random(1, UINT16_MAX); // // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, APPLEMIDI_SESSION_NAME_MAX_LEN);
 #endif
@@ -145,7 +148,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_I
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invitation &invitation)
 {
-    T_DEBUG_PRINTLN(F("Received Data Invitation"));
+    T_DEBUG_PRINT(F("Received Data Invitation.    "));
     T_DEBUG_PRINT("initiator: 0x");
     T_DEBUG_PRINT(invitation.initiatorToken, HEX);
     T_DEBUG_PRINT(", ssrc: 0x");
@@ -156,7 +159,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitation(AppleMIDI_Invi
 #endif
     T_DEBUG_PRINTLN();
 
-    auto participant = getParticipant(invitation.ssrc);
+    auto participant = getParticipantBySSRC(invitation.ssrc);
     if (NULL == participant)
     {
         if (NULL != _errorCallback)
@@ -198,7 +201,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(AppleMIDI_Invitation &invitationAccepted)
 {
-    T_DEBUG_PRINTLN(F("Received Control InvitationAccepted"));
+    T_DEBUG_PRINT(F("Received Control InvitationAccepted. "));
     T_DEBUG_PRINT("initiator: 0x");
     T_DEBUG_PRINT(invitationAccepted.initiatorToken, HEX);
     T_DEBUG_PRINT(", ssrc: 0x");
@@ -209,7 +212,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(App
 #endif
     T_DEBUG_PRINTLN();
     
-    auto participant = this->getParticipantUsingToken(invitationAccepted.initiatorToken);
+    auto participant = this->getParticipantByInitiatorToken(invitationAccepted.initiatorToken);
     if (NULL == participant)
     {
         T_DEBUG_PRINTLN("Participant not found using initiatorToken");
@@ -241,7 +244,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitationAccepted(AppleM
 #endif
     T_DEBUG_PRINTLN();
     
-    auto participant = this->getParticipantUsingToken(invitationAccepted.initiatorToken);
+    auto participant = this->getParticipantByInitiatorToken(invitationAccepted.initiatorToken);
     if (NULL == participant)
     {
         T_DEBUG_PRINTLN("Participant not found using initiatorToken");
@@ -289,7 +292,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     T_DEBUG_PRINT(F("received Synchronization for ssrc 0x"));
     T_DEBUG_PRINTLN(synchronization.ssrc, HEX);
 
-    auto participant = getParticipant(synchronization.ssrc);
+    auto participant = getParticipantBySSRC(synchronization.ssrc);
     if (NULL == participant)
     {
         V_DEBUG_PRINT(F("SYNC for unknown participant with ssrc 0x"));
@@ -354,14 +357,9 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
         break;
     }
 
-    switch (synchronization.count)
-    {
-    case SYNC_CK0:
-    case SYNC_CK1:
-    case SYNC_CK2:
-        _lastSyncExchangeTime = millis();
-        break;
-    }
+    // All particpants need to check in regularly,
+    // failing to do so will result in a lost connection.
+    participant->lastSyncExchangeTime = millis();
 }
 
 // The recovery journal mechanism requires that the receiver periodically
@@ -404,7 +402,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedEndSession(AppleMIDI_EndSessi
 }
 
 template <class UdpClass, class Settings>
-Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipant(const ssrc_t ssrc)
+Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipantBySSRC(const ssrc_t ssrc)
 {
     for (auto i = 0; i < participants.size(); i++)
         if (ssrc == participants[i].ssrc)
@@ -413,7 +411,7 @@ Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipant(cons
 }
 
 template <class UdpClass, class Settings>
-Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipantUsingToken(const uint32_t initiatorToken)
+Participant<Settings>* AppleMidiSession<UdpClass, Settings>::getParticipantByInitiatorToken(const uint32_t initiatorToken)
 {
     for (auto i = 0; i < participants.size(); i++)
         if (initiatorToken == participants[i].initiatorToken)
@@ -446,7 +444,7 @@ void AppleMidiSession<UdpClass, Settings>::writeInvitation(UdpClass &port, IPAdd
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
-    V_DEBUG_PRINTLN(F("writeReceiverFeedback"));
+    N_DEBUG_PRINTLN(F("writeReceiverFeedback"));
 
     if (controlPort.beginPacket(remoteIP, remotePort))
     {
@@ -489,14 +487,17 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiToAllParticipants()
     for (auto i = 0; i < participants.size(); i++)
     {
         auto participant = &participants[i];
-        writeRtpMidiBuffer(participant->remoteIP, participant->remotePort);
+        writeRtpMidiBuffer(participant);
     }
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& remoteIP, const uint16_t& remotePort)
+void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(Participant<Settings> * participant)
 {
     V_DEBUG_PRINT(F("writeRtpMidiBuffer "));
+    
+    const IPAddress remoteIP   = participant->remoteIP;
+    const uint16_t  remotePort = participant->remotePort;
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
     {
@@ -504,10 +505,10 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& r
         return;
     }
 
-    sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
+    participant->sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
     
     V_DEBUG_PRINT(" sequenceNr: ");
-    V_DEBUG_PRINTLN(sequenceNr);
+    V_DEBUG_PRINTLN(participant->sequenceNr);
 
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
@@ -530,7 +531,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& r
     //
     rtp.timestamp = htonl(0); // now
   //  rtp.timestamp = htonl(rtpMidiClock.Now());
-    rtp.sequenceNr = htons(sequenceNr);
+    rtp.sequenceNr = htons(participant->sequenceNr);
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
@@ -571,6 +572,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(const IPAddress& r
 #ifdef APPLEMIDI_INITIATOR
 //
 // The initiator of the session polls if remote station is still alive.
+// (Initiators only)
 //
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::manageSynchronization()
@@ -626,6 +628,7 @@ void AppleMidiSession<UdpClass, Settings>::manageSynchronization()
    }
 }
 
+// (Initiators only)
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
 {
@@ -654,16 +657,24 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
             continue;
 
         // Only for Connected Initiators
-        \
+        // Try to connect every second (1000)
         if (millis() - participant->lastInviteSentTime >  1000)
         {
             if (participant->connectionAttempts >= 10)
             {
+                W_DEBUG_PRINTLN();
+                W_DEBUG_PRINT(participant->remoteIP);
+                W_DEBUG_PRINT(F(":"));
+                W_DEBUG_PRINT(participant->remotePort);
+                W_DEBUG_PRINTLN(F(" didn’t respond to the connection request. Check the address and port, and any firewall or router settings."));
+
                  // too many attempts, give up - indicate this participant slot is free
                 participants.erase(i);
                 continue;
             }
-            
+            if (participant->connectionAttempts > 1)
+                W_DEBUG_PRINT(F("."));
+
             participant->lastInviteSentTime = millis();
             participant->connectionAttempts++;
 
@@ -691,20 +702,25 @@ void AppleMidiSession<UdpClass, Settings>::managePendingInvites()
 #endif
 
 // https://en.wikipedia.org/wiki/RTP-MIDI#Synchronization_sequence
+//
 // A partner not answering multiple CK0 messages shall consider
 // that the remote partner is disconnected.
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::manageSyncExchange()
 {
-    // This routine is only for listeners
-/*
-    if (millis() - _lastSyncExchangeTime > 60000)
+    for (auto i = 0; i < participants.size(); i++)
     {
-        // sender Quit
-    //    controlPort.stop();
-    //    dataPort.stop();
+        auto participant = &participants[i];
+        
+        if (millis() - participant->lastSyncExchangeTime > Settings::AppleMIDI_CK_MaxTimeOut)
+        {
+            W_DEBUG_PRINT(F("no response to CK1 requests, erase ssrc 0x"));
+            W_DEBUG_PRINTLN(participant->ssrc, HEX);
+
+            participants.erase(i);
+            return;
+        }
     }
- */
 }
 
 // The recovery journal mechanism requires that the receiver
@@ -721,10 +737,10 @@ void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
     {
         auto participant = &participants[i];
         
-        if (participant->receiverFeedbackStartTime == 0)
+        if (participant->doReceiverFeedback == false)
             continue;
 
-        if ((millis() - participant->receiverFeedbackStartTime) > 1000)
+        if ((millis() - participant->receiverFeedbackStartTime) > Settings::ReceiversFeedbackThreshold)
         {
             AppleMIDI_ReceiverFeedback_t rf;
             rf.ssrc = htonl(ssrc);
@@ -732,7 +748,7 @@ void AppleMidiSession<UdpClass, Settings>::manageReceiverFeedback()
             writeReceiverFeedback(participant->remoteIP, participant->remotePort, rf);
 
             // reset the clock. It is started when we receive MIDI
-            participant->receiverFeedbackStartTime = 0;
+            participant->doReceiverFeedback = false;
         }
     }
 }
@@ -751,11 +767,10 @@ bool AppleMidiSession<UdpClass, Settings>::sendInvite(IPAddress ip, uint16_t por
     participant.remoteIP = ip;
     participant.remotePort = port;
     participant.lastInviteSentTime = millis() - 1000; // forces invite to be send immediately
-    participant.connectionAttempts = 0;
-    participant.status = Initiating;
-    participant.syncronizationCount = 0;
+    participant.lastSyncExchangeTime = millis();
     participant.initiatorToken = random(1, INT32_MAX) * 2; // 0xb7062030;
-    
+    participant.sequenceNr = random(1, UINT16_MAX); // // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+
     participants.push_back(participant);
 
     return true;
@@ -766,12 +781,14 @@ bool AppleMidiSession<UdpClass, Settings>::sendInvite(IPAddress ip, uint16_t por
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
 {
-    auto participant = getParticipant(rtp.ssrc);
+    auto participant = getParticipantBySSRC(rtp.ssrc);
     
     if (NULL != participant)
     {
-        if (participant->receiverFeedbackStartTime == 0)
+        if (participant->doReceiverFeedback == false)
             participant->receiverFeedbackStartTime = millis();
+        participant->doReceiverFeedback = true;
+
         participant->sequenceNr = rtp.sequenceNr;
     }
     else
