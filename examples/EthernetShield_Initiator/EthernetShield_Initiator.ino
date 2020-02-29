@@ -54,7 +54,7 @@ void setup()
   // Initiate the session
   IPAddress remote(192, 168, 1, 156);
   AppleMIDI.sendInvite(remote); // port is 5004 by default
- // AppleMIDI.sendInvite(remote, 5004); // port is 5004 by default
+  // AppleMIDI.sendInvite(remote, 5004); // port is 5004 by default
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
@@ -93,7 +93,7 @@ void loop()
 void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
   isConnected = true;
   N_DEBUG_PRINT(F("Connected to session "));
-  N_DEBUG_PRINT(name); 
+  N_DEBUG_PRINT(name);
   N_DEBUG_PRINT(F(" ssrc: 0x"));
   N_DEBUG_PRINTLN(ssrc, HEX);
 }

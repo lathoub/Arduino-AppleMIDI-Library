@@ -1,6 +1,7 @@
 #include "Ethernet.h"
 
 #define DEBUG 7
+#define APPLEMIDI_INITIATOR
 
 #include "../src/AppleMidi.h"
 

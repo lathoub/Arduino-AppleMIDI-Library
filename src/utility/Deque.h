@@ -2,14 +2,17 @@
 
 template<typename T, size_t Size>
 class Deque {
-  private:
+//    class iterator;
+
+private:
     int _head, _tail;
     T _data[Size];
     
-  public:
-    Deque() {
+public:
+    Deque()
+    {
         clear();
-    }
+    };
 
     size_t free();
     const size_t size() const;
@@ -30,6 +33,9 @@ class Deque {
 
     void clear();
         
+//    iterator begin();
+//    iterator end();
+
     void erase(size_t);
     void erase(size_t, size_t);
 
@@ -207,4 +213,3 @@ void Deque<T, Size>::clear()
   _tail = -1;
   _head = 0;
 }
-

@@ -21,11 +21,13 @@ struct Participant
 
 #ifdef APPLEMIDI_INITIATOR
     uint8_t         connectionAttempts = 0;
+    uint32_t        initiatorToken = 0;
     unsigned long   lastInviteSentTime;
-    InviteStatus    status = Initiating;
-    uint32_t        initiatorToken;
-    uint8_t         syncronizationCount = 0;
-    bool            doSynchronization = false;
+    InviteStatus    invitationStatus = Initiating;
+    
+    uint8_t         synchronizationHeartBeats = 0;
+    uint8_t         synchronizationCount = 0;
+    bool            synchronizing = false;
 #endif
     
 #ifdef KEEP_SESSION_NAME

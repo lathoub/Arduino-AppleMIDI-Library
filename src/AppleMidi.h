@@ -52,7 +52,7 @@ public:
 		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
         
 		_appleMIDIParser.session = this;
-		_rtpMIDIParser.session = this;
+		_rtpMIDIParser.session   = this;
 	};
 
 	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
@@ -63,7 +63,10 @@ public:
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
 
+#ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
+#endif
+    void sendEndSession();
 
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -152,6 +155,10 @@ protected:
     // MIDI-read() must be called at the start of loop()
 	unsigned available()
 	{
+#ifdef APPLEMIDI_INITIATOR
+        manageSessionInvites();
+#endif
+
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         if (outMidiBuffer.size() > 0)
@@ -167,8 +174,8 @@ protected:
         readDataPackets();
         readControlPackets();
 
-        manageSyncExchange();
         manageReceiverFeedback();
+        manageSynchronization();
 
         return false;
 	};
@@ -199,15 +206,10 @@ private:
 	Deque<byte, Settings::MaxBufferSize> outMidiBuffer;
     
 	rtpMidi_Clock rtpMidiClock;
-    
-    // Session Information
-        
+            
 	ssrc_t ssrc = 0;
-
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
-    
 	uint16_t port = CONTROL_PORT;
-
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
             
 private:
@@ -220,10 +222,13 @@ private:
 	void ReceivedSynchronization  (AppleMIDI_Synchronization &);
 	void ReceivedReceiverFeedback (AppleMIDI_ReceiverFeedback &);
 	void ReceivedEndSession       (AppleMIDI_EndSession &);
+    void ReceivedRejected         (AppleMIDI_Invitation &, const amPortType &);
 
     void ReceivedInvitationAccepted       (AppleMIDI_Invitation &, const amPortType &);
     void ReceivedControlInvitationAccepted(AppleMIDI_Invitation &);
     void ReceivedDataInvitationAccepted   (AppleMIDI_Invitation &);
+    void ReceivedBitrateReceiveLimit      (AppleMIDI_BitrateReceiveLimit &);
+    void ReceivedInvitationRejected       (AppleMIDI_InvitationRejected &);
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);
@@ -233,16 +238,25 @@ private:
     void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
     void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization &);
+    void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession &);
 
+    void sendEndSession(Participant<Settings>*);
+    
     void writeRtpMidiToAllParticipants();
     void writeRtpMidiBuffer(Participant<Settings>*);
 
-    void manageSyncExchange();
     void manageReceiverFeedback();
    
-    void managePendingInvites();
+    void manageSessionInvites();
     void manageSynchronization();
+    void manageSynchronizationListener(size_t);
+    void manageSynchronizationInitiator();
+    void manageSynchronizationInitiatorHeartBeat(size_t);
+    void manageSynchronizationInitiatorInvites(size_t);
     
+    void sendSynchronization(Participant<Settings>*);
+
+
     Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
 };
