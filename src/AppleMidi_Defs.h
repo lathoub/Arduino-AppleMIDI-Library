@@ -88,21 +88,6 @@ typedef struct __attribute__((packed)) AppleMIDI_EndSession
 	ssrc_t ssrc;
 } AppleMIDI_EndSession_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_InvitationRejected
-{
-    uint32_t    initiatorToken;
-    uint32_t    ssrc;
-    char        sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
-
-    const size_t getLength() const
-    {
-        return sizeof(AppleMIDI_InvitationRejected) - (APPLEMIDI_SESSION_NAME_MAX_LEN) + strlen(sessionName);
-    }
-
-} AppleMIDI_InvitationRejected_t;
-
-
-
 // from: https://en.wikipedia.org/wiki/RTP-MIDI
 // Apple decided to create their own protocol, imposing all parameters related to
 // synchronization like the sampling frequency. This session protocol is called "AppleMIDI"

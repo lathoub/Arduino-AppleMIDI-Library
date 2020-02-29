@@ -228,7 +228,7 @@ private:
     void ReceivedControlInvitationAccepted(AppleMIDI_Invitation &);
     void ReceivedDataInvitationAccepted   (AppleMIDI_Invitation &);
     void ReceivedBitrateReceiveLimit      (AppleMIDI_BitrateReceiveLimit &);
-    void ReceivedInvitationRejected       (AppleMIDI_InvitationRejected &);
+    void ReceivedInvitationRejected       (AppleMIDI_Invitation &);
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);

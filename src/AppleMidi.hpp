@@ -193,7 +193,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedBitrateReceiveLimit(AppleMIDI
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected & invitationRejected)
+void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_Invitation & invitationRejected)
 {
     T_DEBUG_PRINT(F("Received InvitationRejected. "));
     T_DEBUG_PRINT("initiator: 0x");
@@ -205,6 +205,16 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_
     T_DEBUG_PRINT(invitationRejected.sessionName);
 #endif
     T_DEBUG_PRINTLN();
+    
+    for (auto i = 0; i < participants.size(); i++)
+    {
+        if (invitationRejected.ssrc == participants[i].ssrc)
+        {
+            participants.erase(i);
+            return;
+        }
+    }
+
 }
 
 #ifdef APPLEMIDI_INITIATOR
