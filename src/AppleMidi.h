@@ -84,8 +84,7 @@ protected:
 		controlPort.begin(port);
 		dataPort.begin(port + 1);
 
-		uint32_t initialTimestamp = rtpMidiClock.Now();
-		rtpMidiClock.Init(initialTimestamp, MIDI_SAMPLING_RATE_DEFAULT);
+		rtpMidiClock.Init(rtpMidiClock.Now(), MIDI_SAMPLING_RATE_DEFAULT);
     }
 
 	bool beginTransmission()

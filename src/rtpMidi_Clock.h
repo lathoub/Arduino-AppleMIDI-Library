@@ -12,12 +12,12 @@ typedef struct rtpMidi_Clock
 {
 	uint32_t clockRate_;
 
-	unsigned long startTime_;
-	uint32_t timestamp_;
+	uint64_t startTime_;
+	uint64_t initialTimeStamp_;
 
-	void Init(uint32_t initialTimeStamp, uint32_t clockRate)
+	void Init(uint64_t initialTimeStamp, uint32_t clockRate)
 	{
-		timestamp_ = initialTimeStamp;
+		initialTimeStamp_ = 0;
 		clockRate_ = clockRate;
 
 		if (clockRate_ == 0)
@@ -31,22 +31,15 @@ typedef struct rtpMidi_Clock
 	/// <summary>
 	/// Returns an timestamp value suitable for inclusion in a RTP packet header.
 	/// </summary>
-	uint32_t Now()
+	uint64_t Now()
 	{
 		return CalculateCurrentTimeStamp();
 	}
 
 private:
-	uint32_t CalculateCurrentTimeStamp()
+	uint64_t CalculateCurrentTimeStamp()
 	{
-		uint32_t lapse = CalculateTimeSpent();
-
-		// check for potential overflow
-		if (lapse < UINT32_MAX - timestamp_)
-			return timestamp_ + lapse;
-
-		uint32_t remainder = UINT32_MAX - timestamp_;
-		return lapse - remainder;
+        return  (CalculateTimeSpent() * clockRate_) / MSEC_PER_SEC;
 	}
 
 	/// <summary>
@@ -55,17 +48,24 @@ private:
 	///     that are equivalent to seconds, scaled by the clock rate.
 	///     i.e: 1 second difference will result in a delta value equals to the clock rate.
 	/// </summary>
-	uint32_t CalculateTimeSpent()
+	uint64_t CalculateTimeSpent()
 	{
-		auto ticks = Ticks() - startTime_;
-		auto lapse = (ticks * clockRate_) / MSEC_PER_SEC;
-		return lapse;
+        return Ticks() - startTime_;
 	}
 
-	unsigned long Ticks() const
+    /// <summary>
+    ///     millis() as a 64bit (not the default 32bit)
+    ///     this prevents wrap around.
+    /// </summary>
+	uint64_t Ticks() const
 	{
-		return millis();
+        static uint32_t low32, high32;
+        uint32_t new_low32 = millis();
+        if (new_low32 < low32) high32++;
+        low32 = new_low32;
+        return (uint64_t) high32 << 32 | low32;
 	}
+
 
 } RtpMidiClock_t;
 

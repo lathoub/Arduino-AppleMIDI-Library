@@ -377,8 +377,29 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
         break;
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         T_DEBUG_PRINTLN(F("SYNC_CK2"));
+            
+//        static uint64_t oldRemoteAverage = 0;
+//        static uint64_t oldLocalAverage  = 0;
+
         // each party can estimate the offset between the two clocks using the following formula
-        auto offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
+//        uint64_t remoteAverage   = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
+//        uint64_t localAverage    =   synchronization.timestamps[1];
+        uint64_t offset_estimate = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1];
+        
+//        uint64_t r = (remoteAverage - oldRemoteAverage);
+//        uint64_t l = (localAverage  - oldLocalAverage);
+/*
+        N_DEBUG_PRINT((long)(r));
+        N_DEBUG_PRINT("\t");
+        N_DEBUG_PRINT((long)(l));
+        N_DEBUG_PRINT("\t");
+        N_DEBUG_PRINT((long)(r - l));
+        N_DEBUG_PRINT("\t");
+        N_DEBUG_PRINTLN((long)(offset_estimate));
+*/
+//        oldRemoteAverage = remoteAverage;
+//        oldLocalAverage  = localAverage;
+
         break;
     }
 
@@ -659,6 +680,8 @@ void AppleMidiSession<UdpClass, Settings>::manageSynchronizationListener(size_t 
 {
     auto participant = &participants[i];
 
+    // The initiator must initiate a new sync exchange at least once every 60 seconds;
+    // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::AppleMIDI_CK_MaxTimeOut)
     {
         W_DEBUG_PRINT(F("The connection to "));
@@ -680,6 +703,9 @@ void AppleMidiSession<UdpClass, Settings>::manageSynchronizationListener(size_t 
 // The initiator of the session polls if remote station is still alive.
 // (Initiators only)
 //
+// The initiator must initiate a new sync exchange at least once every 60 seconds;
+// otherwise the responder may assume that the initiator has died and terminate the session.
+//
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::manageSynchronizationInitiatorHeartBeat(size_t i)
 {
@@ -687,6 +713,10 @@ void AppleMidiSession<UdpClass, Settings>::manageSynchronizationInitiatorHeartBe
 
 //    N_DEBUG_PRINTLN(F("manageSynchronizationHeartBeat"));
     
+    // Note: During startup, the initiator should send synchronization exchanges more frequently;
+    // empirical testing has determined that sending a few exchanges improves clock
+    // synchronization accuracy.
+    // (Here: twice every 0.5 seconds, then 6 times every 1.5 seconds, then every 10 seconds.)
     bool doSyncronize = false;
     if (participant->synchronizationHeartBeats < 2)
     {
