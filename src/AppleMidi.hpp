@@ -368,14 +368,14 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
         T_DEBUG_PRINTLN(F("SYNC_CK0"));
         synchronization.timestamps[SYNC_CK1] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK1;
-        writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
+        writeSynchronization(participant->remoteIP, participant->remotePort + 1, synchronization);
         break;
     case SYNC_CK1: /* From session LISTENER */
 #ifdef APPLEMIDI_INITIATOR
         T_DEBUG_PRINTLN(F("SYNC_CK1"));
         synchronization.timestamps[SYNC_CK2] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK2;
-        writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
+        writeSynchronization(participant->remoteIP, participant->remotePort + 1, synchronization);
         participant->synchronizing = false;
 #endif
         break;
@@ -552,7 +552,7 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(Participant<Settin
     V_DEBUG_PRINT(F("writeRtpMidiBuffer "));
     
     const IPAddress remoteIP   = participant->remoteIP;
-    const uint16_t  remotePort = participant->remotePort;
+    const uint16_t  remotePort = participant->remotePort + 1;
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
     {
@@ -584,8 +584,8 @@ void AppleMidiSession<UdpClass, Settings>::writeRtpMidiBuffer(Participant<Settin
     // have an option to not transmit messages with future timestamps, to accommodate hardware not
     // prepared to defer rendering the messages until the proper time.)
     //
-    rtp.timestamp = htonl(0); // now
-  //  rtp.timestamp = htonl(rtpMidiClock.Now());
+    rtp.timestamp = 0; // now
+ //   rtp.timestamp = htonl(rtpMidiClock.Now());
     rtp.sequenceNr = htons(participant->sequenceNr);
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
@@ -747,7 +747,7 @@ void AppleMidiSession<UdpClass, Settings>::sendSynchronization(Participant<Setti
     synchronization.timestamps[SYNC_CK2] = 0;
     synchronization.count = 0;
 
-    writeSynchronization(participant->remoteIP, participant->remotePort, synchronization);
+    writeSynchronization(participant->remoteIP, participant->remotePort + 1, synchronization);
     participant->synchronizing = true;
     participant->synchronizationCount++;
     participant->lastInviteSentTime = millis();
