@@ -86,7 +86,7 @@ void AppleMidiSession<UdpClass, Settings>::readDataPackets()
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedInvitation(AppleMIDI_Invitation &invitation, const amPortType &portType)
+void AppleMidiSession<UdpClass, Settings>::ReceivedInvitation(AppleMIDI_Invitation_t &invitation, const amPortType &portType)
 {
     if (portType == amPortType::Control)
         ReceivedControlInvitation(invitation);
@@ -95,7 +95,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitation(AppleMIDI_Invitati
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_Invitation &invitation)
+void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
     T_DEBUG_PRINT(F("Received Control Invitation. "));
     T_DEBUG_PRINT("initiator: 0x");
@@ -193,7 +193,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedBitrateReceiveLimit(AppleMIDI
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_Invitation & invitationRejected)
+void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected_t & invitationRejected)
 {
     T_DEBUG_PRINT(F("Received InvitationRejected. "));
     T_DEBUG_PRINT("initiator: 0x");
@@ -220,7 +220,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_
 #ifdef APPLEMIDI_INITIATOR
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_Invitation &invitationAccepted, const amPortType &portType)
+void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted, const amPortType &portType)
 {
     if (portType == amPortType::Control)
         ReceivedControlInvitationAccepted(invitationAccepted);
@@ -229,7 +229,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedInvitationAccepted(AppleMIDI_
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(AppleMIDI_Invitation &invitationAccepted)
+void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
     T_DEBUG_PRINT(F("Received Control InvitationAccepted. "));
     T_DEBUG_PRINT("initiator: 0x");
@@ -261,7 +261,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedControlInvitationAccepted(App
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitationAccepted(AppleMIDI_Invitation &invitationAccepted)
+void AppleMidiSession<UdpClass, Settings>::ReceivedDataInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
     T_DEBUG_PRINTLN(F("Received Data Invitation Accepted"));
     T_DEBUG_PRINT("initiator: 0x");
@@ -317,7 +317,7 @@ network. Some implementations (especially on personal computers) display also an
 user to choose between a new connection attempt or closing the session.
 */
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Synchronization &synchronization)
+void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Synchronization_t &synchronization)
 {
     T_DEBUG_PRINT(F("received Synchronization for ssrc 0x"));
     T_DEBUG_PRINTLN(synchronization.ssrc, HEX);
@@ -398,7 +398,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
 // the specified packet number.
 //
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback &receiverFeedback)
+void AppleMidiSession<UdpClass, Settings>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback_t &receiverFeedback)
 {
     T_DEBUG_PRINTLN(F("ReceivedReceiverFeedback"));
     T_DEBUG_PRINT(F("ssrc: 0x"));
@@ -410,7 +410,7 @@ void AppleMidiSession<UdpClass, Settings>::ReceivedReceiverFeedback(AppleMIDI_Re
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::ReceivedEndSession(AppleMIDI_EndSession &endSession)
+void AppleMidiSession<UdpClass, Settings>::ReceivedEndSession(AppleMIDI_EndSession_t &endSession)
 {
     T_DEBUG_PRINT(F("receivedEndSession "));
     T_DEBUG_PRINT("ssrc: 0x");
@@ -490,7 +490,7 @@ void AppleMidiSession<UdpClass, Settings>::writeReceiverFeedback(const IPAddress
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeSynchronization(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_Synchronization &synchronization)
+void AppleMidiSession<UdpClass, Settings>::writeSynchronization(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_Synchronization_t &synchronization)
 {
     T_DEBUG_PRINT(F("writeSynchronization "));
     T_DEBUG_PRINTLN(synchronization.count);
@@ -514,7 +514,7 @@ void AppleMidiSession<UdpClass, Settings>::writeSynchronization(const IPAddress&
 }
 
 template <class UdpClass, class Settings>
-void AppleMidiSession<UdpClass, Settings>::writeEndSession(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_EndSession &endSession)
+void AppleMidiSession<UdpClass, Settings>::writeEndSession(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_EndSession_t &endSession)
 {
     T_DEBUG_PRINTLN(F("writeEndSession"));
 
@@ -741,7 +741,7 @@ void AppleMidiSession<UdpClass, Settings>::manageSynchronizationInitiatorInvites
 template <class UdpClass, class Settings>
 void AppleMidiSession<UdpClass, Settings>::sendSynchronization(Participant<Settings>* participant)
 {
-    AppleMIDI_Synchronization synchronization;
+    AppleMIDI_Synchronization_t synchronization;
     synchronization.timestamps[SYNC_CK0] = rtpMidiClock.Now();
     synchronization.timestamps[SYNC_CK1] = 0;
     synchronization.timestamps[SYNC_CK2] = 0;
@@ -904,7 +904,7 @@ void AppleMidiSession<UdpClass, Settings>::sendEndSession(Participant<Settings>*
 {
     T_DEBUG_PRINTLN(F("sendEndSession for Participant"));
 
-    AppleMIDI_EndSession endSession;
+    AppleMIDI_EndSession_t endSession;
     endSession.initiatorToken = 0;
     endSession.ssrc = this->ssrc;
     writeEndSession(participant->remoteIP, participant->remotePort, endSession);

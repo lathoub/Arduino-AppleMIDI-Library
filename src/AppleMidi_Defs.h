@@ -20,7 +20,7 @@ typedef uint64_t timestamp_t;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
+const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 0;
 
 #define APPLEMIDI_LISTENER
 #define KEEP_SESSION_NAME
@@ -48,7 +48,6 @@ const uint8_t SYNC_CK0 = 0;
 const uint8_t SYNC_CK1 = 1;
 const uint8_t SYNC_CK2 = 2;
 
-// Same struct for Invitation, InvitationAccepted and InvitationRejected
 typedef struct __attribute__((packed)) AppleMIDI_Invitation
 {
 	initiatorToken_t initiatorToken;
@@ -59,7 +58,7 @@ typedef struct __attribute__((packed)) AppleMIDI_Invitation
 	{
 		return sizeof(AppleMIDI_Invitation) - (APPLEMIDI_SESSION_NAME_MAX_LEN) + strlen(sessionName);
 	}
-} AppleMIDI_Invitation_t;
+} AppleMIDI_Invitation_t, AppleMIDI_InvitationAccepted_t, AppleMIDI_InvitationRejected_t;
 
 typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
 {

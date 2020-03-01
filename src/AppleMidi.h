@@ -216,19 +216,19 @@ private:
 	void readControlPackets();
 	void readDataPackets();
     
-	void ReceivedInvitation       (AppleMIDI_Invitation &, const amPortType &);
-	void ReceivedControlInvitation(AppleMIDI_Invitation &);
-	void ReceivedDataInvitation   (AppleMIDI_Invitation &);
-	void ReceivedSynchronization  (AppleMIDI_Synchronization &);
-	void ReceivedReceiverFeedback (AppleMIDI_ReceiverFeedback &);
-	void ReceivedEndSession       (AppleMIDI_EndSession &);
-    void ReceivedRejected         (AppleMIDI_Invitation &, const amPortType &);
+	void ReceivedInvitation       (AppleMIDI_Invitation_t &, const amPortType &);
+	void ReceivedControlInvitation(AppleMIDI_Invitation_t &);
+	void ReceivedDataInvitation   (AppleMIDI_Invitation_t &);
+	void ReceivedSynchronization  (AppleMIDI_Synchronization_t &);
+	void ReceivedReceiverFeedback (AppleMIDI_ReceiverFeedback_t &);
+	void ReceivedEndSession       (AppleMIDI_EndSession_t &);
+    void ReceivedRejected         (AppleMIDI_InvitationRejected_t &, const amPortType &);
 
-    void ReceivedInvitationAccepted       (AppleMIDI_Invitation &, const amPortType &);
-    void ReceivedControlInvitationAccepted(AppleMIDI_Invitation &);
-    void ReceivedDataInvitationAccepted   (AppleMIDI_Invitation &);
+    void ReceivedInvitationAccepted       (AppleMIDI_InvitationAccepted_t &, const amPortType &);
+    void ReceivedControlInvitationAccepted(AppleMIDI_InvitationAccepted_t &);
+    void ReceivedDataInvitationAccepted   (AppleMIDI_InvitationAccepted_t &);
     void ReceivedBitrateReceiveLimit      (AppleMIDI_BitrateReceiveLimit &);
-    void ReceivedInvitationRejected       (AppleMIDI_Invitation &);
+    void ReceivedInvitationRejected       (AppleMIDI_InvitationRejected_t &);
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);
@@ -237,8 +237,8 @@ private:
 	// Helpers
     void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
-    void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization &);
-    void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession &);
+    void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
+    void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
 
     void sendEndSession(Participant<Settings>*);
     
