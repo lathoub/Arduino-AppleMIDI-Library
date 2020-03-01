@@ -37,7 +37,7 @@ public:
 	//      that were processed. They can be purged safely
 	// - a positive number indicates the amount of valid bytes processed
 	// 
-	parserReturn parse(Deque<byte, Settings::MaxBufferSize> &buffer)
+	parserReturn parse(RtpBuffer_t &buffer)
 	{
 		conversionBuffer cb;
         

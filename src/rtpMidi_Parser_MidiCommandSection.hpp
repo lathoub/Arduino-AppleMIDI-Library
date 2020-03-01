@@ -1,4 +1,4 @@
-parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
+parserReturn decodeMidiSection(RtpBuffer_t &buffer)
 {
     int cmdCount = 0;
 
@@ -52,7 +52,7 @@ parserReturn decodeMidiSection(Deque<byte, Settings::MaxBufferSize> &buffer)
     return parserReturn::Processed;
 }
 
-size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer)
+size_t decodeTime(RtpBuffer_t &buffer)
 {
     uint8_t consumed = 0;
     uint32_t deltatime = 0;
@@ -70,7 +70,7 @@ size_t decodeTime(Deque<byte, Settings::MaxBufferSize> &buffer)
     return consumed;
 }
 
-size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &runningstatus)
+size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
 {
     size_t consumed = 0;
 
@@ -206,7 +206,7 @@ size_t decodeMidi(Deque<byte, Settings::MaxBufferSize> &buffer, uint8_t &running
     return consumed;
 }
 
-size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
+size_t decodeMidiSysEx(RtpBuffer_t &buffer)
 {
     size_t consumed = 1; // beginning SysEx Token is not counted (as it could remain)
     size_t i = 0;
@@ -251,7 +251,7 @@ size_t decodeMidiSysEx(Deque<byte, Settings::MaxBufferSize> &buffer)
 }
 
 #if DEBUG > LOG_LEVEL_NONE
-void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
+void printBuffer(const RtpBuffer_t &buffer)
 {
     T_DEBUG_PRINT(F("Buffer Size: "));
     T_DEBUG_PRINTLN(buffer.size());
@@ -267,6 +267,6 @@ void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
     T_DEBUG_PRINTLN();
 }
 #else
-void printBuffer(const Deque<byte, Settings::MaxBufferSize> &buffer)
+void printBuffer(const RtpBuffer_t &buffer)
 {}
 #endif

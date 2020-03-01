@@ -31,6 +31,8 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+static unsigned long now;
+
 template <class UdpClass, class _Settings = DefaultSettings>
 class AppleMidiSession
 {
@@ -155,6 +157,8 @@ protected:
     // MIDI-read() must be called at the start of loop()
 	unsigned available()
 	{
+        now = millis();
+        
 #ifdef APPLEMIDI_INITIATOR
         manageSessionInvites();
 #endif
@@ -190,8 +194,8 @@ private:
 	UdpClass dataPort;
 
 	// reading from the network
-	Deque<byte, Settings::MaxBufferSize> controlBuffer;
-	Deque<byte, Settings::MaxBufferSize> dataBuffer;
+	RtpBuffer_t controlBuffer;
+	RtpBuffer_t dataBuffer;
 
 	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
@@ -202,8 +206,8 @@ private:
     void (*_errorCallback)(ssrc_t, int32_t) = NULL;
 
 	// buffer for incoming and outgoing midi messages
-	Deque<byte, Settings::MaxBufferSize> inMidiBuffer;
-	Deque<byte, Settings::MaxBufferSize> outMidiBuffer;
+	MidiBuffer_t inMidiBuffer;
+	MidiBuffer_t outMidiBuffer;
     
 	rtpMidi_Clock rtpMidiClock;
             
@@ -216,18 +220,17 @@ private:
 	void readControlPackets();
 	void readDataPackets();
     
-	void ReceivedInvitation       (AppleMIDI_Invitation_t &, const amPortType &);
-	void ReceivedControlInvitation(AppleMIDI_Invitation_t &);
-	void ReceivedDataInvitation   (AppleMIDI_Invitation_t &);
-	void ReceivedSynchronization  (AppleMIDI_Synchronization_t &);
-	void ReceivedReceiverFeedback (AppleMIDI_ReceiverFeedback_t &);
-	void ReceivedEndSession       (AppleMIDI_EndSession_t &);
-    void ReceivedRejected         (AppleMIDI_InvitationRejected_t &, const amPortType &);
-
+	void ReceivedInvitation               (AppleMIDI_Invitation_t &, const amPortType &);
+	void ReceivedControlInvitation        (AppleMIDI_Invitation_t &);
+	void ReceivedDataInvitation           (AppleMIDI_Invitation_t &);
+	void ReceivedSynchronization          (AppleMIDI_Synchronization_t &);
+	void ReceivedReceiverFeedback         (AppleMIDI_ReceiverFeedback_t &);
+	void ReceivedEndSession               (AppleMIDI_EndSession_t &);
+    void ReceivedBitrateReceiveLimit      (AppleMIDI_BitrateReceiveLimit &);
+    
     void ReceivedInvitationAccepted       (AppleMIDI_InvitationAccepted_t &, const amPortType &);
     void ReceivedControlInvitationAccepted(AppleMIDI_InvitationAccepted_t &);
     void ReceivedDataInvitationAccepted   (AppleMIDI_InvitationAccepted_t &);
-    void ReceivedBitrateReceiveLimit      (AppleMIDI_BitrateReceiveLimit &);
     void ReceivedInvitationRejected       (AppleMIDI_InvitationRejected_t &);
     
 	// rtpMIDI callback from parser
@@ -235,7 +238,7 @@ private:
     void ReceivedMidi(byte data);
 
 	// Helpers
-    void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command, ssrc_t);
+    void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command);
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
     void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
     void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
@@ -255,7 +258,6 @@ private:
     void manageSynchronizationInitiatorInvites(size_t);
     
     void sendSynchronization(Participant<Settings>*);
-
 
     Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);

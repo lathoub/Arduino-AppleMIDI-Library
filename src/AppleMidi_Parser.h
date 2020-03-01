@@ -20,7 +20,7 @@ class AppleMIDIParser
 public:
 	AppleMidiSession<UdpClass, Settings> *session;
 
-	parserReturn parse(Deque<byte, Settings::MaxBufferSize> &buffer, const amPortType &portType)
+	parserReturn parse(RtpBuffer_t &buffer, const amPortType &portType)
 	{
 		conversionBuffer cb;
 
