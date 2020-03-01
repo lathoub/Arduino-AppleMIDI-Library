@@ -9,13 +9,11 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define APPLEMIDI_LIBRARY_VERSION_MINOR 0
 #define APPLEMIDI_LIBRARY_VERSION_PATCH 0
 
-#define CONTROL_PORT 5004
+#define DEFAULT_CONTROL_PORT 5004
 
 typedef uint32_t ssrc_t;
 typedef uint32_t initiatorToken_t;
 typedef uint64_t timestamp_t;
-
-#define APPLEMIDI_PARTICIPANT_SLOT_FREE 0
 
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
@@ -121,13 +119,6 @@ enum InviteStatus : uint8_t
     AwaitingDataInvitationAccepted,
     DataInvitationAccepted,
     Connected
-};
-
-enum SynchronizationStatus : uint8_t
-{
-    Idle,
-    SynchronizationRequest,
-    Synchronizing,
 };
 
 END_APPLEMIDI_NAMESPACE

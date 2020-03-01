@@ -43,7 +43,7 @@ class AppleMidiSession
 	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiSession<UdpClass>>;
 
 public:
-	AppleMidiSession(const char *name, const uint16_t port = CONTROL_PORT)
+	AppleMidiSession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
         // Pseudo randomize
 		randomSeed(analogRead(0));
@@ -64,7 +64,7 @@ public:
     const uint16_t getPort() { return this->port; };
 
 #ifdef APPLEMIDI_INITIATOR
-    bool sendInvite(IPAddress ip, uint16_t port = CONTROL_PORT);
+    bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
 #endif
     void sendEndSession();
 
@@ -209,7 +209,7 @@ private:
             
 	ssrc_t ssrc = 0;
 	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
-	uint16_t port = CONTROL_PORT;
+	uint16_t port = DEFAULT_CONTROL_PORT;
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
             
 private:
@@ -270,7 +270,7 @@ private:
 	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
-	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", CONTROL_PORT);
+	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", DEFAULT_CONTROL_PORT);
 
 END_APPLEMIDI_NAMESPACE
 
