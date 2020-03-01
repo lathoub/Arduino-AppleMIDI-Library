@@ -20,7 +20,7 @@ typedef uint64_t timestamp_t;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 0;
+const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
 
 #define APPLEMIDI_LISTENER
 #define KEEP_SESSION_NAME
