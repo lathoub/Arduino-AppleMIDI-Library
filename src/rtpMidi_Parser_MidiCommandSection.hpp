@@ -77,7 +77,7 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
     auto octet = buffer[0];
     bool using_rs;
 
-    /* midi realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
+    /* MIDI realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
      * not be intermingled with other MIDI-commands, so we handle this case right here and return */
     if (octet >= 0xf8)
     {
@@ -233,7 +233,7 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     // to compensate for adding the sysex at the end.
     consumed--;
     
-    // send midi data
+    // send MIDI data
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
     session->ReceivedMidi(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);

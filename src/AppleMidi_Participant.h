@@ -1,8 +1,8 @@
 #pragma once
 
-#include "AppleMidi_Defs.h"
+#include "AppleMIDI_Defs.h"
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -30,8 +30,10 @@ struct Participant
     bool            synchronizing = false;
 #endif
     
+    uint64_t        offsetEstimate;
+    
 #ifdef KEEP_SESSION_NAME
-    char            sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
+    char            sessionName[DefaultSettings::MaxSessionNameLen + 1];
 #endif
 } ;
 

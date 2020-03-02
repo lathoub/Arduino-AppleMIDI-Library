@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "AppleMIDI_Namespace.h"
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 #define MSEC_PER_SEC 1000

@@ -4,17 +4,17 @@
 #include "utility/endian.h"
 #include "utility/midi_feat4_4_0/midi_Defs.h"
 
-#include "rtpMidi_Defs.h"
+#include "rtpMIDI_Defs.h"
 #include "rtp_Defs.h"
 
-#include "AppleMidi_Settings.h"
+#include "AppleMIDI_Settings.h"
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class Settings>
-class AppleMidiSession;
+class AppleMIDISession;
 
 template <class UdpClass, class Settings>
 class rtpMIDIParser
@@ -27,7 +27,7 @@ private:
     uint8_t rtpMidi_Flags = 0;
 
 public:
-	AppleMidiSession<UdpClass, Settings> * session;
+	AppleMIDISession<UdpClass, Settings> * session;
     
 	//  Parse the incoming string
 	// return:
@@ -188,7 +188,7 @@ public:
             _journalTotalChannels = 0;
         }
   
-		// Always a midi section
+		// Always a MIDI section
 		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMidiSection(buffer);

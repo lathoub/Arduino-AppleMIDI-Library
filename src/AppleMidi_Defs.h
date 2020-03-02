@@ -1,6 +1,8 @@
 #pragma once
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Settings.h"
+
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -18,7 +20,7 @@ typedef uint64_t timestamp_t;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
+//const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
 
 #define APPLEMIDI_LISTENER
 #define KEEP_SESSION_NAME
@@ -50,11 +52,11 @@ typedef struct __attribute__((packed)) AppleMIDI_Invitation
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
-	char sessionName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
+    char sessionName[DefaultSettings::MaxSessionNameLen + 1];
 
 	const size_t getLength() const
 	{
-		return sizeof(AppleMIDI_Invitation) - (APPLEMIDI_SESSION_NAME_MAX_LEN) + strlen(sessionName);
+		return sizeof(AppleMIDI_Invitation) - (DefaultSettings::MaxSessionNameLen) + strlen(sessionName);
 	}
 } AppleMIDI_Invitation_t, AppleMIDI_InvitationAccepted_t, AppleMIDI_InvitationRejected_t;
 

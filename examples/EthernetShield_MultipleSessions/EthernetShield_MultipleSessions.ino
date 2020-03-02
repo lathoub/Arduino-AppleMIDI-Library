@@ -1,7 +1,7 @@
 #include <Ethernet.h>
 
 #define DEBUG 4
-#include <AppleMidi.h>
+#include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -12,11 +12,11 @@ byte mac[] = {
 unsigned long t1 = millis();
 bool isConnected = false;
 
-typedef APPLEMIDI_NAMESPACE::AppleMidiSession<EthernetUDP> AppleMidiSession_t;
-AppleMidiSession_t Session1("Session 1", 5004);
-AppleMidiSession_t Session2("Session 2", 5006);
-MIDI_NAMESPACE::MidiInterface<AppleMidiSession_t> MIDI1((AppleMidiSession_t &)Session1);
-MIDI_NAMESPACE::MidiInterface<AppleMidiSession_t> MIDI2((AppleMidiSession_t &)Session2);
+typedef APPLEMIDI_NAMESPACE::AppleMIDISession<EthernetUDP> AppleMIDISession_t;
+AppleMIDISession_t Session1("Session 1", 5004);
+AppleMIDISession_t Session2("Session 2", 5006);
+MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI1((AppleMIDISession_t &)Session1);
+MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI2((AppleMIDISession_t &)Session2);
 
 using namespace appleMidi;
 
@@ -114,7 +114,7 @@ void OnAppleMidiDisconnected(ssrc_t ssrc) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Error occorded during processing
 // -----------------------------------------------------------------------------
-void OnAppleMidiError(ssrc_t ssrc, uint32_t errorCode) {
+void OnAppleMidiError(ssrc_t ssrc, int32_t errorCode) {
   N_DEBUG_PRINTLN(F("ERROR"));
   exit(1);
 }

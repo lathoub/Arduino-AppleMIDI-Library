@@ -1,10 +1,10 @@
 #pragma once
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-/* used to mask the most significant bit, which flags the start of a new midi-command! */
+/* used to mask the most significant bit, which flags the start of a new MIDI-command! */
 #define RTP_MIDI_COMMAND_STATUS_FLAG 0x80
 
 /* used to mask the lower 7 bits of the single octets that make up the delta-time */

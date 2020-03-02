@@ -11,19 +11,19 @@
 
 #include "IPAddress.h"
 
-#include "AppleMidi_Defs.h"
-#include "AppleMidi_Settings.h"
+#include "AppleMIDI_Defs.h"
+#include "AppleMIDI_Settings.h"
 
 #include "rtp_Defs.h"
-#include "rtpMidi_Defs.h"
-#include "rtpMidi_Clock.h"
+#include "rtpMIDI_Defs.h"
+#include "rtpMIDI_Clock.h"
 
-#include "AppleMidi_Participant.h"
+#include "AppleMIDI_Participant.h"
 
-#include "AppleMidi_Parser.h"
-#include "rtpMidi_Parser.h"
+#include "AppleMIDI_Parser.h"
+#include "rtpMIDI_Parser.h"
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 #ifndef UDP_TX_PACKET_MAX_SIZE
 #define UDP_TX_PACKET_MAX_SIZE 24
@@ -34,7 +34,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 static unsigned long now;
 
 template <class UdpClass, class _Settings = DefaultSettings>
-class AppleMidiSession
+class AppleMIDISession
 {
 	typedef _Settings Settings;
 
@@ -42,16 +42,16 @@ class AppleMidiSession
 	// to avoid access by the .ino to internal messages
 	friend class AppleMIDIParser<UdpClass, Settings>;
 	friend class rtpMIDIParser<UdpClass, Settings>;
-	friend class MIDI_NAMESPACE::MidiInterface<AppleMidiSession<UdpClass>>;
+	friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>>;
 
 public:
-	AppleMidiSession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
+	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
         // Pseudo randomize
 		randomSeed(analogRead(0));
 
 		this->port = port;
-		strncpy(this->localName, name, APPLEMIDI_SESSION_NAME_MAX_LEN);
+        strncpy(this->localName, name, DefaultSettings::MaxSessionNameLen);
         
 		_appleMIDIParser.session = this;
 		_rtpMIDIParser.session   = this;
@@ -204,14 +204,14 @@ private:
 	void (*_disconnectedCallback)(ssrc_t) = NULL;
     void (*_errorCallback)(ssrc_t, int32_t) = NULL;
 
-	// buffer for incoming and outgoing midi messages
+	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;
 	MidiBuffer_t outMidiBuffer;
     
 	rtpMidi_Clock rtpMidiClock;
             
 	ssrc_t ssrc = 0;
-	char localName[APPLEMIDI_SESSION_NAME_MAX_LEN + 1];
+    char localName[DefaultSettings::MaxSessionNameLen + 1];
 	uint16_t port = DEFAULT_CONTROL_PORT;
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
             
@@ -266,7 +266,7 @@ private:
 	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
-	typedef APPLEMIDI_NAMESPACE::AppleMidiSession<Type> __amt;   \
+	typedef APPLEMIDI_NAMESPACE::AppleMIDISession<Type> __amt;   \
 	__amt AppleMIDI(sessionName, port);                        \
 	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
@@ -275,5 +275,5 @@ private:
 
 END_APPLEMIDI_NAMESPACE
 
-#include "AppleMidi.hpp"
+#include "AppleMIDI.hpp"
 

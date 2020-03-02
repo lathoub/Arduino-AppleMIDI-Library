@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -8,7 +8,7 @@ struct DefaultSettings
 {
     static const size_t MaxBufferSize = 64;
     
-    static const size_t MaxSessionNameLen = 24; // todo: not used for the moment - because of use in _Defs
+    static const size_t MaxSessionNameLen = 24;
 
     static const uint8_t MaxNumberOfParticipants = 2;
     
@@ -25,7 +25,17 @@ struct DefaultSettings
     // Should not be lower than 11000 (15s)
     // MacOS sends CK messages every 10 seconds
     // rtpMIDI on Windows sends CK messages every x seconds
-    static const unsigned long AppleMIDI_CK_MaxTimeOut = 45000;
+    static const unsigned long CK_MaxTimeOut = 45000;
+
+    // when set to true, the lower 32-bits of the rtpClock ae send
+    // when set to false, 0 will be set for immediate playout.
+    static const bool TimestampRtpPackets = false;
+    
+    static const uint8_t MaxSessionInvitesAttempts = 13;
+    
+    static const uint8_t MaxSynchronizationCK0Attempts = 5;
+    
+    static const unsigned long SynchronizationHeartBeat = 10000;
 };
 
 enum parserReturn: uint8_t

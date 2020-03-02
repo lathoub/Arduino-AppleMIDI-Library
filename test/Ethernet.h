@@ -27,7 +27,7 @@ public:
         
         if (port == 5005 && true)
         {
-            // rtp-midi and AppleMIDI messages
+            // rtp-MIDI and AppleMIDI messages
             
         byte aa[] = {
                  0x80, 0x61, 0xbf, 0xa2, 0x12, 0xb, 0x5a, 0xf7, 0xaa, 0x34, 0x96, 0x4a,
@@ -168,7 +168,7 @@ public:
             // 36 bytes
             byte noteOnOff[] = {
                 0x80, 0x61, 0x27, 0x9e, 0x00, 0x1d, 0xb5, 0x36, 0x36, 0x09, 0x2f, 0x2a, // rtp
-                // Midi section
+                // MIDI section
                 0x46, // flag
                 0x80, 0x3f, 0x00, // note off 63 on channel 1,
                 0x00, // delta time
@@ -184,7 +184,7 @@ public:
             
             byte noteOnOff2[] = {
                 0x80, 0x61, 0x27, 0x9e, 0x00, 0x1d, 0xb5, 0x36, 0x36, 0x09, 0x2f, 0x2a, // rtp
-                // Midi section
+                // MIDI section
                 0x46, // flag
                 0x80, 0x3f, 0x00, // note off 63 on channel 1,
                 0x00, // delta time
@@ -198,7 +198,7 @@ public:
                 0x15, 0xad, 0x5a, 0xdf, 0xa8, // offbit octets
 
                 0x80, 0x61, 0x27, 0x9e, 0x00, 0x1d, 0xb5, 0x36, 0x36, 0x09, 0x2f, 0x2a, // rtp
-                // Midi section
+                // MIDI section
                 0x46, // flag
                 0x80, 0x3f, 0x00, // note off 63 on channel 1,
                 0x00, // delta time
@@ -285,7 +285,7 @@ public:
         
         if (port == 5005 && true)
         {
-            // rtp-midi and AppleMIDI messages
+            // rtp-MIDI and AppleMIDI messages
         }
 
     };

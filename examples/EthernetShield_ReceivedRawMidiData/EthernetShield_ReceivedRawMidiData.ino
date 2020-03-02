@@ -1,6 +1,6 @@
 #include <Ethernet.h>
 #define DEBUG LOG_LEVEL_NOTICE
-#include <AppleMidi.h>
+#include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -85,7 +85,7 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Error occorded during processing
 // -----------------------------------------------------------------------------
-void OnAppleMidiError(uint32_t ssrc, uint32_t errorCode) {
+void OnAppleMidiError(uint32_t ssrc, int32_t errorCode) {
   N_DEBUG_PRINTLN(F("ERROR"));
   exit(1);
 }

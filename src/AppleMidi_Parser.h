@@ -3,22 +3,22 @@
 #include "utility/Deque.h"
 #include "utility/endian.h"
 
-#include "AppleMidi_Defs.h"
+#include "AppleMIDI_Defs.h"
 
-#include "AppleMidi_Settings.h"
+#include "AppleMIDI_Settings.h"
 
-#include "AppleMidi_Namespace.h"
+#include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class Settings>
-class AppleMidiSession;
+class AppleMIDISession;
 
 template <class UdpClass, class Settings>
 class AppleMIDIParser
 {
 public:
-	AppleMidiSession<UdpClass, Settings> *session;
+	AppleMIDISession<UdpClass, Settings> *session;
 
 	parserReturn parse(RtpBuffer_t &buffer, const amPortType &portType)
 	{
@@ -109,7 +109,7 @@ public:
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {
-                if (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN)
+                if (bi <= DefaultSettings::MaxSessionNameLen)
                     invitation.sessionName[bi++] = buffer[i];
                 i++;
             }
@@ -342,7 +342,7 @@ public:
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {
-                if (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN)
+                if (bi <= DefaultSettings::MaxSessionNameLen)
                     invitationAccepted.sessionName[bi++] = buffer[i];
                 i++;
             }
@@ -418,7 +418,7 @@ public:
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {
-                if (bi <= APPLEMIDI_SESSION_NAME_MAX_LEN)
+                if (bi <= DefaultSettings::MaxSessionNameLen)
                     invitationRejected.sessionName[bi++] = buffer[i];
                 i++;
             }

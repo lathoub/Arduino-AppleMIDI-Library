@@ -6,7 +6,7 @@ const char* ssid     = "yourssid";
 const char* password = "yourpasswd";
 
 #define DEBUG 4
-#include <AppleMidi.h>
+#include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
