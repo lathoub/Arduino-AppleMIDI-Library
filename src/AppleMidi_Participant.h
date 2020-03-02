@@ -30,7 +30,9 @@ struct Participant
     bool            synchronizing = false;
 #endif
     
-    uint64_t        offsetEstimate;
+#ifdef LATENCY_CALCULATION
+    uint32_t        offsetEstimate;
+#endif
     
 #ifdef KEEP_SESSION_NAME
     char            sessionName[DefaultSettings::MaxSessionNameLen + 1];

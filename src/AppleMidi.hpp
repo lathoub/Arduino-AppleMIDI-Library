@@ -378,11 +378,13 @@ void AppleMIDISession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
         T_DEBUG_PRINTLN(F("SYNC_CK2"));
             
+#ifdef LATENCY_CALCULATION
         // each party can estimate the offset between the two clocks using the following formula
+        participant->offsetEstimate = (uint32_t)(((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1]);
+/*
         uint64_t remoteAverage   = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
         uint64_t localAverage    =   synchronization.timestamps[1];
-        participant->offsetEstimate = (((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1]);
-        
+
         static uint64_t oldRemoteAverage = 0;
         static uint64_t oldLocalAverage  = 0;
 
@@ -399,7 +401,8 @@ void AppleMIDISession<UdpClass, Settings>::ReceivedSynchronization(AppleMIDI_Syn
 
         oldRemoteAverage = remoteAverage;
         oldLocalAverage  = localAverage;
-
+*/
+#endif
         break;
     }
 
@@ -490,7 +493,7 @@ void AppleMIDISession<UdpClass, Settings>::writeInvitation(UdpClass &port, IPAdd
 template <class UdpClass, class Settings>
 void AppleMIDISession<UdpClass, Settings>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
-    N_DEBUG_PRINTLN(F("writeReceiverFeedback"));
+    T_DEBUG_PRINTLN(F("writeReceiverFeedback"));
 
     if (controlPort.beginPacket(remoteIP, remotePort))
     {
@@ -955,10 +958,16 @@ void AppleMIDISession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
             participant->receiverFeedbackStartTime = now;
         participant->doReceiverFeedback = true;
 
- //       rtp.timestamp
- //       participant->offsetEstimate
-        
+#ifdef LATENCY_CALCULATION
+        auto offset = (rtp.timestamp - participant->offsetEstimate);
+        auto latency = (int32_t)(rtpMidiClock.Now() - offset);
+#else
+        auto latency = 0;
+#endif
         participant->sequenceNr = rtp.sequenceNr;
+        
+        if (NULL != _receivedRtpCallback)
+            _receivedRtpCallback(0, rtp, latency);
     }
     else
     {

@@ -61,7 +61,8 @@ public:
 	void setHandleDisconnected(void (*fptr)(ssrc_t)) { _disconnectedCallback = fptr; }
     void setHandleError(void (*fptr)(ssrc_t, int32_t)) { _errorCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
-
+    void setHandleReceivedRtp(void (*fptr)(ssrc_t, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
+    
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
 
@@ -201,6 +202,7 @@ private:
 
     void (*_connectedCallback)(ssrc_t, const char *) = NULL;
     void (*_receivedMidiByteCallback)(ssrc_t, byte) = NULL;
+    void (*_receivedRtpCallback)(ssrc_t, const Rtp_t&, const int32_t&) = NULL;
 	void (*_disconnectedCallback)(ssrc_t) = NULL;
     void (*_errorCallback)(ssrc_t, int32_t) = NULL;
 
@@ -214,6 +216,7 @@ private:
     char localName[DefaultSettings::MaxSessionNameLen + 1];
 	uint16_t port = DEFAULT_CONTROL_PORT;
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
+    int32_t latencyAdjustment = 0;
             
 private:
 	void readControlPackets();

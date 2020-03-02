@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define DEBUG 4
-// make sure LATENCY_CALCULATION is defined in AppleMIDI_Defs.h
-// (If not defined, latency will always be 0)
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -15,8 +13,6 @@ unsigned long t1 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
-
-USING_NAMESPACE_APPLEMIDI
 
 // -----------------------------------------------------------------------------
 //
@@ -40,6 +36,7 @@ void setup()
   V_DEBUG_PRINT(Ethernet.localIP());
   V_DEBUG_PRINTLN(F(":5004"));
   V_DEBUG_PRINTLN(F("Then press the Connect button"));
+  V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
@@ -48,10 +45,12 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
-  AppleMIDI.setHandleReceivedRtp(OnAppleMidiRtp);
 
+  // and let us know ehen notes come in
+  MIDI.setHandleNoteOn(OnMidiNoteOn);
+  MIDI.setHandleNoteOff(OnMidiNoteOff);
 
-  N_DEBUG_PRINTLN(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
+  N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------
@@ -61,6 +60,21 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
+
+  // send note on/off every second
+  // (dont cáll delay(1000) as it will stall the pipeline)
+  if (isConnected && (millis() - t1) > 1000)
+  {
+    t1 = millis();
+    //   Serial.print(F(".");
+
+    byte note = random(1, 127);
+    byte velocity = 55;
+    byte channel = 1;
+
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
+  }
 }
 
 // ====================================================================================
@@ -93,18 +107,25 @@ void OnAppleMidiError(uint32_t ssrc, int32_t errorCode) {
 }
 
 // -----------------------------------------------------------------------------
-// called for each Rtp packet to come in.
-// 
-// Latency: (from https://en.wikipedia.org/wiki/RTP-MIDI)
-// Sender and receiver clocks are synchronized when the session is initiated, 
-// and they are kept synchronized during the whole session period by the regular 
-// synchronization cycles, controlled by the session initiators. This mechanism has 
-// the capability to compensate for any latency, from a few hundreds of microseconds, 
-// as seen on LAN applications, to seconds. It can compensate for the latency introduced 
-// by the Internet for example, allowing real-time execution of music pieces.
 //
-// latency is expressed in 10 x ms
 // -----------------------------------------------------------------------------
-void OnAppleMidiRtp(uint32_t ssrc, const Rtp_t& rtp, const int32_t& latency) {
-  N_DEBUG_PRINTLN(latency);
+static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
+  N_DEBUG_PRINT(F("Incoming NoteOn  from channel: "));
+  N_DEBUG_PRINT(channel);
+  N_DEBUG_PRINT(F(", note: "));
+  N_DEBUG_PRINT(note);
+  N_DEBUG_PRINT(F(", velocity: "));
+  N_DEBUG_PRINTLN(velocity);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
+  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
+  N_DEBUG_PRINT(channel);
+  N_DEBUG_PRINT(F(", note: "));
+  N_DEBUG_PRINT(note);
+  N_DEBUG_PRINT(F(", velocity: "));
+  N_DEBUG_PRINTLN(velocity);
 }

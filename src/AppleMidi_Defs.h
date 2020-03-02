@@ -20,10 +20,9 @@ typedef uint64_t timestamp_t;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-//const static uint8_t APPLEMIDI_SESSION_NAME_MAX_LEN = 24;
-
 #define APPLEMIDI_LISTENER
 #define KEEP_SESSION_NAME
+#define LATENCY_CALCULATION
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000

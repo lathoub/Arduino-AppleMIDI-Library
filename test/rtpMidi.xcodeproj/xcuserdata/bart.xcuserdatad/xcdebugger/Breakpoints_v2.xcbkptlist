@@ -14,8 +14,8 @@
             filePath = "../src/AppleMIDI.h"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "162"
-            endingLineNumber = "162"
+            startingLineNumber = "163"
+            endingLineNumber = "163"
             landmarkName = "available()"
             landmarkType = "7">
          </BreakpointContent>
