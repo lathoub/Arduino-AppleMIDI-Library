@@ -18,7 +18,7 @@ AppleMIDISession_t Session2("Session 2", 5006);
 MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI1((AppleMIDISession_t &)Session1);
 MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI2((AppleMIDISession_t &)Session2);
 
-using namespace appleMidi;
+USING_NAMESPACE_APPLEMIDI
 
 // -----------------------------------------------------------------------------
 //
