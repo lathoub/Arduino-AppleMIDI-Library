@@ -36,7 +36,7 @@ BEGIN_MIDI_NAMESPACE
  macro to create your instance. The settings you don't override will keep their
  default value. Eg:
  \code{.cpp}
- struct ArduinoPlatform : public MIDI::DefaultPlatform
+ struct ArduinoPlatform : public MIDI_NAMESPACE::DefaultPlatform
  {
     static unsigned long now() { return ::millis(); };
  };
