@@ -4,9 +4,9 @@
 
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
-// this is an exported and stripped down version of the MIDI library by  47 blabla
-// feat 4.4.0 summer 2019
-#include "utility/midi_feat4_4_0/MIDI.h"
+#include <MIDI.h>
+using namespace MIDI_NAMESPACE;
+
 #include "utility/endian.h"
 
 #include "IPAddress.h"
@@ -47,14 +47,8 @@ class AppleMIDISession
 public:
 	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
-        // Pseudo randomize
-		randomSeed(analogRead(0));
-
 		this->port = port;
         strncpy(this->localName, name, DefaultSettings::MaxSessionNameLen);
-        
-		_appleMIDIParser.session = this;
-		_rtpMIDIParser.session   = this;
 	};
 
 	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
@@ -74,6 +68,14 @@ public:
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
+        V_DEBUG_PRINTLN("AppleMidi::begin");
+
+        // Pseudo randomize
+        randomSeed(analogRead(0));
+        
+        _appleMIDIParser.session = this;
+        _rtpMIDIParser.session   = this;
+
 		// Each stream is distinguished by a unique SSRC value and has a unique sequence
 		// number and RTP timestamp space.
 		// this is our SSRC
@@ -88,8 +90,10 @@ protected:
 		rtpMidiClock.Init(rtpMidiClock.Now(), MIDI_SAMPLING_RATE_DEFAULT);
     }
 
-	bool beginTransmission()
+	bool beginTransmission(MIDI_NAMESPACE::MidiType)
 	{
+        V_DEBUG_PRINTLN("AppleMidi::beginTransmission");
+
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         // (The actual sending happen in the available() method, called at the start of the
@@ -122,7 +126,9 @@ protected:
 
 	void write(byte byte)
 	{
-		// do we still have place in the buffer for 1 more character?
+        V_DEBUG_PRINTLN("AppleMidi::write");
+
+        // do we still have place in the buffer for 1 more character?
 		if ((outMidiBuffer.size()) + 2 > outMidiBuffer.max_size())
 		{
 			// buffer is almost full, only 1 more character
@@ -151,6 +157,7 @@ protected:
 
 	void endTransmission()
 	{
+        V_DEBUG_PRINTLN("AppleMidi::endTransmission");
 	};
 
     // first things MIDI.read() calls in this method
@@ -186,6 +193,8 @@ protected:
 
     byte read()
     {
+        V_DEBUG_PRINTLN("AppleMidi::read");
+        
         return inMidiBuffer.pop_front();
     };
 
@@ -270,8 +279,8 @@ private:
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
 	typedef APPLEMIDI_NAMESPACE::AppleMIDISession<Type> __amt;   \
-	__amt AppleMIDI(sessionName, port);                        \
-	APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
+	__amt AppleMIDI(sessionName, port); \
+    APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
 	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", DEFAULT_CONTROL_PORT);

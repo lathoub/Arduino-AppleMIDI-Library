@@ -2,7 +2,7 @@
 
 #include "utility/Deque.h"
 #include "utility/endian.h"
-#include "utility/midi_feat4_4_0/midi_Defs.h"
+#include <midi_Defs.h>
 
 #include "rtpMIDI_Defs.h"
 #include "rtp_Defs.h"
