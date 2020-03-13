@@ -11,8 +11,8 @@ void AppleMIDISession<UdpClass, Settings>::readControlPackets()
 {
     size_t packetSize = controlPort.available();
     if (packetSize == 0)
-        packetSize = controlPort.parsePacket();
-    
+       packetSize = controlPort.parsePacket();
+
     while (packetSize > 0 && !controlBuffer.full())
     {
         auto bytesToRead = min( min(packetSize, controlBuffer.free()), sizeof(packetBuffer));
@@ -41,10 +41,13 @@ void AppleMIDISession<UdpClass, Settings>::readDataPackets()
 {
     size_t packetSize = dataPort.available();
     if (packetSize == 0)
-        packetSize = dataPort.parsePacket();
+       packetSize = dataPort.parsePacket();
     
     while (packetSize > 0 && !dataBuffer.full())
     {
+        V_DEBUG_PRINT("readDataPackets ");
+        V_DEBUG_PRINTLN(packetSize);
+
         auto bytesToRead = min( min(packetSize, dataBuffer.free()), sizeof(packetBuffer));
         auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
