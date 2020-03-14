@@ -45,6 +45,10 @@ void setup()
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
 
+  // Initialize the Bonjour/MDNS library. You can now reach or ping this
+  // Arduino via the host name "arduino.local", provided that your operating
+  // system is Bonjour-enabled (such as MacOS X).
+  // Always call this before any other method!
   EthernetBonjour.begin("arduino");
 
   EthernetBonjour.addServiceRecord("Arduino._apple-midi",
