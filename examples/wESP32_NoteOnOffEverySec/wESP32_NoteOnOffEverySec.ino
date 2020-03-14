@@ -1,12 +1,5 @@
 #include <ETH.h>
-
-#define ETH_ADDR        1
-#define ETH_POWER_PIN   5
-#define ETH_MDC_PIN     23
-#define ETH_MDIO_PIN    18
-#define ETH_TYPE        ETH_PHY_IP101
-
-static bool eth_connected = false;
+#include <ESPmDNS.h>
 
 #define DEBUG 7
 #include <AppleMIDI.h>
@@ -15,43 +8,6 @@ unsigned long t0 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "Arduino", 5004);
-
-void WiFiEvent(WiFiEvent_t event)
-{
-  switch (event) {
-    case SYSTEM_EVENT_ETH_START:
-      V_DEBUG_PRINTLN("ETH Started");
-      //set eth hostname here
-      ETH.setHostname("esp32-ethernet");
-      break;
-    case SYSTEM_EVENT_ETH_CONNECTED:
-      V_DEBUG_PRINTLN("ETH Connected");
-      break;
-    case SYSTEM_EVENT_ETH_GOT_IP:
-      V_DEBUG_PRINT("ETH MAC: ");
-      V_DEBUG_PRINT(ETH.macAddress());
-      V_DEBUG_PRINT(", IPv4: ");
-      V_DEBUG_PRINT(ETH.localIP());
-      if (ETH.fullDuplex()) {
-        V_DEBUG_PRINT(", FULL_DUPLEX");
-      }
-      V_DEBUG_PRINT(", ");
-      V_DEBUG_PRINT(ETH.linkSpeed());
-      V_DEBUG_PRINTLN("Mbps");
-      eth_connected = true;
-      break;
-    case SYSTEM_EVENT_ETH_DISCONNECTED:
-      V_DEBUG_PRINTLN("ETH Disconnected");
-      eth_connected = false;
-      break;
-    case SYSTEM_EVENT_ETH_STOP:
-      V_DEBUG_PRINTLN("ETH Stopped");
-      eth_connected = false;
-      break;
-    default:
-      break;
-  }
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -62,12 +18,9 @@ void setup()
 
   N_DEBUG_PRINTLN(F("Getting IP address..."));
 
-  WiFi.onEvent(WiFiEvent);
-  ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE);
+  ETH.begin();
 
-  while (!eth_connected) {
-    delay(100);
-  }
+  MDNS.begin("wESP32");
 
   N_DEBUG_PRINT("\nIP address is ");
   N_DEBUG_PRINTLN(ETH.localIP());
@@ -87,6 +40,8 @@ void setup()
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+
+  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }

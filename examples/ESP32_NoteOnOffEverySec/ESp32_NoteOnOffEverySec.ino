@@ -11,12 +11,6 @@ const char* password = WIFI_PASSWD;
 #define DEBUG 4
 #include <AppleMIDI.h>
 
-// Enter a MAC address for your controller below.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
-
 unsigned long t0 = millis();
 bool isConnected = false;
 
