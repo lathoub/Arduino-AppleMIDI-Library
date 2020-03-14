@@ -7,3 +7,4 @@ examples/ESP32_NoteOnOffEverySec/config.h
 src/.vscode
 test/x64
 .development
+examples/ESP32_NoteOnOffEverySec/credentials.h

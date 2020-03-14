@@ -1,9 +1,12 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
+#include <ESPmDNS.h>
 
-const char* ssid     = "yourssid";
-const char* password = "yourpasswd";
+#include "credentials.h"
+
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWD;
 
 #define DEBUG 4
 #include <AppleMIDI.h>
@@ -34,6 +37,8 @@ void setup()
     Serial.print(F("."));
   }
 
+  MDNS.begin("ESP32");
+
   N_DEBUG_PRINT("\nIP address is ");
   N_DEBUG_PRINTLN(WiFi.localIP());
 
@@ -53,6 +58,8 @@ void setup()
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+
+  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
