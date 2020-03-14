@@ -28,7 +28,7 @@ void setup()
 
   N_DEBUG_PRINTLN(F("Getting IP address..."));
 
-  WiFi.begin(ssid, pass);
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(F("."));
