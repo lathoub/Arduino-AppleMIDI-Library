@@ -61,6 +61,21 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
+
+  // send a note every second
+  // (dont cáll delay(1000) as it will stall the pipeline)
+  if (isConnected && (millis() - t1) > 1000)
+  {
+    t1 = millis();
+    //   Serial.print(F(".");
+
+    byte note = random(1, 127);
+    byte velocity = 55;
+    byte channel = 1;
+
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
+  }
 }
 
 // ====================================================================================
@@ -94,13 +109,13 @@ void OnAppleMidiError(uint32_t ssrc, int32_t errorCode) {
 
 // -----------------------------------------------------------------------------
 // called for each Rtp packet to come in.
-// 
+//
 // Latency: (from https://en.wikipedia.org/wiki/RTP-MIDI)
-// Sender and receiver clocks are synchronized when the session is initiated, 
-// and they are kept synchronized during the whole session period by the regular 
-// synchronization cycles, controlled by the session initiators. This mechanism has 
-// the capability to compensate for any latency, from a few hundreds of microseconds, 
-// as seen on LAN applications, to seconds. It can compensate for the latency introduced 
+// Sender and receiver clocks are synchronized when the session is initiated,
+// and they are kept synchronized during the whole session period by the regular
+// synchronization cycles, controlled by the session initiators. This mechanism has
+// the capability to compensate for any latency, from a few hundreds of microseconds,
+// as seen on LAN applications, to seconds. It can compensate for the latency introduced
 // by the Internet for example, allowing real-time execution of music pieces.
 //
 // latency is expressed in 10 x ms
