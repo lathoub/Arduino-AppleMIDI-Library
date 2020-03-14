@@ -71,6 +71,8 @@ protected:
         _appleMIDIParser.session = this;
         _rtpMIDIParser.session   = this;
 
+        randomSeed(millis());
+        
 		// Each stream is distinguished by a unique SSRC value and has a unique sequence
 		// number and RTP timestamp space.
 		// this is our SSRC

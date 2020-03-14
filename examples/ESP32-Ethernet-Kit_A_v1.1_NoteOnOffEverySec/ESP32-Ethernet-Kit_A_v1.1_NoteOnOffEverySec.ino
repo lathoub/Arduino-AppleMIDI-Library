@@ -1,4 +1,5 @@
 #include <ETH.h>
+#include <ESPmDNS.h>
 
 #define ETH_ADDR        1
 #define ETH_POWER_PIN   5
@@ -14,7 +15,7 @@ static bool eth_connected = false;
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "Arduino", 5004);
+APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
 
 void WiFiEvent(WiFiEvent_t event)
 {
@@ -69,6 +70,8 @@ void setup()
     delay(100);
   }
 
+  MDNS.begin(AppleMIDI.getName());
+
   N_DEBUG_PRINT("\nIP address is ");
   N_DEBUG_PRINTLN(ETH.localIP());
 
@@ -87,6 +90,8 @@ void setup()
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+
+  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
 
   N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
 }
