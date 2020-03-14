@@ -69,9 +69,6 @@ protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
         V_DEBUG_PRINTLN("AppleMidi::begin");
-
-        // Pseudo randomize
-        randomSeed(analogRead(0));
         
         _appleMIDIParser.session = this;
         _rtpMIDIParser.session   = this;

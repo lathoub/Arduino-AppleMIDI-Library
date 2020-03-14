@@ -1,7 +1,7 @@
 #include <ETH.h>
 #include <ESPmDNS.h>
 
-#define DEBUG 7
+#define DEBUG 4
 #include <AppleMIDI.h>
 
 unsigned long t0 = millis();
@@ -32,7 +32,6 @@ void setup()
   V_DEBUG_PRINTLN(F("Then press the Connect button"));
   V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
-  // Create a session and wait for a remote host to connect to us
   MIDI.begin(1); // listen on channel 1
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
