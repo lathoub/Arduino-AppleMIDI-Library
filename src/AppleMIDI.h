@@ -68,8 +68,6 @@ public:
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
-        V_DEBUG_PRINTLN("AppleMidi::begin");
-        
         _appleMIDIParser.session = this;
         _rtpMIDIParser.session   = this;
 
@@ -123,8 +121,6 @@ protected:
 
 	void write(byte byte)
 	{
-        V_DEBUG_PRINTLN("AppleMidi::write");
-
         // do we still have place in the buffer for 1 more character?
 		if ((outMidiBuffer.size()) + 2 > outMidiBuffer.max_size())
 		{
@@ -154,7 +150,6 @@ protected:
 
 	void endTransmission()
 	{
-        V_DEBUG_PRINTLN("AppleMidi::endTransmission");
 	};
 
     // first things MIDI.read() calls in this method
@@ -190,8 +185,6 @@ protected:
 
     byte read()
     {
-        V_DEBUG_PRINTLN("AppleMidi::read");
-        
         return inMidiBuffer.pop_front();
     };
 
@@ -280,7 +273,10 @@ private:
     APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
-	APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", DEFAULT_CONTROL_PORT);
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", DEFAULT_CONTROL_PORT);
+
+#define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
+APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "ESP32", DEFAULT_CONTROL_PORT);
 
 END_APPLEMIDI_NAMESPACE
 

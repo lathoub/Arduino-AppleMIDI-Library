@@ -7,7 +7,7 @@
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "Arduino", 5004);
+APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
 
 // -----------------------------------------------------------------------------
 //
@@ -20,7 +20,7 @@ void setup()
 
   ETH.begin();
 
-  MDNS.begin("wESP32");
+  MDNS.begin(AppleMIDI.getName());
 
   N_DEBUG_PRINT("\nIP address is ");
   N_DEBUG_PRINTLN(ETH.localIP());
