@@ -1,7 +1,6 @@
 #include <Ethernet.h>
-#include <EthernetBonjour.h>
+#include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
 
-// get from <url>
 #define OPTIONAL_MDNS
 
 //#define DEBUG LOG_LEVEL_NOTICE
