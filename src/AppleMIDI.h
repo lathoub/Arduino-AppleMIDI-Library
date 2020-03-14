@@ -71,6 +71,9 @@ protected:
         _appleMIDIParser.session = this;
         _rtpMIDIParser.session   = this;
 
+        // analogRead(0) is not available on all platforms. The use of millis()
+        // as it preceded by network calls, so timing is variable and usable
+        // for the random generator.
         randomSeed(millis());
         
 		// Each stream is distinguished by a unique SSRC value and has a unique sequence
