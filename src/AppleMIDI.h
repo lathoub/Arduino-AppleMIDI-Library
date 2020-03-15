@@ -11,6 +11,7 @@ using namespace MIDI_NAMESPACE;
 
 #include "AppleMIDI_Defs.h"
 #include "AppleMIDI_Settings.h"
+#include "AppleMIDI_Platform.h"
 
 #include "rtp_Defs.h"
 #include "rtpMIDI_Defs.h"
@@ -31,15 +32,16 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 static unsigned long now;
 
-template <class UdpClass, class _Settings = DefaultSettings>
+template <class UdpClass, class _Settings = DefaultSettings, class _Platform = ArduinoPlatform>
 class AppleMIDISession
 {
-	typedef _Settings Settings;
+    typedef _Settings Settings;
+    typedef _Platform Platform;
 
 	// Allow these internal classes access to our private members
 	// to avoid access by the .ino to internal messages
-	friend class AppleMIDIParser<UdpClass, Settings>;
-	friend class rtpMIDIParser<UdpClass, Settings>;
+	friend class AppleMIDIParser<UdpClass, Settings, Platform>;
+	friend class rtpMIDIParser<UdpClass, Settings, Platform>;
 	friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>>;
 
 public:
@@ -205,8 +207,8 @@ private:
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
 
-	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
-	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
+	AppleMIDIParser<UdpClass, Settings, Platform> _appleMIDIParser;
+	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
 
     void (*_connectedCallback)(const ssrc_t&, const char *) = NULL;
     void (*_startReceivedMidiByteCallback)(const ssrc_t&) = NULL;
@@ -281,7 +283,7 @@ private:
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \
-typedef MIDI_NAMESPACE::MidiInterface<__amt> __oo; \
+    typedef MIDI_NAMESPACE::MidiInterface<__amt> __oo; \
 	__oo midiName((__amt &)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \

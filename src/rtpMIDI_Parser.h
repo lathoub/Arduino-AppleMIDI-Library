@@ -9,15 +9,16 @@
 #include "rtp_Defs.h"
 
 #include "AppleMIDI_Settings.h"
+#include "AppleMIDI_Platform.h"
 
 #include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-template <class UdpClass, class Settings>
+template <class UdpClass, class Settings, class Platform>
 class AppleMIDISession;
 
-template <class UdpClass, class Settings>
+template <class UdpClass, class Settings, class Platform>
 class rtpMIDIParser
 {
 private:
@@ -28,7 +29,7 @@ private:
     uint8_t rtpMidi_Flags = 0;
 
 public:
-	AppleMIDISession<UdpClass, Settings> * session;
+	AppleMIDISession<UdpClass, Settings, Platform> * session;
     
 	//  Parse the incoming string
 	// return:
