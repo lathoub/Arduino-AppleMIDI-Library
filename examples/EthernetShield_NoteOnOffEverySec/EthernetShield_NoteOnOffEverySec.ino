@@ -46,9 +46,6 @@ void setup()
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI.setHandleError(OnAppleMidiError);
-  AppleMIDI.setHandleReceivedRtp(OnAppleMidiRtp);
-
 
   N_DEBUG_PRINTLN(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
 }
@@ -96,29 +93,4 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   N_DEBUG_PRINTLN(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Error occorded during processing
-// -----------------------------------------------------------------------------
-void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
-  N_DEBUG_PRINTLN(F("ERROR"));
-  exit(1);
-}
-
-// -----------------------------------------------------------------------------
-// called for each Rtp packet to come in.
-//
-// Latency: (from https://en.wikipedia.org/wiki/RTP-MIDI)
-// Sender and receiver clocks are synchronized when the session is initiated,
-// and they are kept synchronized during the whole session period by the regular
-// synchronization cycles, controlled by the session initiators. This mechanism has
-// the capability to compensate for any latency, from a few hundreds of microseconds,
-// as seen on LAN applications, to seconds. It can compensate for the latency introduced
-// by the Internet for example, allowing real-time execution of music pieces.
-//
-// latency is expressed in 10 x ms
-// -----------------------------------------------------------------------------
-void OnAppleMidiRtp(const ssrc_t & ssrc, const Rtp_t& rtp, const int32_t& latency) {
-  N_DEBUG_PRINTLN(latency);
 }
