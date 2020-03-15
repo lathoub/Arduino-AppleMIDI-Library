@@ -7,8 +7,6 @@
 #include <MIDI.h>
 using namespace MIDI_NAMESPACE;
 
-#include "utility/endian.h"
-
 #include "IPAddress.h"
 
 #include "AppleMIDI_Defs.h"
@@ -51,12 +49,14 @@ public:
         strncpy(this->localName, name, DefaultSettings::MaxSessionNameLen);
 	};
 
-	void setHandleConnected(void (*fptr)(ssrc_t, const char*)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void (*fptr)(ssrc_t)) { _disconnectedCallback = fptr; }
-    void setHandleError(void (*fptr)(ssrc_t, int32_t)) { _errorCallback = fptr; }
-    void setHandleReceivedMidi(void (*fptr)(ssrc_t, byte)) { _receivedMidiByteCallback = fptr; }
-    void setHandleReceivedRtp(void (*fptr)(ssrc_t, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
-    
+	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
+	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
+    void setHandleError(void (*fptr)(const ssrc_t&, int32_t)) { _errorCallback = fptr; }
+    void setHandleReceivedRtp(void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
+    void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
+    void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
+    void setHandleEndReceivedMidi(void (*fptr)(const ssrc_t&)) { _endReceivedMidiByteCallback = fptr; }
+
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
 
@@ -65,6 +65,8 @@ public:
 #endif
     void sendEndSession();
 
+    const char* getTransportName() { return "AppleMIDI"; };
+    
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
 	{
@@ -176,14 +178,13 @@ protected:
         if (inMidiBuffer.size() > 0)
             return true;
         
-        // read packets from both UDP sockets and send the
-        // bytes to the parsers. Valid MIDI data will be placed
-        // in the inMidiBuffer buffer
-        readDataPackets();
-        readControlPackets();
+        // read packets from both UDP sockets
+        readDataPackets();    // from socket into dataBuffer
+        readControlPackets(); // from socket into controlBuffer
 
-        parseDataPackets();
-        parseControlPackets();
+        // parses buffer and places MIDI into inMidiBuffer
+        parseDataPackets();    // from dataBuffer into inMidiBuffer
+        parseControlPackets(); // from controlBuffer
 
         manageReceiverFeedback(); 
         manageSynchronization();
@@ -207,11 +208,13 @@ private:
 	AppleMIDIParser<UdpClass, Settings> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings> _rtpMIDIParser;
 
-    void (*_connectedCallback)(ssrc_t, const char *) = NULL;
-    void (*_receivedMidiByteCallback)(ssrc_t, byte) = NULL;
-    void (*_receivedRtpCallback)(ssrc_t, const Rtp_t&, const int32_t&) = NULL;
-	void (*_disconnectedCallback)(ssrc_t) = NULL;
-    void (*_errorCallback)(ssrc_t, int32_t) = NULL;
+    void (*_connectedCallback)(const ssrc_t&, const char *) = NULL;
+    void (*_startReceivedMidiByteCallback)(const ssrc_t&) = NULL;
+    void (*_receivedMidiByteCallback)(const ssrc_t&, byte) = NULL;
+    void (*_endReceivedMidiByteCallback)(const ssrc_t&) = NULL;
+    void (*_receivedRtpCallback)(const ssrc_t&, const Rtp_t&, const int32_t&) = NULL;
+	void (*_disconnectedCallback)(const ssrc_t&) = NULL;
+    void (*_errorCallback)(const ssrc_t&, int32_t) = NULL;
 
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;
@@ -247,7 +250,9 @@ private:
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);
+    void StartReceivedMidi();
     void ReceivedMidi(byte data);
+    void EndReceivedMidi();
 
 	// Helpers
     void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command);
