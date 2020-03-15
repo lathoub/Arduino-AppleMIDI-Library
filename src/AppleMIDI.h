@@ -61,13 +61,13 @@ public:
 
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
+    
+    const char*    getTransportName() { return "AppleMIDI"; };
 
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
 #endif
     void sendEndSession();
-
-    const char* getTransportName() { return "AppleMIDI"; };
     
 protected:
 	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
@@ -196,7 +196,10 @@ protected:
 
     byte read()
     {
-        return inMidiBuffer.pop_front();
+        auto byte = inMidiBuffer.front();
+        inMidiBuffer.pop_front();
+        
+        return byte;
     };
 
 private:

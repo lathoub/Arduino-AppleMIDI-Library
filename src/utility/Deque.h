@@ -23,8 +23,8 @@ public:
     const T & back() const;
     void push_front(const T &);
     void push_back(const T &);
-    T pop_front();
-    T pop_back();
+    void pop_front();
+    void pop_back();
     
     T& operator[](size_t);
     const T& operator[](size_t) const;
@@ -33,6 +33,8 @@ public:
 
     void clear();
         
+    
+    
 //    iterator begin();
 //    iterator end();
 
@@ -123,27 +125,25 @@ void Deque<T, Size>::push_back(const T &value)
 }
 
 template<typename T, size_t Size>
-T Deque<T, Size>::pop_front() {
+void Deque<T, Size>::pop_front() {
     if (empty()) // if empty, do nothing.
-        return T();
+        return;
     auto item = front();
     if (++_tail >= Size)
         _tail %= Size;
     if (_tail == _head)
         clear();
-    return item;
 }
 
 template<typename T, size_t Size>
-T Deque<T, Size>::pop_back() {
+void Deque<T, Size>::pop_back() {
     if (empty()) // if empty, do nothing.
-        return T();
+        return;
     auto item = front();
     if (--_head < 0)
         _head = Size - 1;
     if (_head == _tail) //now buffer is empty
         clear();
-    return item;
 }
 
 template<typename T, size_t Size>
