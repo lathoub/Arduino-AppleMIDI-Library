@@ -60,7 +60,7 @@ int main()
 
 #include "../src/utility/Deque.h"
 
-#include "../src/utility/midi_feat4_4_0/midi_Defs.h"
+#include <midi_Defs.h>
 
 float analogRead(int pin)
 {

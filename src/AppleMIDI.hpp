@@ -22,7 +22,11 @@ void AppleMIDISession<UdpClass, Settings>::readControlPackets()
         for (auto i = 0; i < bytesRead; i++)
             controlBuffer.push_back(packetBuffer[i]);
     }
+}
 
+template <class UdpClass, class Settings>
+void AppleMIDISession<UdpClass, Settings>::parseControlPackets()
+{
     while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
@@ -55,7 +59,11 @@ void AppleMIDISession<UdpClass, Settings>::readDataPackets()
         for (auto i = 0; i < bytesRead; i++)
             dataBuffer.push_back(packetBuffer[i]);
     }
+}
 
+template <class UdpClass, class Settings>
+void AppleMIDISession<UdpClass, Settings>::parseDataPackets()
+{
     while (dataBuffer.size() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
@@ -71,7 +79,7 @@ void AppleMIDISession<UdpClass, Settings>::readDataPackets()
         //  // both don't have data to determine protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
-			break;
+            break;
 
         // one or the other don't have enough data to determine the protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
@@ -84,7 +92,7 @@ void AppleMIDISession<UdpClass, Settings>::readDataPackets()
             _errorCallback(ssrc, -3);
 
         T_DEBUG_PRINTLN(F("data buffer, parse error, popping 1 byte "));
-		dataBuffer.pop_front();
+        dataBuffer.pop_front();
     }
 }
 

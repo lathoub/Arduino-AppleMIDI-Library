@@ -182,7 +182,10 @@ protected:
         readDataPackets();
         readControlPackets();
 
-        manageReceiverFeedback();
+        parseDataPackets();
+        parseControlPackets();
+
+        manageReceiverFeedback(); 
         manageSynchronization();
 
         return false;
@@ -223,8 +226,11 @@ private:
     int32_t latencyAdjustment = 0;
             
 private:
-	void readControlPackets();
-	void readDataPackets();
+    void readControlPackets();
+    void readDataPackets();
+    
+    void parseControlPackets();
+    void parseDataPackets();
     
 	void ReceivedInvitation               (AppleMIDI_Invitation_t &, const amPortType &);
 	void ReceivedControlInvitation        (AppleMIDI_Invitation_t &);
@@ -270,7 +276,8 @@ private:
 };
 
 #define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \
-	MIDI_NAMESPACE::MidiInterface<__amt> midiName((__amt &)appleMidiName);
+typedef MIDI_NAMESPACE::MidiInterface<__amt> __oo; \
+	__oo midiName((__amt &)appleMidiName);
 
 #define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
 	typedef APPLEMIDI_NAMESPACE::AppleMIDISession<Type> __amt;   \
