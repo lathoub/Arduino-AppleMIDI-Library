@@ -35,7 +35,7 @@ void AppleMIDISession<UdpClass, Settings>::parseControlPackets()
             if (NULL != _errorCallback)
                 _errorCallback(ssrc, -2);
             
-            dataBuffer.pop_front();
+            controlBuffer.pop_front();
         }
     }
 }
