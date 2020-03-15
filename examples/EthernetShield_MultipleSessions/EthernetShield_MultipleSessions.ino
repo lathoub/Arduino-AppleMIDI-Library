@@ -2,6 +2,7 @@
 
 #define DEBUG 4
 #include <AppleMIDI.h>
+USING_NAMESPACE_APPLEMIDI
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -94,7 +95,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(ssrc_t ssrc, const char* name) {
+void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
   N_DEBUG_PRINT(F("Connected to session "));
   N_DEBUG_PRINT(name);
@@ -105,7 +106,7 @@ void OnAppleMidiConnected(ssrc_t ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(ssrc_t ssrc) {
+void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   N_DEBUG_PRINT(F("Disconnected from ssrc 0x"));
   N_DEBUG_PRINTLN(ssrc, HEX);
@@ -114,7 +115,7 @@ void OnAppleMidiDisconnected(ssrc_t ssrc) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Error occorded during processing
 // -----------------------------------------------------------------------------
-void OnAppleMidiError(ssrc_t ssrc, int32_t errorCode) {
+void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
   N_DEBUG_PRINTLN(F("ERROR"));
   exit(1);
 }

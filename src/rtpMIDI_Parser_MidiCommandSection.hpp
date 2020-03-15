@@ -160,9 +160,11 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
             T_DEBUG_PRINTLN();
         #endif
             
+        session->StartReceivedMidi();
         for (size_t j = 0; j < consumed; j++)
             session->ReceivedMidi(buffer[j]);
-
+        session->EndReceivedMidi();
+        
         return consumed;
     }
 
@@ -200,8 +202,10 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
     T_DEBUG_PRINTLN();
 #endif
     
+    session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
+    session->EndReceivedMidi();
 
     return consumed;
 }
@@ -234,10 +238,12 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     consumed--;
     
     // send MIDI data
+    session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
     session->ReceivedMidi(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
-    
+    session->EndReceivedMidi();
+
     // Remove the bytes that were submitted
     for (size_t j = 0; j < consumed; j++)
         buffer.pop_front();

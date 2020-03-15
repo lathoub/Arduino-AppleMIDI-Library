@@ -293,7 +293,6 @@ void AppleMIDISession<UdpClass, Settings>::ReceivedInvitationRejected(AppleMIDI_
             return;
         }
     }
-
 }
 
 /*! \brief .
@@ -989,12 +988,26 @@ void AppleMIDISession<UdpClass, Settings>::ReceivedRtp(const Rtp_t& rtp)
 }
 
 template <class UdpClass, class Settings>
+void AppleMIDISession<UdpClass, Settings>::StartReceivedMidi()
+{
+   if (NULL != _startReceivedMidiByteCallback)
+        _startReceivedMidiByteCallback(0);
+}
+
+template <class UdpClass, class Settings>
 void AppleMIDISession<UdpClass, Settings>::ReceivedMidi(byte value)
 {
     if (NULL != _receivedMidiByteCallback)
         _receivedMidiByteCallback(0, value);
 
     inMidiBuffer.push_back(value);
+}
+
+template <class UdpClass, class Settings>
+void AppleMIDISession<UdpClass, Settings>::EndReceivedMidi()
+{
+    if (NULL != _endReceivedMidiByteCallback)
+        _endReceivedMidiByteCallback(0);
 }
 
 END_APPLEMIDI_NAMESPACE
