@@ -213,13 +213,13 @@ private:
 	AppleMIDIParser<UdpClass, Settings, Platform> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
 
-    void (*_connectedCallback)(const ssrc_t&, const char *) = NULL;
-    void (*_startReceivedMidiByteCallback)(const ssrc_t&) = NULL;
-    void (*_receivedMidiByteCallback)(const ssrc_t&, byte) = NULL;
-    void (*_endReceivedMidiByteCallback)(const ssrc_t&) = NULL;
-    void (*_receivedRtpCallback)(const ssrc_t&, const Rtp_t&, const int32_t&) = NULL;
-	void (*_disconnectedCallback)(const ssrc_t&) = NULL;
-    void (*_errorCallback)(const ssrc_t&, int32_t) = NULL;
+    connectedCallback _connectedCallback = nullptr;
+    startReceivedMidiByteCallback _startReceivedMidiByteCallback = nullptr;
+    receivedMidiByteCallback _receivedMidiByteCallback = nullptr;
+    endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
+    receivedRtpCallback _receivedRtpCallback = nullptr;
+    disconnectedCallback _disconnectedCallback = nullptr;
+    errorCallback _errorCallback = nullptr;
 
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;

@@ -3,7 +3,6 @@
 
 #include "Arduino.h"
 
-
 class EthernetUDP
 {
     Deque<byte, 4096> _buffer;

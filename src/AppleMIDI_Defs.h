@@ -28,6 +28,18 @@ typedef uint64_t timestamp_t;
 #define MIDI_SAMPLING_RATE_192KHZ 192000
 #define MIDI_SAMPLING_RATE_DEFAULT 10000
 
+struct Rtp;
+typedef Rtp Rtp_t;
+
+using connectedCallback             = void (*)(const ssrc_t&, const char *);
+using startReceivedMidiByteCallback = void (*)(const ssrc_t&);
+using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
+using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
+using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
+using disconnectedCallback          = void (*)(const ssrc_t&);
+using errorCallback                 = void (*)(const ssrc_t&, int32_t);
+
+
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};
 

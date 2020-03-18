@@ -3,7 +3,8 @@
 #define DEBUG 7
 #define APPLEMIDI_INITIATOR
 
-#include "../src/AppleMidi.h"
+#include "AppleMIDI.h"
+USING_NAMESPACE_APPLEMIDI
 
 unsigned long t0 = millis();
 bool isConnected = false;
@@ -32,7 +33,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
+void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
   N_DEBUG_PRINT(F("Connected to session "));
   N_DEBUG_PRINTLN(name);
@@ -41,7 +42,7 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(uint32_t ssrc) {
+void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   N_DEBUG_PRINTLN(F("Disconnected"));
 }
@@ -49,7 +50,7 @@ void OnAppleMidiDisconnected(uint32_t ssrc) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiByte(uint32_t ssrc, byte data) {
+void OnAppleMidiByte(const ssrc_t & ssrc, byte data) {
   N_DEBUG_PRINT(F("MIDI: "));
   N_DEBUG_PRINTLN(data);
 }
