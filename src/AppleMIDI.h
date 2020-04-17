@@ -62,8 +62,6 @@ public:
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
     
-    const char*    getTransportName() { return "AppleMIDI"; };
-
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
 #endif
