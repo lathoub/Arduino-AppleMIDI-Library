@@ -70,7 +70,7 @@ public:
     void sendEndSession();
     
 protected:
-	void begin(MIDI_NAMESPACE::Channel inChannel = 1)
+	void begin()
 	{
         _appleMIDIParser.session = this;
         _rtpMIDIParser.session   = this;
