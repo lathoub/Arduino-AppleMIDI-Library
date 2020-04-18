@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
-//#define DEBUG 0
-// make sure LATENCY_CALCULATION is defined in AppleMIDI_Defs.h
-// (If not defined, latency will always be 0)
+#define DEBUG 4
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
