@@ -94,7 +94,7 @@ void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiReceivedByte(uint32_t ssrc, byte data) {
+void OnAppleMidiReceivedByte(const ssrc_t & ssrc, byte data) {
   N_DEBUG_PRINTLN(data, HEX);
 }
 

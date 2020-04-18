@@ -13,13 +13,8 @@ byte mac[] = {
 unsigned long t1 = millis();
 bool isConnected = false;
 
-typedef APPLEMIDI_NAMESPACE::AppleMIDISession<EthernetUDP> AppleMIDISession_t;
-AppleMIDISession_t Session1("Session 1", 5004);
-AppleMIDISession_t Session2("Session 2", 5006);
-MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI1((AppleMIDISession_t &)Session1);
-MIDI_NAMESPACE::MidiInterface<AppleMIDISession_t> MIDI2((AppleMIDISession_t &)Session2);
-
-USING_NAMESPACE_APPLEMIDI
+APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI1, "Arduino1", DEFAULT_CONTROL_PORT);
+APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI2, "Arduino2", DEFAULT_CONTROL_PORT + 2);
 
 // -----------------------------------------------------------------------------
 //
@@ -50,12 +45,12 @@ void setup()
   MIDI2.begin(2);
 
   // Stay informed on connection status
-  Session1.setHandleConnected(OnAppleMidiConnected);
-  Session1.setHandleDisconnected(OnAppleMidiDisconnected);
-  Session1.setHandleError(OnAppleMidiError);
-  Session2.setHandleConnected(OnAppleMidiConnected);
-  Session2.setHandleDisconnected(OnAppleMidiDisconnected);
-  Session2.setHandleError(OnAppleMidiError);
+  AppleMIDI1.setHandleConnected(OnAppleMidiConnected);
+  AppleMIDI1.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI1.setHandleError(OnAppleMidiError);
+  AppleMIDI2.setHandleConnected(OnAppleMidiConnected);
+  AppleMIDI2.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI2.setHandleError(OnAppleMidiError);
 
   // and let us know ehen notes come in
   MIDI1.setHandleNoteOn(OnMidiNoteOn);

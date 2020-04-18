@@ -283,20 +283,15 @@ private:
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
 };
 
-#define APPLEMIDI_CREATE_INSTANCE(midiName, appleMidiName) \
-    typedef MIDI_NAMESPACE::MidiInterface<__amt> __oo; \
-	__oo midiName((__amt &)appleMidiName);
-
-#define APPLEMIDI_CREATE_DEFAULT_INSTANCE(Type, sessionName, port) \
-	typedef APPLEMIDI_NAMESPACE::AppleMIDISession<Type> __amt;   \
-	__amt AppleMIDI(sessionName, port); \
-    APPLEMIDI_CREATE_INSTANCE(MIDI, AppleMIDI);
+#define APPLEMIDI_CREATE_INSTANCE(Type, Name, SessionName, Port) \
+    APPLEMIDI_NAMESPACE::AppleMIDISession<Type> Apple##Name(SessionName, Port); \
+    MIDI_NAMESPACE::MidiInterface<APPLEMIDI_NAMESPACE::AppleMIDISession<Type>> Name((APPLEMIDI_NAMESPACE::AppleMIDISession<Type>&)Apple##Name);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(EthernetUDP, "Arduino", DEFAULT_CONTROL_PORT);
+APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "Arduino", DEFAULT_CONTROL_PORT);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(WiFiUDP, "ESP32", DEFAULT_CONTROL_PORT);
+APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
 
 END_APPLEMIDI_NAMESPACE
 
