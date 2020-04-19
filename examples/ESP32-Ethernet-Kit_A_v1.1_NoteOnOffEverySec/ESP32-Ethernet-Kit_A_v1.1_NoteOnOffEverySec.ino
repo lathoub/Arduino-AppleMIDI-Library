@@ -1,13 +1,4 @@
-#include <ETH.h>
-#include <ESPmDNS.h>
-
-#define ETH_ADDR        1
-#define ETH_POWER_PIN   5
-#define ETH_MDC_PIN     23
-#define ETH_MDIO_PIN    18
-#define ETH_TYPE        ETH_PHY_IP101
-
-static bool eth_connected = false;
+#include "ETH_Helper.h"
 
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
@@ -16,43 +7,6 @@ unsigned long t0 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
-
-void WiFiEvent(WiFiEvent_t event)
-{
-  switch (event) {
-    case SYSTEM_EVENT_ETH_START:
-      Serial.println("ETH Started");
-      //set eth hostname here
-      ETH.setHostname("esp32-ethernet");
-      break;
-    case SYSTEM_EVENT_ETH_CONNECTED:
-      Serial.println("ETH Connected");
-      break;
-    case SYSTEM_EVENT_ETH_GOT_IP:
-      Serial.print("ETH MAC: ");
-      Serial.print(ETH.macAddress());
-      Serial.print(", IPv4: ");
-      Serial.print(ETH.localIP());
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
-      eth_connected = true;
-      break;
-    case SYSTEM_EVENT_ETH_DISCONNECTED:
-      Serial.println("ETH Disconnected");
-      eth_connected = false;
-      break;
-    case SYSTEM_EVENT_ETH_STOP:
-      Serial.println("ETH Stopped");
-      eth_connected = false;
-      break;
-    default:
-      break;
-  }
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -63,15 +17,8 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
-  Serial.println(F("Getting IP address..."));
-
-  WiFi.onEvent(WiFiEvent);
-  ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE);
-
-  while (!eth_connected) {
-    delay(100);
-  }
-
+  ETH_startup();
+  
   MDNS.begin(AppleMIDI.getName());
 
   Serial.print("\nIP address is ");

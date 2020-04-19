@@ -1,5 +1,4 @@
-#include <ETH.h>
-#include <ESPmDNS.h>
+#include "ETH_Helper.h"
 
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
@@ -20,12 +19,10 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
-  ETH.begin();
-
-  Serial.println(F("Getting IP address..."));
+  ETH_startup();
 
   // Start TCP (HTTP) server
-//  server.begin();
+  //  server.begin();
 
   MDNS.begin(AppleMIDI.getName());
 
