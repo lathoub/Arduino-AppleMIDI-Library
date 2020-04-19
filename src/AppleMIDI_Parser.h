@@ -25,10 +25,6 @@ public:
 	{
 		conversionBuffer cb;
 
-		V_DEBUG_PRINT("AppleMIDI_Parser::Parser received ");
-		V_DEBUG_PRINT(buffer.size());
-		V_DEBUG_PRINTLN(" bytes");
-
 		byte signature[2]; // Signature "Magic Value" for Apple network MIDI session establishment
 		byte command[2];   // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
 
@@ -42,11 +38,6 @@ public:
 		signature[1] = buffer[i++];
 		if (0 != memcmp(signature, amSignature, sizeof(amSignature)))
 		{
-			// E_DEBUG_PRINT("Wrong signature: 0x");
-			// E_DEBUG_PRINT(signature[0], HEX);
-			// E_DEBUG_PRINT(signature[1], HEX);
-			// E_DEBUG_PRINTLN(" was expecting 0xFFFF");
-
             return parserReturn::UnexpectedData;
 		}
 
@@ -59,8 +50,6 @@ public:
 #ifdef APPLEMIDI_LISTENER
 		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			V_DEBUG_PRINTLN("received Invitation");
-
 			byte protocolVersion[4];
 
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
@@ -76,12 +65,6 @@ public:
 			protocolVersion[3] = buffer[i++];
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
 			{
-				// T_DEBUG_PRINT("Wrong protocolVersion: 0x");
-				// T_DEBUG_PRINT(protocolVersion[0], HEX);
-				// T_DEBUG_PRINT(protocolVersion[1], HEX);
-				// T_DEBUG_PRINT(protocolVersion[2], HEX);
-				// T_DEBUG_PRINT(protocolVersion[3], HEX);
-				// T_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
 			}
 
@@ -101,11 +84,6 @@ public:
 			cb.buffer[3] = buffer[i++];
 			invitation.ssrc = ntohl(cb.value32);
 
-			V_DEBUG_PRINT("initiator: 0x");
-			V_DEBUG_PRINT(invitation.initiatorToken, HEX);
-			V_DEBUG_PRINT(" ssrc: 0x");
-			V_DEBUG_PRINTLN(invitation.ssrc, HEX);
-
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
@@ -122,10 +100,6 @@ public:
 			if (i == buffer.size() || buffer[i++] != 0x00)
                 return parserReturn::NotEnoughData;
 
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -135,8 +109,6 @@ public:
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
-			V_DEBUG_PRINTLN("received EndSession");
-
 			byte protocolVersion[4];
 
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
@@ -150,12 +122,6 @@ public:
 			protocolVersion[3] = buffer[i++];
 			if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
 			{
-				// V_DEBUG_PRINT("Wrong protocolVersion: 0x");
-				// V_DEBUG_PRINT(protocolVersion[0], HEX);
-				// V_DEBUG_PRINT(protocolVersion[1], HEX);
-				// V_DEBUG_PRINT(protocolVersion[2], HEX);
-				// V_DEBUG_PRINT(protocolVersion[3], HEX);
-				// V_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
 			}
 
@@ -175,10 +141,6 @@ public:
 			cb.buffer[3] = buffer[i++];
 			endSession.ssrc = ntohl(cb.value32);
 
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -188,8 +150,6 @@ public:
 		}
 		else if (0 == memcmp(command, amSynchronization, sizeof(amSynchronization)))
 		{
-			V_DEBUG_PRINTLN("received Syncronization");
-
 			AppleMIDI_Synchronization_t synchronization;
 
 			// minimum amount : 4 bytes for sender SSRC, 1 byte for count, 3 bytes padding and 3 times 8 bytes
@@ -238,10 +198,6 @@ public:
 			cb.buffer[7] = buffer[i++];
 			synchronization.timestamps[2] = ntohll(cb.value64);
 
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -251,8 +207,6 @@ public:
 		}
 		else if (0 == memcmp(command, amReceiverFeedback, sizeof(amReceiverFeedback)))
 		{
-			//V_DEBUG_PRINTLN("received ReceiverFeedback");
-
 			AppleMIDI_ReceiverFeedback_t receiverFeedback;
 
 			minimumLen += (sizeof(receiverFeedback.ssrc) + sizeof(receiverFeedback.sequenceNr) + sizeof(receiverFeedback.dummy));
@@ -272,15 +226,6 @@ public:
 			cb.buffer[1] = buffer[i++];
 			receiverFeedback.dummy = ntohs(cb.value16);
 
-			V_DEBUG_PRINT("ssrc: 0x");
-			V_DEBUG_PRINTLN(receiverFeedback.ssrc, HEX);
-			V_DEBUG_PRINT("sequenceNr: ");
-			V_DEBUG_PRINTLN(receiverFeedback.sequenceNr);
-
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -292,8 +237,6 @@ public:
 #ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amInvitationAccepted, sizeof(amInvitationAccepted)))
 		{
-            V_DEBUG_PRINTLN("received Invitation Accepted");
-
             byte protocolVersion[4];
 
             minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
@@ -309,12 +252,6 @@ public:
             protocolVersion[3] = buffer[i++];
             if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
             {
-                // T_DEBUG_PRINT("Wrong protocolVersion: 0x");
-                // T_DEBUG_PRINT(protocolVersion[0], HEX);
-                // T_DEBUG_PRINT(protocolVersion[1], HEX);
-                // T_DEBUG_PRINT(protocolVersion[2], HEX);
-                // T_DEBUG_PRINT(protocolVersion[3], HEX);
-                // T_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
             }
 
@@ -334,12 +271,7 @@ public:
             cb.buffer[3] = buffer[i++];
             invitationAccepted.ssrc = ntohl(cb.value32);
 
-            V_DEBUG_PRINT("initiator: 0x");
-            V_DEBUG_PRINT(invitationAccepted.initiatorToken, HEX);
-            V_DEBUG_PRINT(" ssrc: 0x");
-            V_DEBUG_PRINTLN(invitationAccepted.ssrc, HEX);
-
-#ifdef KEEP_SESSION_NAME
+ #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {
@@ -355,10 +287,6 @@ public:
             if (i == buffer.size() || buffer[i++] != 0x00)
                 return parserReturn::NotEnoughData;
 
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -368,8 +296,6 @@ public:
 		}
 		else if (0 == memcmp(command, amInvitationRejected, sizeof(amInvitationRejected)))
 		{
-            //V_DEBUG_PRINTLN("received ReceiverFeedback");
-
             byte protocolVersion[4];
 
             minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
@@ -385,12 +311,6 @@ public:
             protocolVersion[3] = buffer[i++];
             if (0 != memcmp(protocolVersion, amProtocolVersion, sizeof(amProtocolVersion)))
             {
-                // T_DEBUG_PRINT("Wrong protocolVersion: 0x");
-                // T_DEBUG_PRINT(protocolVersion[0], HEX);
-                // T_DEBUG_PRINT(protocolVersion[1], HEX);
-                // T_DEBUG_PRINT(protocolVersion[2], HEX);
-                // T_DEBUG_PRINT(protocolVersion[3], HEX);
-                // T_DEBUG_PRINTLN(" was expecting 0x00000002");
                 return parserReturn::UnexpectedData;
             }
 
@@ -410,11 +330,6 @@ public:
             cb.buffer[3] = buffer[i++];
             invitationRejected.ssrc = ntohl(cb.value32);
 
-            V_DEBUG_PRINT("initiator: 0x");
-            V_DEBUG_PRINT(invitationRejected.initiatorToken, HEX);
-            V_DEBUG_PRINT(" ssrc: 0x");
-            V_DEBUG_PRINTLN(invitationRejected.ssrc, HEX);
-
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
@@ -431,10 +346,6 @@ public:
             if (i == buffer.size() || buffer[i++] != 0x00)
                 return parserReturn::NotEnoughData;
 
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
-
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
@@ -444,8 +355,6 @@ public:
 		}
         else if (0 == memcmp(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
         {
-            //V_DEBUG_PRINTLN("received ReceiverFeedback");
-
             AppleMIDI_BitrateReceiveLimit bitrateReceiveLimit;
 
             minimumLen += (sizeof(bitrateReceiveLimit.ssrc) + sizeof(bitrateReceiveLimit.bitratelimit));
@@ -463,15 +372,6 @@ public:
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
             bitrateReceiveLimit.bitratelimit = ntohl(cb.value32);
-
-            V_DEBUG_PRINT("ssrc: 0x");
-            V_DEBUG_PRINTLN(bitrateReceiveLimit.ssrc, HEX);
-            V_DEBUG_PRINT("bitrateReceiveLimit: ");
-            V_DEBUG_PRINTLN(bitrateReceiveLimit.bitratelimit);
-
-            V_DEBUG_PRINT("AppleMidi Consumed ");
-            V_DEBUG_PRINT(i);
-            V_DEBUG_PRINTLN(" bytes");
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message

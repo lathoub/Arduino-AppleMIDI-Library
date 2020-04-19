@@ -1,7 +1,6 @@
 #include <ETH.h>
 #include <ESPmDNS.h>
 
-#define DEBUG 4
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -10,28 +9,35 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
 
+//WiFiServer server(80);
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DEBUG_BEGIN(115200);
-
-  N_DEBUG_PRINTLN(F("Getting IP address..."));
+  Serial.begin(115200);
+  while (!Serial);
+  Serial.println("Booting");
 
   ETH.begin();
 
+  Serial.println(F("Getting IP address..."));
+
+  // Start TCP (HTTP) server
+//  server.begin();
+
   MDNS.begin(AppleMIDI.getName());
 
-  N_DEBUG_PRINT("\nIP address is ");
-  N_DEBUG_PRINTLN(ETH.localIP());
+  Serial.print("IP address is ");
+  Serial.println(ETH.localIP());
 
-  V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  V_DEBUG_PRINT(ETH.localIP());
-  V_DEBUG_PRINTLN(F(":5004"));
-  V_DEBUG_PRINTLN(F("Then press the Connect button"));
-  V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  Serial.print(F("Add device named Arduino with Host/Port "));
+  Serial.print(ETH.localIP());
+  Serial.println(F(":5004"));
+  Serial.println(F("Then press the Connect button"));
+  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   MIDI.begin(1); // listen on channel 1
 
@@ -42,8 +48,9 @@ void setup()
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
 
   MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
+  MDNS.addService("http", "tcp", 80);
 
-  N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
+  Serial.println(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------
@@ -79,8 +86,8 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  N_DEBUG_PRINT(F("Connected to session "));
-  N_DEBUG_PRINTLN(name);
+  Serial.print(F("Connected to session "));
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -88,29 +95,29 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  N_DEBUG_PRINTLN(F("Disconnected"));
+  Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn  from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  Serial.print(F("Incoming NoteOn  from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  Serial.print(F("Incoming NoteOff from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
 }

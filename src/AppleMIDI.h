@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utility/Logging.h"
-
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 #include <MIDI.h>
@@ -94,8 +92,6 @@ protected:
 
 	bool beginTransmission(MIDI_NAMESPACE::MidiType)
 	{
-        V_DEBUG_PRINTLN("AppleMidi::beginTransmission");
-
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         // (The actual sending happen in the available() method, called at the start of the
@@ -147,7 +143,6 @@ protected:
 			{
                 if (NULL != _errorCallback)
                     _errorCallback(ssrc, -1);
-				F_DEBUG_PRINTLN("buffer to small in write, and it's not sysex!!!");
 			}
 		}
 

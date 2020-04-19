@@ -27,9 +27,6 @@ parserReturn decodeMidiSection(RtpBuffer_t &buffer)
             size_t consumed = decodeMidi(buffer, runningstatus);
             if (consumed == 0)
             {
-                E_DEBUG_PRINTLN(F("decodeMidi indicates it did not consumed bytes"));
-                E_DEBUG_PRINT(F("decodeMidi commandLength is "));
-                E_DEBUG_PRINTLN(midiCommandLength);
             }
             else if (consumed > buffer.size())
             {
@@ -148,18 +145,6 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
             break;
         }
 
-        #if DEBUG >= LOG_LEVEL_TRACE
-            T_DEBUG_PRINT(F("MIDI data, consumed: "));
-            T_DEBUG_PRINT(consumed);
-            T_DEBUG_PRINT(F(" "));
-            for (size_t j = 0; j < consumed; j++)
-            {
-                T_DEBUG_PRINT(" 0x");
-                T_DEBUG_PRINT(buffer[j], HEX);
-            }
-            T_DEBUG_PRINTLN();
-        #endif
-            
         session->StartReceivedMidi();
         for (size_t j = 0; j < consumed; j++)
             session->ReceivedMidi(buffer[j]);
@@ -190,18 +175,6 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
         break;
     }
 
-#if DEBUG >= LOG_LEVEL_TRACE
-    T_DEBUG_PRINT(F("MIDI data, consumed: "));
-    T_DEBUG_PRINT(consumed);
-    T_DEBUG_PRINT(F(" "));
-    for (size_t j = 0; j < consumed; j++)
-    {
-        T_DEBUG_PRINT(" 0x");
-        T_DEBUG_PRINT(buffer[j], HEX);
-    }
-    T_DEBUG_PRINTLN();
-#endif
-    
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
@@ -226,9 +199,6 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
             return consumed;
     }
     
-    T_DEBUG_PRINT(F("Partial SysEx. Consumed: "));
-    T_DEBUG_PRINTLN(consumed);
-
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,
     // remove the byes, modify the length and indicate
@@ -255,24 +225,3 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     // indicates split SysEx
     return buffer.max_size() + 1;
 }
-
-#if DEBUG > LOG_LEVEL_NONE
-void printBuffer(const RtpBuffer_t &buffer)
-{
-    T_DEBUG_PRINT(F("Buffer Size: "));
-    T_DEBUG_PRINTLN(buffer.size());
-
-    size_t column = 0;
-    for (size_t i = 0; i < buffer.size(); i++)
-    {
-        T_DEBUG_PRINT(" 0x");
-        T_DEBUG_PRINT(buffer[i], HEX);
-        if (++column % 10 == 0)
-            T_DEBUG_PRINTLN();
-    }
-    T_DEBUG_PRINTLN();
-}
-#else
-void printBuffer(const RtpBuffer_t &buffer)
-{}
-#endif

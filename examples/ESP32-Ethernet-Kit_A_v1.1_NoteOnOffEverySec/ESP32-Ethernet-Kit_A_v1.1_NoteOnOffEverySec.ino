@@ -9,7 +9,6 @@
 
 static bool eth_connected = false;
 
-#define DEBUG 7
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -22,32 +21,32 @@ void WiFiEvent(WiFiEvent_t event)
 {
   switch (event) {
     case SYSTEM_EVENT_ETH_START:
-      V_DEBUG_PRINTLN("ETH Started");
+      Serial.println("ETH Started");
       //set eth hostname here
       ETH.setHostname("esp32-ethernet");
       break;
     case SYSTEM_EVENT_ETH_CONNECTED:
-      V_DEBUG_PRINTLN("ETH Connected");
+      Serial.println("ETH Connected");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
-      V_DEBUG_PRINT("ETH MAC: ");
-      V_DEBUG_PRINT(ETH.macAddress());
-      V_DEBUG_PRINT(", IPv4: ");
-      V_DEBUG_PRINT(ETH.localIP());
+      Serial.print("ETH MAC: ");
+      Serial.print(ETH.macAddress());
+      Serial.print(", IPv4: ");
+      Serial.print(ETH.localIP());
       if (ETH.fullDuplex()) {
-        V_DEBUG_PRINT(", FULL_DUPLEX");
+        Serial.print(", FULL_DUPLEX");
       }
-      V_DEBUG_PRINT(", ");
-      V_DEBUG_PRINT(ETH.linkSpeed());
-      V_DEBUG_PRINTLN("Mbps");
+      Serial.print(", ");
+      Serial.print(ETH.linkSpeed());
+      Serial.println("Mbps");
       eth_connected = true;
       break;
     case SYSTEM_EVENT_ETH_DISCONNECTED:
-      V_DEBUG_PRINTLN("ETH Disconnected");
+      Serial.println("ETH Disconnected");
       eth_connected = false;
       break;
     case SYSTEM_EVENT_ETH_STOP:
-      V_DEBUG_PRINTLN("ETH Stopped");
+      Serial.println("ETH Stopped");
       eth_connected = false;
       break;
     default:
@@ -60,9 +59,11 @@ void WiFiEvent(WiFiEvent_t event)
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DEBUG_BEGIN(115200);
+  Serial.begin(115200);
+  while (!Serial);
+  Serial.println("Booting");
 
-  N_DEBUG_PRINTLN(F("Getting IP address..."));
+  Serial.println(F("Getting IP address..."));
 
   WiFi.onEvent(WiFiEvent);
   ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE);
@@ -73,15 +74,15 @@ void setup()
 
   MDNS.begin(AppleMIDI.getName());
 
-  N_DEBUG_PRINT("\nIP address is ");
-  N_DEBUG_PRINTLN(ETH.localIP());
+  Serial.print("\nIP address is ");
+  Serial.println(ETH.localIP());
 
-  V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  V_DEBUG_PRINT(ETH.localIP());
-  V_DEBUG_PRINTLN(F(":5004"));
-  V_DEBUG_PRINTLN(F("Then press the Connect button"));
-  V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  Serial.print(F("Add device named Arduino with Host/Port "));
+  Serial.print(ETH.localIP());
+  Serial.println(F(":5004"));
+  Serial.println(F("Then press the Connect button"));
+  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
   MIDI.begin(1); // listen on channel 1
@@ -94,7 +95,7 @@ void setup()
 
   MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
 
-  N_DEBUG_PRINTLN(F("Every second send a random NoteOn/Off"));
+  Serial.println(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------
@@ -130,8 +131,8 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  N_DEBUG_PRINT(F("Connected to session "));
-  N_DEBUG_PRINTLN(name);
+  Serial.print(F("Connected to session "));
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -139,29 +140,29 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  N_DEBUG_PRINTLN(F("Disconnected"));
+  Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn  from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  Serial.print(F("Incoming NoteOn  from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  Serial.print(F("Incoming NoteOff from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
 }

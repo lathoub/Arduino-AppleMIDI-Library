@@ -133,7 +133,6 @@ void aa(uint64_t value)
 {
     if ( value >= 10 )
         aa(value / 10);
-    N_DEBUG_PRINT((uint32_t)(value % 10));
 }
 
 #endif

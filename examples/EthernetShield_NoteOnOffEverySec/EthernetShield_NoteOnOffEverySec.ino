@@ -1,6 +1,5 @@
 #include <Ethernet.h>
 
-#define DEBUG 4
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -20,23 +19,26 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DEBUG_BEGIN(115200);
+  Serial.begin(115200);
+  while (!Serial);
+  Serial.println("Booting");
 
-  N_DEBUG_PRINTLN(F("Getting IP address..."));
+
+  Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
+    Serial.println(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  N_DEBUG_PRINT(F("IP address is "));
-  N_DEBUG_PRINTLN(Ethernet.localIP());
+  Serial.print(F("IP address is "));
+  Serial.println(Ethernet.localIP());
 
-  V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  V_DEBUG_PRINT(Ethernet.localIP());
-  V_DEBUG_PRINTLN(F(":5004"));
-  V_DEBUG_PRINTLN(F("Then press the Connect button"));
+  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  Serial.print(F("Add device named Arduino with Host/Port "));
+  Serial.print(Ethernet.localIP());
+  Serial.println(F(":5004"));
+  Serial.println(F("Then press the Connect button"));
 
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
@@ -45,7 +47,7 @@ void setup()
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  N_DEBUG_PRINTLN(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
+  Serial.println(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
 }
 
 // -----------------------------------------------------------------------------
@@ -81,8 +83,8 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  N_DEBUG_PRINT(F("Connected to session "));
-  N_DEBUG_PRINTLN(name);
+  Serial.print(F("Connected to session "));
+  Serial.println(name);
 }
 
 // -----------------------------------------------------------------------------
@@ -90,5 +92,5 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  N_DEBUG_PRINTLN(F("Disconnected"));
+  Serial.println(F("Disconnected"));
 }

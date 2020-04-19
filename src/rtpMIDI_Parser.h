@@ -43,10 +43,6 @@ public:
 	{
 		conversionBuffer cb;
         
-        V_DEBUG_PRINT("RtpMIDI_Parser::Parser received ");
-        V_DEBUG_PRINT(buffer.size());
-        V_DEBUG_PRINTLN(" bytes");
-
         // [RFC3550] provides a complete description of the RTP header fields.
         // In this section, we clarify the role of a few RTP header fields for
         // MIDI applications. All fields are coded in network byte order (big-
@@ -101,16 +97,6 @@ public:
             uint8_t csrc_count = RTP_CSRC_COUNT(rtp.vpxcc);
     #endif
             
-            V_DEBUG_PRINTLN(F("RTP"));
-            V_DEBUG_PRINT(F("version: "));
-            V_DEBUG_PRINTLN(version);
-            V_DEBUG_PRINT(F("padding: "));
-            V_DEBUG_PRINTLN(padding);
-            V_DEBUG_PRINT(F("extension: "));
-            V_DEBUG_PRINTLN(extension);
-            V_DEBUG_PRINT(F("csrc_count: "));
-            V_DEBUG_PRINTLN(csrc_count);
-
             if (2 != version)
             {
                 return parserReturn::UnexpectedData;
@@ -121,28 +107,10 @@ public:
     #endif
             uint8_t payloadType = RTP_PAYLOAD_TYPE(rtp.mpayload);
             
-            V_DEBUG_PRINT(F("marker: "));
-            V_DEBUG_PRINTLN(marker);
-            V_DEBUG_PRINT(F("Payload type: "));
-            V_DEBUG_PRINTLN(payloadType);
-            
             if (PAYLOADTYPE_RTPMIDI != payloadType)
             {
-                V_DEBUG_PRINT(F("Unexpected Payload: "));
-                V_DEBUG_PRINTLN(payloadType);
-
                 return parserReturn::UnexpectedData;
             }
-
-            V_DEBUG_PRINT(F("Sequence Nr: "));
-            V_DEBUG_PRINTLN(rtp.sequenceNr);
-            V_DEBUG_PRINT(F("Timestamp: "));
-            V_DEBUG_PRINTLN(rtp.timestamp);
-            V_DEBUG_PRINT(F("SSRC: 0x"));
-            V_DEBUG_PRINT(rtp.ssrc, HEX);
-            V_DEBUG_PRINT(F(" ("));
-            V_DEBUG_PRINT(rtp.ssrc);
-            V_DEBUG_PRINTLN(F(")"));
 
             session->ReceivedRtp(rtp);
 
@@ -158,9 +126,6 @@ public:
             
             /* RTP-MIDI starts with 4 bits of flags... */
             rtpMidi_Flags = buffer[i++];
-
-            V_DEBUG_PRINT(F("rtpMidi_Flags: 0x"));
-            V_DEBUG_PRINTLN(rtpMidi_Flags, HEX);
 
             // ...followed by a length-field of at least 4 bits
             midiCommandLength = rtpMidi_Flags & RTP_MIDI_CS_MASK_SHORTLEN;
@@ -181,10 +146,7 @@ public:
                 buffer.pop_front();
             
             _rtpHeadersComplete = true;
-            
-            V_DEBUG_PRINT(F("MIDI Command length: "));
-            V_DEBUG_PRINTLN(midiCommandLength);
-            
+                        
             // initialize the Journal Section
             _journalSectionComplete = false;
             _journalTotalChannels = 0;
@@ -209,10 +171,6 @@ public:
             if (retVal != parserReturn::Processed)
                 return retVal;
         }
-
-        V_DEBUG_PRINT(F("Remaining control bytes "));
-        V_DEBUG_PRINT(buffer.size());
-        V_DEBUG_PRINTLN(F(" bytes"));
 
         _rtpHeadersComplete = false;
         

@@ -25,8 +25,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
     if (false == _journalSectionComplete)
     {
-        V_DEBUG_PRINTLN(F("Journal section"));
-
         size_t i = 0;
 
         minimumLen += 1;
@@ -36,9 +34,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         /* lets get the main flags from the recovery journal header */
         uint8_t flags = buffer[i++];
 
-        V_DEBUG_PRINT(F("flags: 0x"));
-        V_DEBUG_PRINTLN(flags, HEX);
-
         // sequenceNr
         minimumLen += 2;
         if (buffer.size() < minimumLen)
@@ -46,7 +41,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
         if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
         {
-            V_DEBUG_PRINTLN(F("empty journal section"));
             return parserReturn::Processed;
         }
         
@@ -64,9 +58,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
         uint16_t checkPoint = ntohs(cb.value16);
-
-        V_DEBUG_PRINT(F("checkPoint: "));
-        V_DEBUG_PRINTLN(checkPoint);
         
         // By default, the payload format does not use enhanced Chapter C
         // encoding. In this default case, the H bit MUST be set to 0 for all
@@ -75,8 +66,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         {
             // The H bit indicates if MIDI channels in the stream have been
             // configured to use the enhanced Chapter C encoding
-
-            V_DEBUG_PRINTLN(F("enhanced Chapter C encoding NOT SUPPORTED"));
         }
 
         // The S (single-packet loss) bit appears in most recovery journal
@@ -85,7 +74,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // of the loss of a single packet.
         if (flags & RTP_MIDI_JS_FLAG_S)
         {
-            V_DEBUG_PRINTLN(F("special encoding"));
             // special encoding
         }
 
@@ -93,8 +81,6 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // recovery journal, directly following the recovery journal header.
         if (flags & RTP_MIDI_JS_FLAG_Y)
         {
-            V_DEBUG_PRINTLN(F("System journal"));
-            
             minimumLen += 2;
             if (buffer.size() < minimumLen)
                 return parserReturn::NotEnoughData;
@@ -118,14 +104,9 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // field is interpreted as an unsigned integer).
         if (flags & RTP_MIDI_JS_FLAG_A)
         {
-            V_DEBUG_PRINTLN(F("Channel journal"));
-
             /* At the same place we find the total channels encoded in the channel journal */
             _journalTotalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
 
-            V_DEBUG_PRINT(F("totalChannels: "));
-            V_DEBUG_PRINTLN(_journalTotalChannels);
-            
             // do channel reading below, so we can already purge bytes here
         }
         
@@ -155,25 +136,15 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
         if (buffer.size() < chanjourlen)
         {
-            V_DEBUG_PRINT(F("------------------------------- "));
             return parserReturn::NotEnoughData;
         }
         
-        V_DEBUG_PRINT(F("Channel: "));
-        V_DEBUG_PRINTLN(channelNr + 1);
-        V_DEBUG_PRINT(F("Channel Flags: 0x"));
-        V_DEBUG_PRINTLN(chanflags, HEX);
-        V_DEBUG_PRINT(F("Journal Length: "));
-        V_DEBUG_PRINTLN(chanjourlen);
-
         _journalTotalChannels--;
         
         // advance the pointer
         while (chanjourlen--)
             buffer.pop_front();
-        
-        printBuffer(buffer);
-    }
+        }
     
     return parserReturn::Processed;
 }
