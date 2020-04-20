@@ -10,7 +10,7 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
-    - platformio lib -g install 870 872
+    - platformio lib -g install 62 870 872
 
 script:
 - platformio ci --board=uno    --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
