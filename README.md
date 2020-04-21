@@ -4,10 +4,10 @@
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
 
 ## Features
-  * Tested with AppleMIDI on Mac OS (Catalina) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
-  * Send and receive all MIDI messages
-  * Uses callbacks to receive MIDI commands (no need for polling)
-  * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
+* Tested with AppleMIDI on Mac OS (Catalina) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Send and receive all MIDI messages
+* Uses callbacks to receive MIDI commands (no need for polling)
+* Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
@@ -43,11 +43,11 @@ void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 More usages in the `examples` folder
 
 ## Hardware
-  * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
-  * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
-  * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
-  * Teensy 3.2
-  * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
+* Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
+* ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
+* ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
+* Teensy 3.2
+* Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
 This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
@@ -58,13 +58,13 @@ The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the de
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
  
 ## Network Shields
-  * Arduino Ethernet shield (Wiznet W5100 and W5500)
-  * Arduino Wifi R3 shield
-  * MKR ETH shield
-  * Teensy WIZ820io W5200
+* Arduino Ethernet shield (Wiznet W5100 and W5500)
+* Arduino Wifi R3 shield
+* MKR ETH shield
+* Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
-  * 1.8.10
+* 1.8.10
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
