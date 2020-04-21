@@ -4,7 +4,7 @@
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
 
 ## Features
-* Tested with AppleMIDI on Mac OS (High Sierra) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Tested with AppleMIDI on Mac OS (Catalina) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
@@ -15,23 +15,29 @@ From the Arduino IDE Library Manager, search for AppleMIDI
 
 ## Basic Usage
 ```
-#include "AppleMidi.h"
+#include <Ethernet.h>
+#include <AppleMidi.h>
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(); 
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE(); 
 
 void setup()
 {
-  // ...setup ethernet connection
-  AppleMIDI.begin("test"); // 'test' will show up as the session name
+  MIDI.begin(1);
+  
+  // Optional
+  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
 }
 
 void loop()
 {
-  AppleMIDI.run();
-  // ...
+  // Listen to incoming notes
+  MIDI.read();
   
   // Send MIDI note 40 on, velocity 55 on channel 1
-  AppleMIDI.sendNoteOn(40, 55, 1);
+  MIDI.sendNoteOn(40, 55, 1);
+}
+
+void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 }
 ```
 More usages in the `examples` folder
@@ -44,21 +50,21 @@ More usages in the `examples` folder
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
-The code has been pseudo optimized to minimize the memory footprint.
-Internal buffers also use valuable memory space. The biggest buffer `PACKET_MAX_SIZE` is set to 350 by default in `AppleMidi_Settings.h`. Albeit this number is somewhat arbitratry (large enough to receive full SysEx messages), it can be reduced significantly if you do not have to receive large messages.
+This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
 
-On an Arduino, 2 sessions can be active at once (W5100 can have max 4 sockets open at the same time, each session needs 2 UDP sockets). Setting MAX_SESSIONS to 1 saves 228 bytes (each session takes 228 bytes).
+The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
-Save memory (about 2000 bytes) when the device does not initiate sessions by `#undef APPLEMIDI_REMOTE_SESSIONS` in `AppleMidi_Settings.h`. See the `EthernetShield_NoteOnOffEverySec.ino` example
+`MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
+Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
  
 ## Network Shields
-* Arduino Ethernet shield (Wiznet W5100)
+* Arduino Ethernet shield (Wiznet W5100 and W5500)
 * Arduino Wifi R3 shield
 * MKR ETH shield
 * Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
-* 1.8.9
+* 1.8.10
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.

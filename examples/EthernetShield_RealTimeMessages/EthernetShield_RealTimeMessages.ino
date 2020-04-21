@@ -1,6 +1,7 @@
 #include <Ethernet.h>
 
-#include "AppleMidi.h"
+#include <AppleMIDI.h>
+USING_NAMESPACE_APPLEMIDI
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -8,33 +9,28 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned long t0 = millis();
-bool isConnected = false;
+bool isConnected;
 
-APPLEMIDI_CREATE_DEFAULT_INSTANCE(); // see definition in AppleMidi_Defs.h
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void setup()
 {
-  // Serial communications and wait for port to open:
   Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
+  while (!Serial);
+  Serial.println("Booting");
 
-  Serial.print(F("Getting IP address..."));
+
+  Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    Serial.println();
-    Serial.println(F("Failed DHCP, check network cable & reboot"));
-    for (;;)
-      ;
+    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
+    for (;;);
   }
 
-  Serial.println();
-  Serial.print(F("IP address is "));
+  Serial.print("IP address is ");
   Serial.println(Ethernet.localIP());
 
   Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
@@ -45,24 +41,22 @@ void setup()
   Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Create a session and wait for a remote host to connect to us
-  AppleMIDI.begin("test");
+  MIDI.begin(1);
 
-  AppleMIDI.OnConnected(OnAppleMidiConnected);
-  AppleMIDI.OnDisconnected(OnAppleMidiDisconnected);
+  // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
+  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
+  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleError(OnAppleMidiError);
 
-  AppleMIDI.OnReceiveNoteOn(OnAppleMidiNoteOn);
-  AppleMIDI.OnReceiveNoteOff(OnAppleMidiNoteOff);
+  MIDI.setHandleClock(OnMidiClock);
+  MIDI.setHandleStart(OnMidiStart);
+  MIDI.setHandleStop(OnMidiStop);
+  MIDI.setHandleContinue(OnMidiContinue);
+  MIDI.setHandleActiveSensing(OnMidiActiveSensing);
+  MIDI.setHandleSystemReset(OnMidiSystemReset);
+  MIDI.setHandleSongPosition(OnMidiSongPosition);
 
-  AppleMIDI.OnReceiveClock(OnAppleMidiClock);
-  AppleMIDI.OnReceiveStart(OnAppleMidiStart);
-  AppleMIDI.OnReceiveStop(OnAppleMidiStop);
-  AppleMIDI.OnReceiveContinue(OnAppleMidiContinue);
-  AppleMIDI.OnReceiveActiveSensing(OnAppleMidiActiveSensing);
-  AppleMIDI.OnReceiveReset(OnAppleMidiReset);
-
-  AppleMIDI.OnReceiveSongPosition(OnAppleMidiSongPosition);
-
-  Serial.println(F("Listening for Clock events"));
+  Serial.println(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------
@@ -71,7 +65,7 @@ void setup()
 void loop()
 {
   // Listen to incoming notes
-  AppleMIDI.read();
+  MIDI.read();
 }
 
 // ====================================================================================
@@ -81,7 +75,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(uint32_t ssrc, char* name) {
+void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
   Serial.print(F("Connected to session "));
   Serial.println(name);
@@ -90,98 +84,79 @@ void OnAppleMidiConnected(uint32_t ssrc, char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(uint32_t ssrc) {
+void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
-//
+// rtpMIDI session. Error occorded during processing
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOn from channel:"));
-  Serial.print(channel);
-  Serial.print(F(" note:"));
-  Serial.print(note);
-  Serial.print(F(" velocity:"));
-  Serial.print(velocity);
-  Serial.println();
+void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
+  Serial.println(F("ERROR"));
+  exit(1);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOff from channel:"));
-  Serial.print(channel);
-  Serial.print(F(" note:"));
-  Serial.print(note);
-  Serial.print(F(" velocity:"));
-  Serial.print(velocity);
-  Serial.println();
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-static void OnAppleMidiClock() {
+static void OnMidiClock() {
   Serial.println(F("Clock"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiStart() {
+static void OnMidiStart() {
   Serial.println(F("Start"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiStop() {
+static void OnMidiStop() {
   Serial.println(F("Stop"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiContinue() {
+static void OnMidiContinue() {
   Serial.println(F("Continue"));
 }
 
 // -----------------------------------------------------------------------------
 // (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-// Active Sensing. 
-// This message is intended to be sent repeatedly to tell the receiver that a 
-// connection is alive. Use of this message is optional. When initially received, 
-// the receiver will expect to receive another Active Sensing message each 300ms (max), 
-// and if it does not then it will assume that the connection has been terminated. 
-// At termination, the receiver will turn off all voices and return to normal 
-// (non- active sensing) operation. 
+// Active Sensing.
+// This message is intended to be sent repeatedly to tell the receiver that a
+// connection is alive. Use of this message is optional. When initially received,
+// the receiver will expect to receive another Active Sensing message each 300ms (max),
+// and if it does not then it will assume that the connection has been terminated.
+// At termination, the receiver will turn off all voices and return to normal
+// (non- active sensing) operation.
 // -----------------------------------------------------------------------------
-static void OnAppleMidiActiveSensing() {
+static void OnMidiActiveSensing() {
   Serial.println(F("ActiveSensing"));
-  AppleMIDI.sendActiveSensing();
 }
 
 // -----------------------------------------------------------------------------
 // (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-// Reset. 
-// Reset all receivers in the system to power-up status. This should be used 
-// sparingly, preferably under manual control. In particular, it should not be 
+// Reset.
+// Reset all receivers in the system to power-up status. This should be used
+// sparingly, preferably under manual control. In particular, it should not be
 // sent on power-up.
 // -----------------------------------------------------------------------------
-static void OnAppleMidiReset() {
-  Serial.println(F("Reset"));
+static void OnMidiSystemReset() {
+  Serial.println(F("SystemReset"));
 }
 
 // -----------------------------------------------------------------------------
 // (https://www.midi.org/specifications/item/table-1-summary-of-midi-message)
-// Song Position Pointer. 
-// This is an internal 14 bit register that holds the number of MIDI beats 
+// Song Position Pointer.
+// This is an internal 14 bit register that holds the number of MIDI beats
 // (1 beat= six MIDI clocks) since the start of the song. l is the LSB, m the MSB.
 // -----------------------------------------------------------------------------
-static void OnAppleMidiSongPosition(unsigned short a) {
-  Serial.print  (F("SongPosition: "));
+static void OnMidiSongPosition(unsigned a) {
+  Serial.print (F("SongPosition: "));
   Serial.println(a);
 }

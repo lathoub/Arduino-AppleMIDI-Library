@@ -1,18 +1,12 @@
-#include <Ethernet.h>
+#include "ETH_Helper.h"
 
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
-// Enter a MAC address for your controller below.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
-
-unsigned long t1 = millis();
+unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
+APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
 
 // -----------------------------------------------------------------------------
 //
@@ -23,31 +17,32 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
+  ETH_startup();
+  
+  MDNS.begin(AppleMIDI.getName());
 
-  Serial.println(F("Getting IP address..."));
-
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println(F("Failed DHCP, check network cable & reboot"));
-    for (;;);
-  }
-
-  Serial.print(F("IP address is "));
-  Serial.println(Ethernet.localIP());
+  Serial.print("\nIP address is ");
+  Serial.println(ETH.localIP());
 
   Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   Serial.print(F("Add device named Arduino with Host/Port "));
-  Serial.print(Ethernet.localIP());
+  Serial.print(ETH.localIP());
   Serial.println(F(":5004"));
   Serial.println(F("Then press the Connect button"));
+  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
-  // Listen for MIDI messages on channel 1
-  MIDI.begin(1);
+  // Create a session and wait for a remote host to connect to us
+  MIDI.begin(1); // listen on channel 1
 
-  // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  Serial.println(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
+  MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
+  MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+
+  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
+
+  Serial.println(F("Every second send a random NoteOn/Off"));
 }
 
 // -----------------------------------------------------------------------------
@@ -60,9 +55,9 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if (isConnected && (millis() - t0) > 1000)
   {
-    t1 = millis();
+    t0 = millis();
     //   Serial.print(F(".");
 
     byte note = random(1, 127);
@@ -93,4 +88,28 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.println(F("Disconnected"));
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
+  Serial.print(F("Incoming NoteOn  from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
+  Serial.print(F("Incoming NoteOff from channel: "));
+  Serial.print(channel);
+  Serial.print(F(", note: "));
+  Serial.print(note);
+  Serial.print(F(", velocity: "));
+  Serial.println(velocity);
 }

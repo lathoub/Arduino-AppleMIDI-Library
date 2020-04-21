@@ -5,56 +5,73 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-AppleMIDI	KEYWORD1
-AppleMidi.h	KEYWORD1
-AppleMidiInterface	KEYWORD1
-DefaultSettings	KEYWORD1
+AppleMidi	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
+setHandleConnected	 KEYWORD2
+setHandleDisconnected	 KEYWORD2
+setHandleError	         KEYWORD2
+setHandleReceivedMidi    KEYWORD2
+setHandleReceivedRtp     KEYWORD2
+
+setHandleNoteOff 	 KEYWORD2 
+setHandleNoteOn 	 KEYWORD2 
+setHandleAfterTouchPoly  KEYWORD2 
+setHandleControlChange 	 KEYWORD2 
+setHandleProgramChange 	 KEYWORD2 
+setHandleAfterTouchChannel 	KEYWORD2 
+setHandlePitchBend 	 KEYWORD2 
+setHandleSystemExclusive KEYWORD2 
+setHandleTimeCodeQuarterFrame 	KEYWORD2 
+setHandleSongPosition 	 KEYWORD2 
+setHandleSongSelect 	 KEYWORD2 
+setHandleTuneRequest 	  KEYWORD2 
+setHandleClock 	         KEYWORD2 
+setHandleStart 	         KEYWORD2 
+setHandleContinue 	 KEYWORD2 
+setHandleStop 	         KEYWORD2 
+setHandleActiveSensing 	 KEYWORD2 
+setHandleSystemReset 	 KEYWORD2 
+
 begin	         	 KEYWORD2
-invite	         	 KEYWORD2
-getSessionName	KEYWORD2
-getSynchronizationSource	KEYWORD2
-run		             KEYWORD2
-sendNoteOn	         	 KEYWORD2
-sendNoteOff	             KEYWORD2
-sendAfterTouchPoly	     KEYWORD2
-sendControlChange	     KEYWORD2
-sendProgramChange	     KEYWORD2
-sendAfterTouchChannel	KEYWORD2
+run		         KEYWORD2
+sendNoteOn	         KEYWORD2
+sendNoteOff	         KEYWORD2
+sendAfterTouchPoly	 KEYWORD2
+sendControlChange	 KEYWORD2
+sendProgramChange	 KEYWORD2
+sendAfterTouchChannel	 KEYWORD2
 sendPitchBend	         KEYWORD2
-sendSystemEx	     KEYWORD2
-sendTimeCodeQuarterFrame	KEYWORD2
-sendSongPosition	     KEYWORD2
+sendSystemEx	     	 KEYWORD2
+sendTimeCodeQuarterFrame KEYWORD2
+sendSongPosition	 KEYWORD2
 sendSongSelect	         KEYWORD2
 sendTuneRequest	         KEYWORD2
-sendClock	             KEYWORD2
-sendStart	             KEYWORD2
+sendClock	         KEYWORD2
+sendStart	         KEYWORD2
 sendContinue	         KEYWORD2
-sendStop	             KEYWORD2
-sendActiveSensing	     KEYWORD2
+sendStop	         KEYWORD2
+sendActiveSensing	 KEYWORD2
 sendSystemReset	         KEYWORD2
-sendTimeCodeQuarterFrame	         KEYWORD2
+sendTimeCodeQuarterFrame KEYWORD2
 sendSysEx	         KEYWORD2
 sendAfterTouch	         KEYWORD2
-sendPolyPressure	         KEYWORD2
+sendPolyPressure	 KEYWORD2
 sendTick	         KEYWORD2
 
 #######################################
 # Instances (KEYWORD3)
 #######################################
+AppleMIDI	KEYWORD3
+MIDI		KEYWORD3
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-# Namespace, considering it as a literal
-applemidi	LITERAL1
-
-CONTROL_PORT	LITERAL1
 APPLEMIDI_CREATE_INSTANCE	LITERAL1
-APPLEMIDI_CREATE_DEFAULT_INSTANCE	LITERAL1
-APPLEMIDI_CREATE_CUSTOM_INSTANCE	LITERAL1
+APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE	LITERAL1
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE	LITERAL1

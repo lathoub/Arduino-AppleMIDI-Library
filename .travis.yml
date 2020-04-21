@@ -10,16 +10,7 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
-    - platformio lib -g install 870 872
+    - platformio lib -g install 62@5.0.0 870 872
 
 script:
-- platformio ci --board=huzzah --lib=. examples/Esp32_NoteOnOffEverySec/Esp32_NoteOnOffEverySec.ino;
-- platformio ci --board=huzzah --lib=. examples/Esp8266_2Sessions_NoteOnOffEverySec/Esp8266_2Sessions_NoteOnOffEverySec.ino;
-- platformio ci --board=huzzah --lib=. examples/Esp8266_NoteOnOffEverySec/Esp8266_NoteOnOffEverySec.ino;
-- platformio ci --board=uno    --lib=. examples/EthernetShield_InitiateSession/EthernetShield_InitiateSession.ino;
-- platformio ci --board=uno    --lib=. examples/EthernetShield_InitiateSessions/EthernetShield_InitiateSessions.ino;
 - platformio ci --board=uno    --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
-- platformio ci --board=uno    --lib=. examples/EthernetShield_RealTimeMessages/EthernetShield_RealTimeMessages.ino;
-- platformio ci --board=uno    --lib=. examples/EthernetShield_ReceiveMTC/EthernetShield_ReceiveMTC.ino;
-- platformio ci --board=uno    --lib=. examples/EthernetShield_SysEx/EthernetShield_SysEx.ino;
-- platformio ci --board=uno    --lib=. examples/Wifi_NoteOnOffEverySec/Wifi_NoteOnOffEverySec.ino;
