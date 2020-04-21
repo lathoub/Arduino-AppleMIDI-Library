@@ -44,6 +44,10 @@ void loop()
 void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 }
 ```
+
+`APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();` creates 2 instance: `MIDI` and `AppleMIDI`. `MIDI` is the instance that manages all MIDI interaction, `AppleMIDI` is the instance this manages the rtp transport layer.
+
+
 More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Library/tree/master/examples) folder
 
 ## Hardware
