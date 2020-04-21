@@ -29,7 +29,7 @@ void setup()
   Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
+    Serial.println(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
