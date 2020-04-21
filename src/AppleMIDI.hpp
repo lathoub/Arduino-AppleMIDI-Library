@@ -550,7 +550,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
 #ifdef APPLEMIDI_INITIATOR
         auto participant = &participants[i];
