@@ -43,7 +43,7 @@ void loop()
 void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
 }
 ```
-More usages in the `examples` folder
+More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Library/tree/master/examples) folder
 
 ## Hardware
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
