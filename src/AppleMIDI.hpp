@@ -350,7 +350,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMIDI_EndSession_t &endSession)
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
         if (endSession.ssrc == participants[i].ssrc)
         {
@@ -367,7 +367,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
 template <class UdpClass, class Settings, class Platform>
 Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantBySSRC(const ssrc_t ssrc)
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
         if (ssrc == participants[i].ssrc)
             return &participants[i];
     return NULL;
@@ -460,7 +460,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAdd
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipants()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
         auto participant = &participants[i];
         writeRtpMidiBuffer(participant);
@@ -550,7 +550,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
 #ifdef APPLEMIDI_INITIATOR
         auto participant = &participants[i];
@@ -745,7 +745,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
         auto participant = &participants[i];
         

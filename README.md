@@ -50,9 +50,9 @@ More usages in the `examples` folder
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
-This library is not using any dynamic memory allocation methiods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file.
+This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
 
-The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it higher will make sending larger SysEx messages more efficiant (larg SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed).
+The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
 `MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
