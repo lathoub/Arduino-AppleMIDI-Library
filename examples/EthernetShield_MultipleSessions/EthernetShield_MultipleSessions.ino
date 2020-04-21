@@ -24,11 +24,10 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
-
   Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
+    Serial.println(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
@@ -49,10 +48,8 @@ void setup()
   // Stay informed on connection status
   AppleMIDI1.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI1.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI1.setHandleError(OnAppleMidiError);
   AppleMIDI2.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI2.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI2.setHandleError(OnAppleMidiError);
 
   // and let us know ehen notes come in
   MIDI1.setHandleNoteOn(OnMidiNoteOn);
@@ -107,14 +104,6 @@ void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.print(F("Disconnected from ssrc 0x"));
   Serial.println(ssrc, HEX);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Error occorded during processing
-// -----------------------------------------------------------------------------
-void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
-  Serial.println(F("ERROR"));
-  exit(1);
 }
 
 // -----------------------------------------------------------------------------

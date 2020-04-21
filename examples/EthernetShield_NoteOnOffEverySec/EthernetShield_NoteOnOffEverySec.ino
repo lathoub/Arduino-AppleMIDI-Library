@@ -23,7 +23,6 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
-
   Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {

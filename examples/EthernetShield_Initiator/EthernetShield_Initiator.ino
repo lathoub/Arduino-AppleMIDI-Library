@@ -24,23 +24,22 @@ void setup()
   while (!Serial);
   Serial.println("Booting");
 
-
   Serial.println(F("Getting IP address..."));
 
   if (Ethernet.begin(mac) == 0) {
-    F_DEBUG_PRINTLN(F("Failed DHCP, check network cable & reboot"));
+    Serial.println(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
   Serial.print(F("IP address is "));
   Serial.println(Ethernet.localIP());
 
-  T_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  T_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  T_DEBUG_PRINT(Ethernet.localIP());
-  T_DEBUG_PRINTLN(F(":5004"));
-  T_DEBUG_PRINTLN(F("Then press the Connect button"));
-  T_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  Serial.print(F("Add device named Arduino with Host/Port "));
+  Serial.print(Ethernet.localIP());
+  Serial.println(F(":5004"));
+  Serial.println(F("Then press the Connect button"));
+  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
 
   // Listen for MIDI messages on channel 1
   MIDI.begin(1);
@@ -48,7 +47,6 @@ void setup()
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI.setHandleError(OnAppleMidiError);
 
   // and let us know ehen notes come in
   MIDI.setHandleNoteOn(OnMidiNoteOn);
@@ -57,7 +55,6 @@ void setup()
   // Initiate the session
   IPAddress remote(192, 168, 1, 156);
   AppleMIDI.sendInvite(remote); // port is 5004 by default
-  // AppleMIDI.sendInvite(remote, 5004); // port is 5004 by default
 
   Serial.println(F("Every second send a random NoteOn/Off"));
 }
@@ -108,15 +105,6 @@ void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.print  (F("Disconnected from ssrc 0x"));
   Serial.println(ssrc, HEX);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Error occorded during processing
-// -----------------------------------------------------------------------------
-void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
-  Serial.print(F("ERROR "));
-  Serial.println(errorCode);
-  exit(1);
 }
 
 // -----------------------------------------------------------------------------
