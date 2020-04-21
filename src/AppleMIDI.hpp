@@ -460,7 +460,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAdd
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipants()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
         auto participant = &participants[i];
         writeRtpMidiBuffer(participant);
@@ -745,7 +745,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
 {
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
         auto participant = &participants[i];
         
