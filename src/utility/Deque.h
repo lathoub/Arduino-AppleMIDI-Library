@@ -128,7 +128,6 @@ template<typename T, size_t Size>
 void Deque<T, Size>::pop_front() {
     if (empty()) // if empty, do nothing.
         return;
-    auto item = front();
     if (++_tail >= Size)
         _tail %= Size;
     if (_tail == _head)
