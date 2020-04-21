@@ -177,9 +177,9 @@ public:
         return parserReturn::Processed;
 	}
 
-    #include "rtpMidi_Parser_JournalSection.hpp"
+    #include "rtpMIDI_Parser_JournalSection.hpp"
     
-    #include "rtpMidi_Parser_MidiCommandSection.hpp"
+    #include "rtpMIDI_Parser_MidiCommandSection.hpp"
 };
 
 END_APPLEMIDI_NAMESPACE
