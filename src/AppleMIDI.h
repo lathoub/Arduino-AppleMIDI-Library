@@ -66,6 +66,8 @@ public:
     void sendEndSession();
     
 protected:
+    	static const bool thruActivated = false;
+
 	void begin()
 	{
         _appleMIDIParser.session = this;
