@@ -20,7 +20,7 @@ This will also install [FortySevenEffects MIDI library](https://github.com/Forty
 ## Basic Usage
 ```
 #include <Ethernet.h>
-#include <AppleMidi.h>
+#include <AppleMIDI.h>
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE(); 
 
