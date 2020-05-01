@@ -41,6 +41,8 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
         if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
         {
+            while (minimumLen-- > 0)
+                buffer.pop_front();
             return parserReturn::Processed;
         }
         
