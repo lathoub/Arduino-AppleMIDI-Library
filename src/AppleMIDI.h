@@ -30,6 +30,13 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 static unsigned long now;
 
+struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
+{
+    // Packet based protocols prefer the entire message to be parsed
+    // as a whole.
+    static const bool Use1ByteParsing = false;
+};
+
 template <class UdpClass, class _Settings = DefaultSettings, class _Platform = ArduinoPlatform>
 class AppleMIDISession
 {
@@ -40,7 +47,7 @@ class AppleMIDISession
 	// to avoid access by the .ino to internal messages
 	friend class AppleMIDIParser<UdpClass, Settings, Platform>;
 	friend class rtpMIDIParser<UdpClass, Settings, Platform>;
-	friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>>;
+    friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>, AppleMIDISettings>;
 
 public:
 	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
@@ -66,7 +73,7 @@ public:
     void sendEndSession();
     
 protected:
-    	static const bool thruActivated = false;
+    static const bool thruActivated = false;
 
 	void begin()
 	{
@@ -280,17 +287,16 @@ private:
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
 };
 
+END_APPLEMIDI_NAMESPACE
+
+#include "AppleMIDI.hpp"
+
 #define APPLEMIDI_CREATE_INSTANCE(Type, Name, SessionName, Port) \
     APPLEMIDI_NAMESPACE::AppleMIDISession<Type> Apple##Name(SessionName, Port); \
-    MIDI_NAMESPACE::MidiInterface<APPLEMIDI_NAMESPACE::AppleMIDISession<Type>> Name((APPLEMIDI_NAMESPACE::AppleMIDISession<Type>&)Apple##Name);
+    MIDI_NAMESPACE::MidiInterface<APPLEMIDI_NAMESPACE::AppleMIDISession<Type>, AppleMIDISettings> Name((APPLEMIDI_NAMESPACE::AppleMIDISession<Type>&)Apple##Name);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "Arduino", DEFAULT_CONTROL_PORT);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
-
-END_APPLEMIDI_NAMESPACE
-
-#include "AppleMIDI.hpp"
-

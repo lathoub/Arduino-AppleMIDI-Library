@@ -27,25 +27,14 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
     {
         size_t i = 0;
 
-        minimumLen += 1;
+        // Minimum size for the Journal section is 3
+        minimumLen += 3;
         if (buffer.size() < minimumLen)
             return parserReturn::NotEnoughData;
 
         /* lets get the main flags from the recovery journal header */
         uint8_t flags = buffer[i++];
 
-        // sequenceNr
-        minimumLen += 2;
-        if (buffer.size() < minimumLen)
-            return parserReturn::NotEnoughData;
-
-        if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
-        {
-            while (minimumLen-- > 0)
-                buffer.pop_front();
-            return parserReturn::Processed;
-        }
-        
         // The 16-bit Checkpoint Packet Seqnum header field codes the sequence
         // number of the checkpoint packet for this journal, in network byte
         // order (big-endian). The choice of the checkpoint packet sets the
@@ -60,6 +49,18 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
         uint16_t checkPoint = ntohs(cb.value16);
+        
+        // (RFC 4695, 5 Recovery Journal Format)
+        // If A and Y are both zero, the recovery journal only contains its 3-
+        // octet header and is considered to be an "empty" journal.
+        if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
+        {
+            // Big fixed by @hugbug
+            while (minimumLen-- > 0)
+                buffer.pop_front();
+
+            return parserReturn::Processed;
+        }
         
         // By default, the payload format does not use enhanced Chapter C
         // encoding. In this default case, the H bit MUST be set to 0 for all
