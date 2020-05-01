@@ -293,7 +293,7 @@ END_APPLEMIDI_NAMESPACE
 
 #define APPLEMIDI_CREATE_INSTANCE(Type, Name, SessionName, Port) \
     APPLEMIDI_NAMESPACE::AppleMIDISession<Type> Apple##Name(SessionName, Port); \
-    MIDI_NAMESPACE::MidiInterface<APPLEMIDI_NAMESPACE::AppleMIDISession<Type>, AppleMIDISettings> Name((APPLEMIDI_NAMESPACE::AppleMIDISession<Type>&)Apple##Name);
+    MIDI_NAMESPACE::MidiInterface<APPLEMIDI_NAMESPACE::AppleMIDISession<Type>, APPLEMIDI_NAMESPACE::AppleMIDISettings> Name((APPLEMIDI_NAMESPACE::AppleMIDISession<Type>&)Apple##Name);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE() \
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "Arduino", DEFAULT_CONTROL_PORT);
