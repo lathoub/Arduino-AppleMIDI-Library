@@ -357,7 +357,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
             participants.erase(i);
             
             if (NULL != _disconnectedCallback)
-                _disconnectedCallback(endSession.ssrc);
+                _disconnectedCallback(participants[i].ssrc);
 
             return;
         }
@@ -529,7 +529,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     }
     
     // write out the MIDI Section
-    for (int i = 0; i < bufferLen; i++)
+    for (auto i = 0; i < bufferLen; i++)
         dataPort.write(outMidiBuffer[i]);
     
     // *No* journal section (Not supported)
@@ -573,7 +573,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationListen
 {
     auto participant = &participants[i];
 
-    // The initiator must initiate a new sync exchange at least once every 60 seconds;
+    // The initiator must check in with the listener at least once every 60 seconds;
     // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::CK_MaxTimeOut)
     {
@@ -696,9 +696,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         {
             if (participant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
             {
-                // too many attempts, give up - indicate this participant slot is free
-
+                // After too many attempts, stop.
+                sendEndSession(participant);
                 participants.erase(i);
+
                 continue;
             }
 
@@ -790,11 +791,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
 {
     while (participants.size() > 0)
     {
-        auto participant = &participants[0];
-
+        auto participant = &participants.front();
         sendEndSession(participant);
 
-        participants.erase(0);
+        participants.pop_front();
     }
 }
 
