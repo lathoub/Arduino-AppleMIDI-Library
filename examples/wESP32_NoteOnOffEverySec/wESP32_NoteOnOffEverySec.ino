@@ -1,5 +1,6 @@
 #include "ETH_Helper.h"
 
+#define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -7,8 +8,6 @@ unsigned long t0 = millis();
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
-
-//WiFiServer server(80);
 
 // -----------------------------------------------------------------------------
 //
@@ -20,9 +19,6 @@ void setup()
   Serial.println("Booting");
 
   ETH_startup();
-
-  // Start TCP (HTTP) server
-  //  server.begin();
 
   MDNS.begin(AppleMIDI.getName());
 
@@ -40,6 +36,7 @@ void setup()
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleError(OnAppleMidiError);
 
   MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
   MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
@@ -48,6 +45,10 @@ void setup()
   MDNS.addService("http", "tcp", 80);
 
   Serial.println(F("Every second send a random NoteOn/Off"));
+
+  // Initiate the session
+  IPAddress remote(192, 168, 1, 4);
+  AppleMIDI.sendInvite(remote); // port is 5004 by default
 }
 
 // -----------------------------------------------------------------------------
@@ -96,7 +97,24 @@ void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
 }
 
 // -----------------------------------------------------------------------------
-//
+// rtpMIDI session. Device disconnected
+// -----------------------------------------------------------------------------
+void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
+  Serial.print  (F("Exception "));
+  Serial.print  (err);
+  Serial.print  (F(" from ssrc 0x"));
+  Serial.println(ssrc, HEX);
+
+  switch (err)
+  {
+    case Exception::NoResponseFromConnectionRequestException:
+      Serial.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
+      break;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 
 // -----------------------------------------------------------------------------
 static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
   Serial.print(F("Incoming NoteOn  from channel: "));
