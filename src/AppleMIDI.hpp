@@ -32,7 +32,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal == parserReturn::UnexpectedData)
         {
-            if (NULL != _errorCallback)
             if (NULL != _exceptionCallback)
                 _exceptionCallback(ssrc, ParseException);
             
