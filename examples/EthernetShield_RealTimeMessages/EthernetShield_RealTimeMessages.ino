@@ -46,7 +46,6 @@ void setup()
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI.setHandleError(OnAppleMidiError);
 
   MIDI.setHandleClock(OnMidiClock);
   MIDI.setHandleStart(OnMidiStart);
@@ -79,14 +78,6 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
   Serial.print(F("Connected to session "));
   Serial.println(name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
-  isConnected = false;
-  Serial.println(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------

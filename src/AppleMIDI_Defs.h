@@ -37,7 +37,7 @@ using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
 using disconnectedCallback          = void (*)(const ssrc_t&);
-using errorCallback                 = void (*)(const ssrc_t&, int32_t);
+using exceptionCallback             = void (*)(const ssrc_t&, int32_t);
 
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
@@ -132,6 +132,18 @@ enum InviteStatus : uint8_t
     AwaitingDataInvitationAccepted,
     DataInvitationAccepted,
     Connected
+};
+
+enum Exception : uint8_t
+{
+    BufferFullException,
+    ParseException,
+    UnexpectedParseException,
+    TooManyParticipantsException,
+    ParticipantNotFoundException,
+    ListenerTimeOutException,
+    MaxAttemptsException,
+    NoResponseFromConnectionRequestException,
 };
 
 END_APPLEMIDI_NAMESPACE

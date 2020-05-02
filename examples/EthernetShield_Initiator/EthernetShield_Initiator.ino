@@ -47,13 +47,14 @@ void setup()
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleError(OnAppleMidiError);
 
   // and let us know ehen notes come in
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
 
   // Initiate the session
-  IPAddress remote(192, 168, 1, 156);
+  IPAddress remote(192, 168, 1, 4);
   AppleMIDI.sendInvite(remote); // port is 5004 by default
 
   Serial.println(F("Every second send a random NoteOn/Off"));
@@ -105,6 +106,23 @@ void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.print  (F("Disconnected from ssrc 0x"));
   Serial.println(ssrc, HEX);
+}
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Device disconnected
+// -----------------------------------------------------------------------------
+void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
+  Serial.print  (F("Exception "));
+  Serial.println(err);
+  Serial.print  (F(" from ssrc 0x"));
+  Serial.println(ssrc, HEX);
+
+  switch (err)
+  {
+    case Exception::NoResponseFromConnectionRequestException:
+      Serial.println(F("xxx:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
+      break;
+  }
 }
 
 // -----------------------------------------------------------------------------

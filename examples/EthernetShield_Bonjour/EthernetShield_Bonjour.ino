@@ -59,7 +59,6 @@ void setup()
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-  AppleMIDI.setHandleError(OnAppleMidiError);
 
   // and let us know ehen notes come in
   MIDI.setHandleNoteOn(OnMidiNoteOn);
@@ -113,14 +112,6 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
   Serial.println(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Error occorded during processing
-// -----------------------------------------------------------------------------
-void OnAppleMidiError(const ssrc_t & ssrc, int32_t errorCode) {
-  Serial.println(F("ERROR"));
-  exit(1);
 }
 
 // -----------------------------------------------------------------------------
