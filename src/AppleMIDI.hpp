@@ -465,6 +465,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
         auto participant = &participants[i];
         writeRtpMidiBuffer(participant);
     }
+    outMidiBuffer.clear();
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -474,9 +475,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     const uint16_t  remotePort = participant->remotePort + 1;
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
-    {
         return;
-    }
 
     participant->sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
     
@@ -528,15 +527,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         dataPort.write(rtpMidi.flags);
         dataPort.write((uint8_t)(bufferLen));
     }
-
-    // MIDI Section
-    while (!outMidiBuffer.empty())
-    {
-        auto byte = outMidiBuffer.front();
-        outMidiBuffer.pop_front();
-        
-        dataPort.write(byte);
-    }
+    
+    // write out the MIDI Section
+    for (int i = 0; i < bufferLen; i++)
+        dataPort.write(outMidiBuffer[i]);
     
     // *No* journal section (Not supported)
     
