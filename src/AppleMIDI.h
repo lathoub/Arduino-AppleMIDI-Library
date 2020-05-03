@@ -43,7 +43,6 @@ class AppleMIDISession
 	// to avoid access by the .ino to internal messages
 	friend class AppleMIDIParser<UdpClass, Settings, Platform>;
 	friend class rtpMIDIParser<UdpClass, Settings, Platform>;
-    friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>, AppleMIDISettings>;
 
 public:
 	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
@@ -68,7 +67,7 @@ public:
 #endif
     void sendEndSession();
     
-protected:
+public:
     static const bool thruActivated = false;
 
 	void begin()
