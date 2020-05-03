@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AppleMIDI_Settings.h"
-
 #include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -16,6 +15,15 @@ BEGIN_APPLEMIDI_NAMESPACE
 typedef uint32_t ssrc_t;
 typedef uint32_t initiatorToken_t;
 typedef uint64_t timestamp_t;
+
+union conversionBuffer
+{
+    uint8_t value8;
+    uint16_t value16;
+    uint32_t value32;
+    uint64_t value64;
+    byte buffer[8];
+};
 
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>

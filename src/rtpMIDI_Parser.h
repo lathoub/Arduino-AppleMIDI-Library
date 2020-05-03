@@ -1,7 +1,6 @@
 #pragma once
 
 #include "utility/Deque.h"
-#include "utility/endian.h"
 
 #include <midi_Defs.h>
 
