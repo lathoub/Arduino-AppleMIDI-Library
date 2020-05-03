@@ -7,9 +7,9 @@ using namespace MIDI_NAMESPACE;
 
 #include "IPAddress.h"
 
+#include "AppleMIDI_PlatformBegin.h"
 #include "AppleMIDI_Defs.h"
 #include "AppleMIDI_Settings.h"
-#include "AppleMIDI_Platform.h"
 
 #include "rtp_Defs.h"
 #include "rtpMIDI_Defs.h"
@@ -33,7 +33,7 @@ struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
     static const bool Use1ByteParsing = false;
 };
 
-template <class UdpClass, class _Settings = DefaultSettings, class _Platform = ArduinoPlatform>
+template <class UdpClass, class _Settings = DefaultSettings, class _Platform = DefaultPlatform>
 class AppleMIDISession
 {
     typedef _Settings Settings;
@@ -299,3 +299,5 @@ APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "Arduino", DEFAULT_CONTROL_PORT);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
+
+#include "AppleMIDI_PlatformEnd.h"

@@ -26,7 +26,7 @@ other than 0! */
 /* Payload type is the last 7 bits */
 #define RTP_PAYLOAD_TYPE(octet) ((octet)&0x7F)
 
-typedef struct __attribute__((packed)) Rtp
+typedef struct PACKED Rtp
 {
 	uint8_t vpxcc;
 	uint8_t mpayload;

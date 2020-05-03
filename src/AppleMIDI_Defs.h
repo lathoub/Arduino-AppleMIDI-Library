@@ -59,7 +59,7 @@ const uint8_t SYNC_CK0 = 0;
 const uint8_t SYNC_CK1 = 1;
 const uint8_t SYNC_CK2 = 2;
 
-typedef struct __attribute__((packed)) AppleMIDI_Invitation
+typedef struct PACKED AppleMIDI_Invitation
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
@@ -71,13 +71,13 @@ typedef struct __attribute__((packed)) AppleMIDI_Invitation
 	}
 } AppleMIDI_Invitation_t, AppleMIDI_InvitationAccepted_t, AppleMIDI_InvitationRejected_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
+typedef struct PACKED AppleMIDI_BitrateReceiveLimit
 {
 	ssrc_t ssrc;
 	uint32_t bitratelimit;
 } AppleMIDI_BitrateReceiveLimit_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_Synchronization
+typedef struct PACKED AppleMIDI_Synchronization
 {
 	ssrc_t ssrc;
 	uint8_t count;
@@ -85,14 +85,14 @@ typedef struct __attribute__((packed)) AppleMIDI_Synchronization
 	timestamp_t timestamps[3];
 } AppleMIDI_Synchronization_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_ReceiverFeedback
+typedef struct PACKED AppleMIDI_ReceiverFeedback
 {
 	ssrc_t ssrc;
 	uint16_t sequenceNr;
 	uint16_t dummy;
 } AppleMIDI_ReceiverFeedback_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_EndSession
+typedef struct PACKED AppleMIDI_EndSession
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
