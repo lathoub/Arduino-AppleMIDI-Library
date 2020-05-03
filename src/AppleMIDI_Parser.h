@@ -1,13 +1,9 @@
 #pragma once
 
 #include "utility/Deque.h"
-#include "utility/endian.h"
 
 #include "AppleMIDI_Defs.h"
-
 #include "AppleMIDI_Settings.h"
-#include "AppleMIDI_Platform.h"
-
 #include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -97,8 +93,11 @@ public:
             while ((i < buffer.size()) && (buffer[i] != 0x00))
                 i++;
 #endif
-			if (i == buffer.size() || buffer[i++] != 0x00)
-                return parserReturn::NotEnoughData;
+            // session name is optional.
+            // If i > minimum size (16), then a sessionName was provided and must include 0x00
+            if (i > minimumLen)
+                if (i == buffer.size() || buffer[i++] != 0x00)
+                    return parserReturn::NotEnoughData;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
@@ -284,8 +283,11 @@ public:
             while ((i < buffer.size()) && (buffer[i] != 0x00))
                 i++;
 #endif
-            if (i == buffer.size() || buffer[i++] != 0x00)
-                return parserReturn::NotEnoughData;
+            // session name is optional.
+            // If i > minimum size (16), then a sessionName was provided and must include 0x00
+            if (i > minimumLen)
+                if (i == buffer.size() || buffer[i++] != 0x00)
+                    return parserReturn::NotEnoughData;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
@@ -343,8 +345,11 @@ public:
             while ((i < buffer.size()) && (buffer[i] != 0x00))
                 i++;
 #endif
-            if (i == buffer.size() || buffer[i++] != 0x00)
-                return parserReturn::NotEnoughData;
+            // session name is optional.
+            // If i > minimum size (16), then a sessionName was provided and must include 0x00
+            if (i > minimumLen)
+                if (i == buffer.size() || buffer[i++] != 0x00)
+                    return parserReturn::NotEnoughData;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message

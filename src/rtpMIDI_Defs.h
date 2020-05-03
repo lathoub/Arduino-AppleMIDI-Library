@@ -133,7 +133,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define RTP_MIDI_CJ_CHAPTER_E_MASK_LENGTH 0x7f
 #define RTP_MIDI_CJ_CHAPTER_A_MASK_LENGTH 0x7f
 
-typedef struct __attribute__((packed)) RtpMIDI
+typedef struct PACKED RtpMIDI
 {
 	uint8_t flags;
 } RtpMIDI_t;

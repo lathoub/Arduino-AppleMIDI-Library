@@ -1,7 +1,6 @@
 #pragma once
 
 #include "utility/Deque.h"
-#include "utility/endian.h"
 
 #include <midi_Defs.h>
 
@@ -9,8 +8,6 @@
 #include "rtp_Defs.h"
 
 #include "AppleMIDI_Settings.h"
-#include "AppleMIDI_Platform.h"
-
 #include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE

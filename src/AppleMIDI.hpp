@@ -4,8 +4,6 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
-
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {
@@ -32,8 +30,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal == parserReturn::UnexpectedData)
         {
-            if (NULL != _errorCallback)
-                _errorCallback(ssrc, -2);
+            if (NULL != _exceptionCallback)
+                _exceptionCallback(ssrc, ParseException);
             
             controlBuffer.pop_front();
         }
@@ -82,11 +80,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
             break; // one or the other buffer does not have enough data
-
-        // TODO can we ever get here???
         
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, -3);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, UnexpectedParseException);
 
          dataBuffer.pop_front();
     }
@@ -114,8 +110,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     {
         writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
         
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, -33);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, TooManyParticipantsException);
 
         return;
     }
@@ -144,8 +140,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     {
         writeInvitation(dataPort, dataPort.remoteIP(), dataPort.remotePort(), invitation, amInvitationRejected);
 
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, -4);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException);
         
         return;
     }
@@ -221,6 +217,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(
         if (invitationRejected.ssrc == participants[i].ssrc)
         {
             participants.erase(i);
+            
             return;
         }
     }
@@ -357,7 +354,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
             participants.erase(i);
             
             if (NULL != _disconnectedCallback)
-                _disconnectedCallback(endSession.ssrc);
+                _disconnectedCallback(participants[i].ssrc);
 
             return;
         }
@@ -465,6 +462,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
         auto participant = &participants[i];
         writeRtpMidiBuffer(participant);
     }
+    outMidiBuffer.clear();
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -474,9 +472,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     const uint16_t  remotePort = participant->remotePort + 1;
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
-    {
         return;
-    }
 
     participant->sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
     
@@ -528,15 +524,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         dataPort.write(rtpMidi.flags);
         dataPort.write((uint8_t)(bufferLen));
     }
-
-    // MIDI Section
-    while (!outMidiBuffer.empty())
-    {
-        auto byte = outMidiBuffer.front();
-        outMidiBuffer.pop_front();
-        
-        dataPort.write(byte);
-    }
+    
+    // write out the MIDI Section
+    for (auto i = 0; i < bufferLen; i++)
+        dataPort.write(outMidiBuffer[i]);
     
     // *No* journal section (Not supported)
     
@@ -579,10 +570,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationListen
 {
     auto participant = &participants[i];
 
-    // The initiator must initiate a new sync exchange at least once every 60 seconds;
+    // The initiator must check in with the listener at least once every 60 seconds;
     // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::CK_MaxTimeOut)
     {
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, ListenerTimeOutException);
+
         sendEndSession(participant);
         
         participants.erase(i);
@@ -646,6 +640,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
     {
         if (participant->synchronizationCount > DefaultSettings::MaxSynchronizationCK0Attempts)
         {
+            if (NULL != _exceptionCallback)
+                _exceptionCallback(ssrc, MaxAttemptsException);
+
             // After too many attempts, stop.
             sendEndSession(participant);
 
@@ -702,9 +699,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         {
             if (participant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
             {
-                // too many attempts, give up - indicate this participant slot is free
+                if (NULL != _exceptionCallback)
+                    _exceptionCallback(ssrc, NoResponseFromConnectionRequestException);
 
+                // After too many attempts, stop.
+                sendEndSession(participant);
+                
                 participants.erase(i);
+
                 continue;
             }
 
@@ -796,11 +798,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
 {
     while (participants.size() > 0)
     {
-        auto participant = &participants[0];
-
+        auto participant = &participants.front();
         sendEndSession(participant);
 
-        participants.erase(0);
+        participants.pop_front();
     }
 }
 

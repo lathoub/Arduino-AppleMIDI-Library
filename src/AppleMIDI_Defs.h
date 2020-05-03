@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AppleMIDI_Settings.h"
-
 #include "AppleMIDI_Namespace.h"
 
 BEGIN_APPLEMIDI_NAMESPACE
@@ -16,6 +15,15 @@ BEGIN_APPLEMIDI_NAMESPACE
 typedef uint32_t ssrc_t;
 typedef uint32_t initiatorToken_t;
 typedef uint64_t timestamp_t;
+
+union conversionBuffer
+{
+    uint8_t value8;
+    uint16_t value16;
+    uint32_t value32;
+    uint64_t value64;
+    byte buffer[8];
+};
 
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
@@ -37,7 +45,7 @@ using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
 using disconnectedCallback          = void (*)(const ssrc_t&);
-using errorCallback                 = void (*)(const ssrc_t&, int32_t);
+using exceptionCallback             = void (*)(const ssrc_t&, int32_t);
 
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
@@ -59,7 +67,7 @@ const uint8_t SYNC_CK0 = 0;
 const uint8_t SYNC_CK1 = 1;
 const uint8_t SYNC_CK2 = 2;
 
-typedef struct __attribute__((packed)) AppleMIDI_Invitation
+typedef struct PACKED AppleMIDI_Invitation
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
@@ -71,13 +79,13 @@ typedef struct __attribute__((packed)) AppleMIDI_Invitation
 	}
 } AppleMIDI_Invitation_t, AppleMIDI_InvitationAccepted_t, AppleMIDI_InvitationRejected_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_BitrateReceiveLimit
+typedef struct PACKED AppleMIDI_BitrateReceiveLimit
 {
 	ssrc_t ssrc;
 	uint32_t bitratelimit;
 } AppleMIDI_BitrateReceiveLimit_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_Synchronization
+typedef struct PACKED AppleMIDI_Synchronization
 {
 	ssrc_t ssrc;
 	uint8_t count;
@@ -85,14 +93,14 @@ typedef struct __attribute__((packed)) AppleMIDI_Synchronization
 	timestamp_t timestamps[3];
 } AppleMIDI_Synchronization_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_ReceiverFeedback
+typedef struct PACKED AppleMIDI_ReceiverFeedback
 {
 	ssrc_t ssrc;
 	uint16_t sequenceNr;
 	uint16_t dummy;
 } AppleMIDI_ReceiverFeedback_t;
 
-typedef struct __attribute__((packed)) AppleMIDI_EndSession
+typedef struct PACKED AppleMIDI_EndSession
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
@@ -132,6 +140,18 @@ enum InviteStatus : uint8_t
     AwaitingDataInvitationAccepted,
     DataInvitationAccepted,
     Connected
+};
+
+enum Exception : uint8_t
+{
+    BufferFullException,
+    ParseException,
+    UnexpectedParseException,
+    TooManyParticipantsException,
+    ParticipantNotFoundException,
+    ListenerTimeOutException,
+    MaxAttemptsException,
+    NoResponseFromConnectionRequestException,
 };
 
 END_APPLEMIDI_NAMESPACE

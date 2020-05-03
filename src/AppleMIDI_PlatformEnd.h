@@ -4,8 +4,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-struct ArduinoPlatform
-{
-};
+#ifdef WIN32
+#pragma pack(pop)
+#endif
+#undef PACKED
 
 END_APPLEMIDI_NAMESPACE

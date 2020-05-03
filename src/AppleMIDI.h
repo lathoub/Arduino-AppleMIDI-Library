@@ -7,9 +7,9 @@ using namespace MIDI_NAMESPACE;
 
 #include "IPAddress.h"
 
+#include "AppleMIDI_PlatformBegin.h"
 #include "AppleMIDI_Defs.h"
 #include "AppleMIDI_Settings.h"
-#include "AppleMIDI_Platform.h"
 
 #include "rtp_Defs.h"
 #include "rtpMIDI_Defs.h"
@@ -22,10 +22,6 @@ using namespace MIDI_NAMESPACE;
 
 #include "AppleMIDI_Namespace.h"
 
-#ifndef UDP_TX_PACKET_MAX_SIZE
-#define UDP_TX_PACKET_MAX_SIZE 24
-#endif
-
 BEGIN_APPLEMIDI_NAMESPACE
 
 static unsigned long now;
@@ -37,7 +33,7 @@ struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
     static const bool Use1ByteParsing = false;
 };
 
-template <class UdpClass, class _Settings = DefaultSettings, class _Platform = ArduinoPlatform>
+template <class UdpClass, class _Settings = DefaultSettings, class _Platform = DefaultPlatform>
 class AppleMIDISession
 {
     typedef _Settings Settings;
@@ -47,7 +43,6 @@ class AppleMIDISession
 	// to avoid access by the .ino to internal messages
 	friend class AppleMIDIParser<UdpClass, Settings, Platform>;
 	friend class rtpMIDIParser<UdpClass, Settings, Platform>;
-    friend class MIDI_NAMESPACE::MidiInterface<AppleMIDISession<UdpClass>, AppleMIDISettings>;
 
 public:
 	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
@@ -58,7 +53,7 @@ public:
 
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
-    void setHandleError(void (*fptr)(const ssrc_t&, int32_t)) { _errorCallback = fptr; }
+    void setHandleError(void (*fptr)(const ssrc_t&, int32_t)) { _exceptionCallback = fptr; }
     void setHandleReceivedRtp(void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
     void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
@@ -72,7 +67,7 @@ public:
 #endif
     void sendEndSession();
     
-protected:
+public:
     static const bool thruActivated = false;
 
 	void begin()
@@ -150,8 +145,8 @@ protected:
             }
 			else
 			{
-                if (NULL != _errorCallback)
-                    _errorCallback(ssrc, -1);
+                if (NULL != _exceptionCallback)
+                    _exceptionCallback(ssrc, BufferFullException);
 			}
 		}
 
@@ -204,13 +199,16 @@ protected:
         return byte;
     };
 
-private:
+protected:
 	UdpClass controlPort;
 	UdpClass dataPort;
 
+private:
 	// reading from the network
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
+
+    byte packetBuffer[Settings::UdpTxPacketMaxSize];
 
 	AppleMIDIParser<UdpClass, Settings, Platform> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
@@ -221,7 +219,7 @@ private:
     endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
     receivedRtpCallback _receivedRtpCallback = nullptr;
     disconnectedCallback _disconnectedCallback = nullptr;
-    errorCallback _errorCallback = nullptr;
+    exceptionCallback _exceptionCallback = nullptr;
 
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;
@@ -300,3 +298,5 @@ APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "Arduino", DEFAULT_CONTROL_PORT);
 
 #define APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE() \
 APPLEMIDI_CREATE_INSTANCE(WiFiUDP, MIDI, "ESP32", DEFAULT_CONTROL_PORT);
+
+#include "AppleMIDI_PlatformEnd.h"
