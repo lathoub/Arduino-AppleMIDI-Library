@@ -4,8 +4,6 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-static byte packetBuffer[UDP_TX_PACKET_MAX_SIZE];
-
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {

@@ -22,10 +22,6 @@ using namespace MIDI_NAMESPACE;
 
 #include "AppleMIDI_Namespace.h"
 
-#ifndef UDP_TX_PACKET_MAX_SIZE
-#define UDP_TX_PACKET_MAX_SIZE 24
-#endif
-
 BEGIN_APPLEMIDI_NAMESPACE
 
 static unsigned long now;
@@ -212,6 +208,8 @@ private:
 	// reading from the network
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
+
+    byte packetBuffer[Settings::UdpTxPacketMaxSize];
 
 	AppleMIDIParser<UdpClass, Settings, Platform> _appleMIDIParser;
 	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
