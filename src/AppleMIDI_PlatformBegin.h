@@ -9,12 +9,8 @@ BEGIN_APPLEMIDI_NAMESPACE
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #define PACKED
-#elif ARDUINO
-#define PACKED __attribute__ ((packed))
-#elif __APPLE__
-#define PACKED
 #else
-#define PACKED
+#define PACKED __attribute__((__packed__))
 #endif
 
 struct DefaultPlatform
