@@ -82,8 +82,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
             break; // one or the other buffer does not have enough data
-
-        // TODO can we ever get here???
         
         if (NULL != _exceptionCallback)
             _exceptionCallback(ssrc, UnexpectedParseException);
