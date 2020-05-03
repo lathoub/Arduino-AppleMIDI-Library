@@ -204,10 +204,11 @@ protected:
         return byte;
     };
 
-private:
+protected:
 	UdpClass controlPort;
 	UdpClass dataPort;
 
+private:
 	// reading from the network
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
