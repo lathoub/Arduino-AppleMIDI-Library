@@ -4,7 +4,7 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #pragma pack(push, 1)
 #define PACKED
 #elif ARDUINO
