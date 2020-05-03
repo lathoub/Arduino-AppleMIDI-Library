@@ -9,6 +9,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
+* Compiles on Arduino, MacOS (XCode) and Windows (MSVS)
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
