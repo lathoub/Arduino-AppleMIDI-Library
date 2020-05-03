@@ -2,6 +2,8 @@
 
 #include "AppleMIDI_Namespace.h"
 
+#include "utility/endian.h"
+
 BEGIN_APPLEMIDI_NAMESPACE
 
 #ifdef _MSC_VER
