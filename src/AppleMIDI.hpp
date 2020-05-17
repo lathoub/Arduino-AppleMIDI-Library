@@ -355,10 +355,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
     {
         if (endSession.ssrc == participants[i].ssrc)
         {
+            auto ssrc = participants[i].ssrc;
+
             participants.erase(i);
             
             if (NULL != _disconnectedCallback)
-                _disconnectedCallback(participants[i].ssrc);
+                _disconnectedCallback(ssrc);
 
             return;
         }
