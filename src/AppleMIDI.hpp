@@ -100,6 +100,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMID
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
+    // ignore invitation of a participant already in the participant list
+    if (NULL != getParticipantBySSRC(invitation.ssrc))
+        return;
+
     // advertise our own session name
 #ifdef KEEP_SESSION_NAME
     strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
@@ -351,10 +355,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
     {
         if (endSession.ssrc == participants[i].ssrc)
         {
+            auto ssrc = participants[i].ssrc;
+
             participants.erase(i);
             
             if (NULL != _disconnectedCallback)
-                _disconnectedCallback(participants[i].ssrc);
+                _disconnectedCallback(ssrc);
 
             return;
         }
