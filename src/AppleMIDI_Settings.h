@@ -24,10 +24,9 @@ struct DefaultSettings
     // two sequence numbers. The sender can then free the memory containing old journalling data if necessary.
     static const unsigned long ReceiversFeedbackThreshold = 1000;
     
-    // Should not be lower than 11000 (15s)
-    // MacOS sends CK messages every 10 seconds
-    // rtpMIDI on Windows sends CK messages every x seconds
-    static const unsigned long CK_MaxTimeOut = 45000;
+    // The initiator must initiate a new sync exchange at least once every 60 seconds
+    // as in https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
+    static const unsigned long CK_MaxTimeOut = 61000;
 
     // when set to true, the lower 32-bits of the rtpClock ae send
     // when set to false, 0 will be set for immediate playout.
