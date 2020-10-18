@@ -1,5 +1,7 @@
 #include <Ethernet.h>
 
+#define SerialMon Serial
+#define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -19,34 +21,28 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("Booting");
-
-  Serial.println(F("Getting IP address..."));
+  SerialMon.begin(115200);
+  while (!SerialMon);
+  DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    Serial.println(F("Failed DHCP, check network cable & reboot"));
+    DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  Serial.print(F("IP address is "));
-  Serial.println(Ethernet.localIP());
+  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Then press the Connect button"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  DBG(F("Listen to incoming MIDI commands"));
 
-  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  Serial.print(F("Add device named Arduino with Host/Port "));
-  Serial.print(Ethernet.localIP());
-  Serial.println(F(":5004"));
-  Serial.println(F("Then press the Connect button"));
-
-  // Listen for MIDI messages on channel 1
-  MIDI.begin(1);
+  MIDI.begin();
 
   // Stay informed on connection status
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  Serial.println(F("Send MIDI messages to this session and see the latency on the Serial Monitor"));
+  DBG(F("Send MIDI messages every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -62,7 +58,6 @@ void loop()
   if (isConnected && (millis() - t1) > 1000)
   {
     t1 = millis();
-    //   Serial.print(F(".");
 
     byte note = random(1, 127);
     byte velocity = 55;
@@ -82,8 +77,7 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  Serial.print(F("Connected to session "));
-  Serial.println(name);
+  DBG(F("Connected to session"), name);
 }
 
 // -----------------------------------------------------------------------------
@@ -91,5 +85,5 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  Serial.println(F("Disconnected"));
+  DBG(F("Disconnected"));
 }

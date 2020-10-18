@@ -5,9 +5,11 @@
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
+#include "arduino_secrets.h"
+
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 void setup() {
   SerialMon.begin(115200);
@@ -15,7 +17,7 @@ void setup() {
 
   DBG("Booting");
 
-  WiFi.begin("xxxx", "uuuu");
+  WiFi.begin(SECRET_SSID, SECRET_PASS);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     DBG("Establishing connection to WiFi..");
@@ -26,23 +28,16 @@ void setup() {
   DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Every second send a random NoteOn/Off"));
+  DBG(F("Listen to incoming MIDI commands"));
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
   AppleMIDI.setHandleError(OnAppleMidiError);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-  DBG("Little Endian");
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-  DBG("Big Endian");
-#endif
-
   MIDI.begin();
 
-  MIDI.setHandleNoteOff(OnNoteOff);
-  MIDI.setHandleNoteOn(OnNoteOn);
+  MIDI.setHandleNoteOff(OnMidiNoteOff);
+  MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleAfterTouchPoly(OnAfterTouchPoly);
   MIDI.setHandleControlChange(OnControlChange);
   MIDI.setHandleProgramChange(OnProgramChange);
@@ -67,18 +62,25 @@ void loop() {
   MIDI.read();
 }
 
-//------
-
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
   DBG(F("Connected to session"), name);
 }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  DBG(F("Disconnected"));
+DBG(F("Disconnected"));
 }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
   switch (err)
   {
@@ -111,12 +113,12 @@ void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
 
 //------
 
-static void OnNoteOff(byte channel, byte note, byte velocity) {
-  DBG(F("Note Off. Channel:"), channel, " Note:", note, " Velocity:", velocity);
+static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
+  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }
 
-static void OnNoteOn(byte channel, byte note, byte velocity) {
-  DBG(F("Note On. Channel:"), channel, " Note:", note, " Velocity:", velocity);
+static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
+  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }
 
 static void OnAfterTouchPoly(byte channel, byte note, byte velocity) {
@@ -145,6 +147,7 @@ static void OnSystemExclusive(byte* data, unsigned size) {
     SerialMon.print(F(" 0x"));
     SerialMon.print(data[i], HEX);
   }
+  SerialMon.println();
 }
 
 static void OnTimeCodeQuarterFrame(byte data) {

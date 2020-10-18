@@ -35,8 +35,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  N_DEBUG_PRINT(F("Connected to session "));
-  N_DEBUG_PRINTLN(name);
+  DBG(F("Connected to session"), name);
 }
 
 // -----------------------------------------------------------------------------
@@ -59,24 +58,14 @@ void OnAppleMidiByte(const ssrc_t & ssrc, byte data) {
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOn from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  N_DEBUG_PRINT(F("Incoming NoteOff from channel: "));
-  N_DEBUG_PRINT(channel);
-  N_DEBUG_PRINT(F(", note: "));
-  N_DEBUG_PRINT(note);
-  N_DEBUG_PRINT(F(", velocity: "));
-  N_DEBUG_PRINTLN(velocity);
+  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
@@ -110,14 +99,13 @@ static void OnMidiSystemExclusive(byte* array, unsigned size) {
 
 void begin()
 {
-    V_DEBUG_PRINTLN(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-    V_DEBUG_PRINT(F("Add device named Arduino with Host/Port "));
-  //  V_DEBUG_PRINT(Ethernet.localIP());
-    V_DEBUG_PRINTLN(F(":5004"));
-    V_DEBUG_PRINTLN(F("Then press the Connect button"));
-    V_DEBUG_PRINTLN(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Then press the Connect button"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  DBG(F("Listen to incoming MIDI commands"));
 
-	MIDI.begin(1);
+	MIDI.begin();
     
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
@@ -140,7 +128,6 @@ void loop()
      if (isConnected && (millis() - t0) > 10000)
      {
        t0 = millis();
-       //   Serial.print(F(".");
 
        byte note = random(1, 127);
        byte velocity = 55;

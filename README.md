@@ -27,7 +27,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 void setup()
 {
-  MIDI.begin(1);
+  MIDI.begin();
   
   // Optional
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);

@@ -14,7 +14,9 @@ AppleMidi	KEYWORD1
 setHandleConnected	 KEYWORD2
 setHandleDisconnected	 KEYWORD2
 setHandleError	         KEYWORD2
+setHandleStartReceivedMidi    KEYWORD2
 setHandleReceivedMidi    KEYWORD2
+setHandleEndReceivedMidi    KEYWORD2
 setHandleReceivedRtp     KEYWORD2
 
 setHandleNoteOff 	 KEYWORD2 
@@ -73,5 +75,4 @@ MIDI		KEYWORD3
 #######################################
 
 APPLEMIDI_CREATE_INSTANCE	LITERAL1
-APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE	LITERAL1
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE	LITERAL1

@@ -19,12 +19,12 @@ public:
     {
         _port = port;
 
-        if (port == 5004 && true)
+        if (port == DEFAULT_CONTROL_PORT && true)
         {
             // AppleMIDI messages
         }
         
-        if (port == 5005 && true)
+        if (port == (DEFAULT_CONTROL_PORT + 1) && true)
         {
             // rtp-MIDI and AppleMIDI messages
             

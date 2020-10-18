@@ -1,5 +1,7 @@
 #include <Ethernet.h>
 
+#define SerialMon Serial
+#define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -34,29 +36,23 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("Booting");
-
-  Serial.println(F("Getting IP address..."));
+  SerialMon.begin(115200);
+  while (!SerialMon);
+  
+  DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    Serial.println(F("Failed DHCP, check network cable & reboot"));
+    DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  Serial.print("IP address is ");
-  Serial.println(Ethernet.localIP());
+  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Then press the Connect button"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  DBG(F("Listen to incoming MIDI commands"));
 
-  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  Serial.print(F("Add device named Arduino with Host/Port "));
-  Serial.print(Ethernet.localIP());
-  Serial.println(F(":5004"));
-  Serial.println(F("Then press the Connect button"));
-  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
-
-  // Create a session and wait for a remote host to connect to us
-  MIDI.begin(1);
+  MIDI.begin();
 
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van makenDw
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
@@ -64,7 +60,7 @@ void setup()
 
   MIDI.setHandleSystemExclusive(OnMidiSysEx);
 
-  Serial.println(F("Every second send a random NoteOn/Off"));
+  DBG(F("Send and Receive SysEx"));
 }
 
 // -----------------------------------------------------------------------------
@@ -93,8 +89,7 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  Serial.print(F("Connected to session "));
-  Serial.println(name);
+  DBG(F("Connected to session"), name);
 }
 
 // -----------------------------------------------------------------------------
@@ -102,24 +97,24 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  Serial.println(F("Disconnected"));
+  DBG(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void OnMidiSysEx(byte* data, unsigned length) {
-  Serial.print(F("SYSEX: ("));
-  Serial.print(getSysExStatus(data, length));
-  Serial.print(F(", "));
-  Serial.print(length);
-  Serial.print(F(" bytes) "));
+  SerialMon.print(F("SYSEX: ("));
+  SerialMon.print(getSysExStatus(data, length));
+  SerialMon.print(F(", "));
+  SerialMon.print(length);
+  SerialMon.print(F(" bytes) "));
   for (uint16_t i = 0; i < length; i++)
   {
-    Serial.print(data[i], HEX);
-    Serial.print(" ");
+    SerialMon.print(data[i], HEX);
+    SerialMon.print(" ");
   }
-  Serial.println();
+  SerialMon.println();
 }
 
 char getSysExStatus(const byte* data, uint16_t length)

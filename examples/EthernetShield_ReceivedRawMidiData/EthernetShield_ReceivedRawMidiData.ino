@@ -1,5 +1,7 @@
 #include <Ethernet.h>
 
+#define SerialMon Serial
+#define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
 
@@ -19,40 +21,35 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("Booting");
+  SerialMon.begin(115200);
+  while (!SerialMon);
 
-
-  Serial.println(F("Getting IP address..."));
+  DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    Serial.println(F("Failed DHCP, check network cable & reboot"));
+    DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  Serial.print(F("IP address is "));
-  Serial.println(Ethernet.localIP());
+  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Then press the Connect button"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  DBG(F("Listen to incoming MIDI commands"));
 
-  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  Serial.print(F("Add device named Arduino with Host/Port "));
-  Serial.print(Ethernet.localIP());
-  Serial.println(F(":5004"));
-  Serial.println(F("Then press the Connect button"));
-  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
-
-  // Create a session and wait for a remote host to connect to us
-  MIDI.begin(1);
+  MIDI.begin();
 
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleStartReceivedMidi(OnAppleMidiStartReceived);
   AppleMIDI.setHandleReceivedMidi(OnAppleMidiReceivedByte);
+  AppleMIDI.setHandleEndReceivedMidi(OnAppleMidiEndReceive);
 
   MIDI.setHandleNoteOn(OnMidiNoteOn);
   MIDI.setHandleNoteOff(OnMidiNoteOff);
 
-  Serial.println(F("Waiting for incoming MIDI messages"));
+  DBG(F("Waiting for incoming MIDI messages"));
 }
 
 // -----------------------------------------------------------------------------
@@ -73,8 +70,7 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  Serial.print(F("Connected to session "));
-  Serial.println(name);
+  DBG(F("Connected to session"), name);
 }
 
 // -----------------------------------------------------------------------------
@@ -82,36 +78,40 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
   isConnected = false;
-  Serial.println(F("Disconnected"));
+  DBG(F("Disconnected"));
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+void OnAppleMidiStartReceived(const ssrc_t & ssrc) {
+  DBG(F("Start receiving"), ssrc);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void OnAppleMidiReceivedByte(const ssrc_t & ssrc, byte data) {
-  Serial.println(data, HEX);
+  SerialMon.println(data, HEX);
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+void OnAppleMidiEndReceive(const ssrc_t & ssrc) {
+  DBG(F("End receiving"), ssrc);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOn  from channel: "));
-  Serial.print(channel);
-  Serial.print(F(", note: "));
-  Serial.print(note);
-  Serial.print(F(", velocity: "));
-  Serial.println(velocity);
+  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOff from channel: "));
-  Serial.print(channel);
-  Serial.print(F(", note: "));
-  Serial.print(note);
-  Serial.print(F(", velocity: "));
-  Serial.println(velocity);
+  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }

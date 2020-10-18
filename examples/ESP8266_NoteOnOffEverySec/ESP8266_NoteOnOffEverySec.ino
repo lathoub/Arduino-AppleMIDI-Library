@@ -1,48 +1,60 @@
-#include "ETH_Helper.h"
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiUdp.h>
 
+#define SerialMon Serial
+#define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 USING_NAMESPACE_APPLEMIDI
+
+char ssid[] = "yourNetwork"; //  your network SSID (name)
+char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
 bool isConnected = false;
 
-APPLEMIDI_CREATE_DEFAULTSESSION_ESP32_INSTANCE();
+APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
+
+// Forward declaration
+void OnAppleMidiConnected(uint32_t ssrc, char* name);
+void OnAppleMidiDisconnected(uint32_t ssrc);
+void OnMidiNoteOn(byte channel, byte note, byte velocity);
+void OnMidiNoteOff(byte channel, byte note, byte velocity);
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void setup()
 {
-  Serial.begin(115200);
-  while (!Serial);
-  Serial.println("Booting");
+  // Serial communications and wait for port to open:
+  SerialMon.begin(115200);
+  while (!SerialMon);
 
-  ETH_startup();
-  
-  MDNS.begin(AppleMIDI.getName());
+  DBG("Booting");
 
-  Serial.print("\nIP address is ");
-  Serial.println(ETH.localIP());
+  WiFi.begin(ssid, pass);
 
-  Serial.println(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  Serial.print(F("Add device named Arduino with Host/Port "));
-  Serial.print(ETH.localIP());
-  Serial.println(F(":5004"));
-  Serial.println(F("Then press the Connect button"));
-  Serial.println(F("Then open a MIDI listener (eg MIDI-OX) and monitor incoming notes"));
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    DBG("Establishing connection to WiFi..");
+  }
+  DBG("Connected to network");
 
-  // Create a session and wait for a remote host to connect to us
-  MIDI.begin(1); // listen on channel 1
+  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Then press the Connect button"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  DBG(F("Listen to incoming MIDI commands"));
+
+  MIDI.begin();
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
 
-  MIDI.setHandleNoteOn(OnAppleMidiNoteOn);
-  MIDI.setHandleNoteOff(OnAppleMidiNoteOff);
+  MIDI.setHandleNoteOn(OnMidiNoteOn);
+  MIDI.setHandleNoteOff(OnMidiNoteOff);
 
-  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
-
-  Serial.println(F("Every second send a random NoteOn/Off"));
+  DBG(F("Sending NoteOn/Off of note 45, every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -58,9 +70,8 @@ void loop()
   if (isConnected && (millis() - t0) > 1000)
   {
     t0 = millis();
-    //   Serial.print(F(".");
 
-    byte note = random(1, 127);
+    byte note = 45;
     byte velocity = 55;
     byte channel = 1;
 
@@ -77,39 +88,28 @@ void loop()
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  Serial.print(F("Connected to session "));
-  Serial.println(name);
+  isConnected  = true;
+  DBG(F("Connected to session"), name);
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
-  isConnected = false;
-  Serial.println(F("Disconnected"));
+  isConnected  = false;
+  DBG(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOn(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOn  from channel: "));
-  Serial.print(channel);
-  Serial.print(F(", note: "));
-  Serial.print(note);
-  Serial.print(F(", velocity: "));
-  Serial.println(velocity);
+void OnMidiNoteOn(byte channel, byte note, byte velocity) {
+  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-static void OnAppleMidiNoteOff(byte channel, byte note, byte velocity) {
-  Serial.print(F("Incoming NoteOff from channel: "));
-  Serial.print(channel);
-  Serial.print(F(", note: "));
-  Serial.print(note);
-  Serial.print(F(", velocity: "));
-  Serial.println(velocity);
+void OnMidiNoteOff(byte channel, byte note, byte velocity) {
+  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }
