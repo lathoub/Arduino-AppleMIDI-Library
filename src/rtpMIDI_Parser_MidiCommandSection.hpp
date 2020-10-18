@@ -78,6 +78,10 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
      * not be intermingled with other MIDI-commands, so we handle this case right here and return */
     if (octet >= 0xf8)
     {
+        session->StartReceivedMidi();
+        session->ReceivedMidi(buffer[0]);
+        session->EndReceivedMidi();
+        
         return 1;
     }
 
