@@ -15,7 +15,7 @@ void setup() {
 
   DBG("Booting");
 
-  WiFi.begin("The Hefty Network", "0208196700");
+  WiFi.begin("xxxx", "uuuu");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     DBG("Establishing connection to WiFi..");
