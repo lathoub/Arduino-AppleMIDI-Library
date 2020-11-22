@@ -45,10 +45,10 @@ class AppleMIDISession
 	friend class rtpMIDIParser<UdpClass, Settings, Platform>;
 
 public:
-	AppleMIDISession(const char *name, const uint16_t port = DEFAULT_CONTROL_PORT)
+	AppleMIDISession(const char *sessionName, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
 		this->port = port;
-        strncpy(this->localName, name, DefaultSettings::MaxSessionNameLen);
+        strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
 	};
 
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
@@ -62,6 +62,8 @@ public:
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
     const ssrc_t getSynchronizationSource() { return this->ssrc; };
+
+    void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
 
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
