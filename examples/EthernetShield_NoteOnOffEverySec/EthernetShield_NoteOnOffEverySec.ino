@@ -15,26 +15,6 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
-// ====================================================================================
-// Event handlers for incoming MIDI messages
-// ====================================================================================
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  DBG(F("Connected to session"), name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected = false;
-  DBG(F("Disconnected"));
-}
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -57,8 +37,20 @@ void setup()
   MIDI.begin();
 
   // Stay informed on connection status
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+    isConnected = true;
+    DBG(F("Connected to session"), name);
+  });
+  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+    isConnected = false;
+    DBG(F("Disconnected"));
+  });
+  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOn "), note);
+  });
+  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOff "), note);
+  });
 
   DBG(F("Send MIDI messages every second"));
 }
