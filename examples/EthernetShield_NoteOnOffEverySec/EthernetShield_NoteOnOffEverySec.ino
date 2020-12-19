@@ -15,6 +15,26 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
+// ====================================================================================
+// Event handlers for incoming MIDI messages
+// ====================================================================================
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Device connected
+// -----------------------------------------------------------------------------
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+  isConnected = true;
+  DBG(F("Connected to session"), name);
+}
+
+// -----------------------------------------------------------------------------
+// rtpMIDI session. Device disconnected
+// -----------------------------------------------------------------------------
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+  isConnected = false;
+  DBG(F("Disconnected"));
+}
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -44,22 +64,6 @@ void setup()
 }
 
 // -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  DBG(F("Connected to session"), name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected = false;
-  DBG(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void loop()
@@ -81,7 +85,3 @@ void loop()
     MIDI.sendNoteOff(note, velocity, channel);
   }
 }
-
-// ====================================================================================
-// Event handlers for incoming MIDI messages
-// ====================================================================================
