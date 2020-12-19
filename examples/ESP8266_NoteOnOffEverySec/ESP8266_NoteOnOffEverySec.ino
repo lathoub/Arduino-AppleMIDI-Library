@@ -38,7 +38,6 @@ void setup()
 
   MIDI.begin();
 
-  // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected = true;
     DBG(F("Connected to session"), name);

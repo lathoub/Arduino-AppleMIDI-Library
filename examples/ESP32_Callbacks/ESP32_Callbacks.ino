@@ -25,7 +25,6 @@ void setup() {
   DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
@@ -81,28 +80,28 @@ DBG(F("Disconnected"));
 void OnAppleMidiError(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, int32_t err) {
   switch (err)
   {
-    case Exception::BufferFullException:
+    case APPLEMIDI_NAMESPACE::Exception::BufferFullException:
       DBG(F("*** BufferFullException"));
       break;
-    case Exception::ParseException:
+    case APPLEMIDI_NAMESPACE::Exception::ParseException:
       DBG(F("*** ParseException"));
       break;
-    case Exception::TooManyParticipantsException:
+    case APPLEMIDI_NAMESPACE::Exception::TooManyParticipantsException:
       DBG(F("*** TooManyParticipantsException"));
       break;
-    case Exception::UnexpectedInviteException:
+    case APPLEMIDI_NAMESPACE::Exception::UnexpectedInviteException:
       DBG(F("*** UnexpectedInviteException"));
       break;
-    case Exception::ParticipantNotFoundException:
+    case APPLEMIDI_NAMESPACE::Exception::ParticipantNotFoundException:
       DBG(F("*** ParticipantNotFoundException"));
       break;
-    case Exception::ListenerTimeOutException:
+    case APPLEMIDI_NAMESPACE::Exception::ListenerTimeOutException:
       DBG(F("*** ListenerTimeOutException"));
       break;
-    case Exception::MaxAttemptsException:
+    case APPLEMIDI_NAMESPACE::Exception::MaxAttemptsException:
       DBG(F("*** MaxAttemptsException"));
       break;
-    case Exception::NoResponseFromConnectionRequestException:
+    case APPLEMIDI_NAMESPACE::Exception::NoResponseFromConnectionRequestException:
       DBG(F("***:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
       break;
   }

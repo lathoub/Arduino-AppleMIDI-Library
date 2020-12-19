@@ -30,10 +30,10 @@ void setup()
   }
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI1.getPort(), "(Name", AppleMIDI1.getName(), ")");
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI2.getPort(), "(Name", AppleMIDI2.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
   // Listen for MIDI messages on channel 1
   MIDI1.begin(1);

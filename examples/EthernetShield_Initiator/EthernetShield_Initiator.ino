@@ -33,23 +33,30 @@ void setup()
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
   MIDI.begin();
 
-  // Stay informed on connection status
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-
-  // and let us know ehen notes come in
-  MIDI.setHandleNoteOn(OnMidiNoteOn);
-  MIDI.setHandleNoteOff(OnMidiNoteOff);
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+    isConnected = true;
+    DBG(F("Connected to session"), name);
+  });
+  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+    isConnected = false;
+    DBG(F("Disconnected"));
+  });
+  
+  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOn "), note);
+  });
+  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOff "), note);
+  });
 
   // Initiate the session
   IPAddress remote(192, 168, 1, 4);
   AppleMIDI.sendInvite(remote, DEFAULT_CONTROL_PORT); // port is 5004 by default
 
-  DBG(F("Every second send a random NoteOn/Off"));
+  DBG(F("Sending a random NoteOn/Off every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -73,38 +80,4 @@ void loop()
     MIDI.sendNoteOn(note, velocity, channel);
     MIDI.sendNoteOff(note, velocity, channel);
   }
-}
-
-// ====================================================================================
-// Event handlers for incoming MIDI messages
-// ====================================================================================
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  DBG(F("Connected to session"), name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected = false;
-  DBG(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }

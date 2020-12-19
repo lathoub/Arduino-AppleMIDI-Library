@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 #include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
 
-#define OPTIONAL_MDNS
-
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.

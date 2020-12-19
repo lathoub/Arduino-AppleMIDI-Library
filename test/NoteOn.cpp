@@ -102,7 +102,6 @@ void begin()
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
 	MIDI.begin();
     
