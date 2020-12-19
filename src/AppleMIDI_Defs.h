@@ -149,7 +149,7 @@ typedef struct PACKED AppleMIDI_Synchronization
 {
 	ssrc_t ssrc;
 	uint8_t count;
-	uint8_t padding[3];
+	uint8_t padding[3] = {0,0,0};
 	timestamp_t timestamps[3];
 } AppleMIDI_Synchronization_t;
 
