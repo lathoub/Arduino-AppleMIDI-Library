@@ -30,9 +30,6 @@ void setup()
   }
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
 
@@ -53,8 +50,12 @@ void setup()
   });
 
   // Initiate the session
-  IPAddress remote(192, 168, 1, 4);
+  IPAddress remote(192, 168, 1, 65);
   AppleMIDI.sendInvite(remote, DEFAULT_CONTROL_PORT); // port is 5004 by default
+
+  DBG(F("Connecting to "), remote, "Port", DEFAULT_CONTROL_PORT, "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Watch as this session is added to the Participants list"));
+  DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   DBG(F("Sending a random NoteOn/Off every second"));
 }
@@ -77,7 +78,7 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-    MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
+ //   MIDI.sendNoteOn(note, velocity, channel);
+ //   MIDI.sendNoteOff(note, velocity, channel);
   }
 }
