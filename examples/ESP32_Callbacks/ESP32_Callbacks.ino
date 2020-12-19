@@ -4,7 +4,7 @@
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
-#include "arduino_secrets.h"
+#include "arduino_secrets.h" // contains SECRET_SSID and SECRET_PASS
 
 bool isConnected = false;
 

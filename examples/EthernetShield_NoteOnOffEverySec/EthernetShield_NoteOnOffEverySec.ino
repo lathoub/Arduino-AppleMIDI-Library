@@ -46,10 +46,10 @@ void setup()
   });
   
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn "), note);
+    DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff "), note);
+    DBG(F("NoteOff"), note);
   });
 
   DBG(F("Sending MIDI messages every second"));
@@ -74,6 +74,6 @@ void loop()
     byte channel = 1;
 
     MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
+//    MIDI.sendNoteOff(note, velocity, channel);
   }
 }

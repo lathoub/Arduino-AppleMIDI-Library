@@ -1,8 +1,4 @@
-#include <Ethernet.h>
-
-#define SerialMon Serial
-#define APPLEMIDI_DEBUG SerialMon
-#include <AppleMIDI.h>
+#include <MIDI.h>
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -27,7 +23,7 @@ byte sysexBig[] = { 0xF0, 0x41,
                            0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
                     0xF7 };
 
-APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
+MIDI_CREATE_DEFAULT_INSTANCE();
 
 // -----------------------------------------------------------------------------
 //
@@ -37,27 +33,7 @@ void setup()
   DBG_SETUP(115200);
   DBG("Booting");
 
-  if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
-    for (;;);
-  }
-
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
-
   MIDI.begin();
-
-  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
-    DBG(F("Connected to session"), name);
-  });
-  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
-    DBG(F("Disconnected"));
-  });
-
   MIDI.setHandleSystemExclusive(OnMidiSysEx);
 
   DBG(F("Send SysEx every second"));
