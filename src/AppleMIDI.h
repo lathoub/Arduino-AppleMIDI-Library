@@ -63,7 +63,7 @@ public:
 
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
-    const ssrc_t getSynchronizationSource() { return this->ssrc; };
+    const ssrc_t   getSynchronizationSource() { return this->ssrc; };
 
     void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
 
@@ -237,6 +237,7 @@ private:
 	uint16_t port = DEFAULT_CONTROL_PORT;
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
     int32_t latencyAdjustment = 0;
+   	uint16_t sequenceNr = random(1, UINT16_MAX);
             
 private:
     void readControlPackets();

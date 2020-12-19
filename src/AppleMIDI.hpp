@@ -126,7 +126,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
     participant.lastSyncExchangeTime = now;
-    participant.sequenceNr = random(1, UINT16_MAX); // // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, DefaultSettings::MaxSessionNameLen);
 #endif
@@ -345,7 +344,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback_t &receiverFeedback)
 {
-    // As we do not keep any recovery journals, no command history, nothing!
+    // We do not keep any recovery journals, no command history, nothing!
+    // If we did, then we can flush the previous sent buffer until receiverFeedback.sequenceNr
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -479,9 +479,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
         return;
-
-    participant->sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
-    
+  
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
@@ -502,8 +500,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     // prepared to defer rendering the messages until the proper time.)
     //
     rtp.timestamp = (Settings::TimestampRtpPackets) ? htonl(rtpMidiClock.Now()) : 0;
-    
-    rtp.sequenceNr = htons(participant->sequenceNr);
+ 
+    // 
+    sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
+    rtp.sequenceNr = htons(sequenceNr);
+
+
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
@@ -841,7 +843,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         auto latency = 0;
 #endif
         participant->sequenceNr = rtp.sequenceNr;
-        
+
         if (NULL != _receivedRtpCallback)
             _receivedRtpCallback(0, rtp, latency);
     }
