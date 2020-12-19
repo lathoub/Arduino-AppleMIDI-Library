@@ -395,7 +395,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
             port.write((uint8_t *)command, sizeof(amInvitation));
             port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
             invitation.initiatorToken = htonl(invitation.initiatorToken);
-            invitation.ssrc = htonl(ssrc);
+            invitation.ssrc = ssrc;
+            invitation.ssrc = htonl(invitation.ssrc);
             port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
         
         port.endPacket();
@@ -429,7 +430,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const 
     {
         dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
         dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
-        synchronization.ssrc = htonl(this->ssrc);
+        synchronization.ssrc = ssrc;
+        synchronization.ssrc = htonl(synchronization.ssrc);
 
         synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
         synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
@@ -483,7 +485,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
-    rtp.ssrc = htonl(ssrc);
+    rtp.ssrc = ssrc;
+    rtp.ssrc = htonl(rtp.ssrc);
     
     // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
@@ -503,8 +506,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
  
     // 
     sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
-    rtp.sequenceNr = htons(sequenceNr);
 
+    rtp.sequenceNr = sequenceNr;
+    rtp.sequenceNr = htons(rtp.sequenceNr);
 
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
