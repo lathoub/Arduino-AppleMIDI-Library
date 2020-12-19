@@ -532,7 +532,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     }
     
     // write out the MIDI Section
-    for (auto i = 0; i < bufferLen; i++)
+    for (size_t i = 0; i < bufferLen; i++)
         dataPort.write(outMidiBuffer[i]);
     
     // *No* journal section (Not supported)
