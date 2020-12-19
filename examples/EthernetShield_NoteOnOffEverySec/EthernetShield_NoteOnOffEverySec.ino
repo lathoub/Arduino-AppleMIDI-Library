@@ -45,6 +45,7 @@ void setup()
     isConnected = false;
     DBG(F("Disconnected"));
   });
+  
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOn "), note);
   });
