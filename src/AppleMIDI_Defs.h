@@ -37,30 +37,6 @@ typedef const char* AppleMIDIConstStr;
 #define GF(x) x
 #endif
 
-#ifdef APPLEMIDI_DEBUG
-namespace {
-template <typename T>
-static void DBG_PLAIN(T last) {
-  APPLEMIDI_DEBUG.println(last);
-}
-
-template <typename T, typename... Args>
-static void DBG_PLAIN(T head, Args... tail) {
-  APPLEMIDI_DEBUG.print(head);
-  APPLEMIDI_DEBUG.print(' ');
-  DBG_PLAIN(tail...);
-}
-
-template <typename... Args>
-static void DBG(Args... args) {
-  DBG_PLAIN(args...);
-}
-}  // namespace
-#else
-#define DBG_PLAIN(...)
-#define DBG(...)
-#endif
-
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 

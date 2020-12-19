@@ -7,6 +7,8 @@ using namespace MIDI_NAMESPACE;
 
 #include "IPAddress.h"
 
+#include "AppleMIDI_Debug.h"
+
 #include "AppleMIDI_PlatformBegin.h"
 #include "AppleMIDI_Defs.h"
 #include "AppleMIDI_Settings.h"

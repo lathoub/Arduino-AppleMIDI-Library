@@ -5,7 +5,6 @@
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
-USING_NAMESPACE_APPLEMIDI
 
 char ssid[] = "yourNetwork"; //  your network SSID (name)
 char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
@@ -26,10 +25,7 @@ void OnMidiNoteOff(byte channel, byte note, byte velocity);
 // -----------------------------------------------------------------------------
 void setup()
 {
-  // Serial communications and wait for port to open:
-  SerialMon.begin(115200);
-  while (!SerialMon);
-
+  DBG_SETUP(115200);
   DBG("Booting");
 
   WiFi.begin(ssid, pass);
@@ -87,7 +83,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected  = true;
   DBG(F("Connected to session"), name);
 }
@@ -95,7 +91,7 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected  = false;
   DBG(F("Disconnected"));
 }

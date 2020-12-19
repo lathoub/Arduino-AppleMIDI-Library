@@ -1,7 +1,6 @@
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
-USING_NAMESPACE_APPLEMIDI
 
 #include "ETH_Helper.h"
 
@@ -15,9 +14,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  SerialMon.begin(115200);
-  while (!SerialMon);
-  
+  DBG_SETUP(115200);
   DBG("Booting");
 
   ETH_startup();
@@ -74,7 +71,7 @@ void loop()
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected = true;
   DBG(F("Connected to session"), name);
 }
@@ -82,7 +79,7 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected = false;
   DBG(F("Disconnected"));
 }

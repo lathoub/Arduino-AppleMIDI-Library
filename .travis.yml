@@ -13,4 +13,5 @@ install:
     - platformio lib -g install 62@5.0.0 870 872
 
 script:
-- platformio ci --board=uno    --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
+- platformio ci --board=uno      --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
+- platformio ci --board=esp32dev --lib=. examples/\ESP8266_NoteOnOffEverySec/\ESP8266_NoteOnOffEverySec.ino;
