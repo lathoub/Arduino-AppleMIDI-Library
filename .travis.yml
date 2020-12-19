@@ -7,13 +7,10 @@ cache:
     directories:
         - "~/.platformio"
 
-env:
-    - PLATFORMIO_CI_SRC=examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino
-
 install:
     - pip install -U platformio
     - platformio update
     - platformio lib -g install 62@5.0.0 870 872
 
 script:
-- pio ci --board=uno
+- pio ci --board=uno --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
