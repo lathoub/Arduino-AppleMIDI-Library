@@ -72,7 +72,6 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
     size_t consumed = 0;
 
     auto octet = buffer[0];
-    bool using_rs;
 
     /* MIDI realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
      * not be intermingled with other MIDI-commands, so we handle this case right here and return */
@@ -96,12 +95,9 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
         /* our first octet is "virtual" coming from a preceding MIDI-command,
          * so actually we have not really consumed anything yet */
         octet = runningstatus;
-        using_rs = true;
     }
     else
     {
-        /* We have a "real" status-byte */
-        using_rs = false;
         /* Let's see how this octet influences our running-status */
         /* if we have a "normal" MIDI-command then the new status replaces the current running-status */
         if (octet < 0xf0)

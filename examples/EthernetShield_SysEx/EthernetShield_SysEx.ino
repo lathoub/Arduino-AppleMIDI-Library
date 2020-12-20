@@ -3,7 +3,6 @@
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
-USING_NAMESPACE_APPLEMIDI
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -18,16 +17,16 @@ byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0
 byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
 byte sysex16[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x32, 0x50, 0x4D, 0xF7 };
 byte sysexBig[] = { 0xF0, 0x41,
-                           0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
-                           0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
-                           0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
-                           0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
-                           0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
-                           0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
-                           0x7a,
-    
-                           0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-                    0xF7 };
+                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+                    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+                    0x7a,
+                    0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+                    0xF7
+                  };
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -36,9 +35,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  SerialMon.begin(115200);
-  while (!SerialMon);
-  
+  DBG_SETUP(115200);
   DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
@@ -50,17 +47,20 @@ void setup()
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
+
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+    isConnected = true;
+    DBG(F("Connected to session"), name);
+  });
+  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+    isConnected = false;
+    DBG(F("Disconnected"));
+  });
 
   MIDI.begin();
-
-  // check: zien we de connecttion binnenkomen?? Anders terug een ref van makenDw
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-
   MIDI.setHandleSystemExclusive(OnMidiSysEx);
 
-  DBG(F("Send and Receive SysEx"));
+  DBG(F("Send SysEx every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -75,8 +75,8 @@ void loop()
   // (dont cáll delay(1000) as it will stall the pipeline)
   if (isConnected && (millis() - t1) > 1000)
   {
-       MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
-       t1 = millis();
+    MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
+    t1 = millis();
   }
 }
 
@@ -84,25 +84,6 @@ void loop()
 // Event handlers for incoming MIDI messages
 // ====================================================================================
 
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  DBG(F("Connected to session"), name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
-  isConnected = false;
-  DBG(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
 void OnMidiSysEx(byte* data, unsigned length) {
   SerialMon.print(F("SYSEX: ("));
   SerialMon.print(getSysExStatus(data, length));

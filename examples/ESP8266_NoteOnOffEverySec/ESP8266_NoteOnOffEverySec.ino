@@ -5,7 +5,6 @@
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
-USING_NAMESPACE_APPLEMIDI
 
 char ssid[] = "yourNetwork"; //  your network SSID (name)
 char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
@@ -15,21 +14,12 @@ bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
-// Forward declaration
-void OnAppleMidiConnected(uint32_t ssrc, char* name);
-void OnAppleMidiDisconnected(uint32_t ssrc);
-void OnMidiNoteOn(byte channel, byte note, byte velocity);
-void OnMidiNoteOff(byte channel, byte note, byte velocity);
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void setup()
 {
-  // Serial communications and wait for port to open:
-  SerialMon.begin(115200);
-  while (!SerialMon);
-
+  DBG_SETUP(115200);
   DBG("Booting");
 
   WiFi.begin(ssid, pass);
@@ -48,11 +38,21 @@ void setup()
 
   MIDI.begin();
 
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
-  AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-
-  MIDI.setHandleNoteOn(OnMidiNoteOn);
-  MIDI.setHandleNoteOff(OnMidiNoteOff);
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+    isConnected = true;
+    DBG(F("Connected to session"), name);
+  });
+  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+    isConnected = false;
+    DBG(F("Disconnected"));
+  });
+  
+  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOn"), note);
+  });
+  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
+    DBG(F("NoteOff"), note);
+  });
 
   DBG(F("Sending NoteOn/Off of note 45, every second"));
 }
@@ -78,38 +78,4 @@ void loop()
     MIDI.sendNoteOn(note, velocity, channel);
     MIDI.sendNoteOff(note, velocity, channel);
   }
-}
-
-// ====================================================================================
-// Event handlers for incoming MIDI messages
-// ====================================================================================
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device connected
-// -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
-  isConnected  = true;
-  DBG(F("Connected to session"), name);
-}
-
-// -----------------------------------------------------------------------------
-// rtpMIDI session. Device disconnected
-// -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
-  isConnected  = false;
-  DBG(F("Disconnected"));
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }

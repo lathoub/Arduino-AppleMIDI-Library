@@ -4,7 +4,6 @@
 #define APPLEMIDI_INITIATOR
 
 #include "AppleMIDI.h"
-USING_NAMESPACE_APPLEMIDI
 
 unsigned long t0 = millis();
 bool isConnected = false;
@@ -33,7 +32,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected = true;
   DBG(F("Connected to session"), name);
 }
@@ -41,17 +40,17 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected = false;
-  N_DEBUG_PRINTLN(F("Disconnected"));
+  DBG(F("Disconnected"));
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiByte(const ssrc_t & ssrc, byte data) {
-  N_DEBUG_PRINT(F("MIDI: "));
-  N_DEBUG_PRINTLN(data);
+void OnAppleMidiByte(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, byte data) {
+  DBG(F("MIDI: "));
+  DBG(data);
 }
 
 // -----------------------------------------------------------------------------
@@ -84,17 +83,17 @@ char getSysExStatus(const byte* data, uint16_t length)
 }
 
 static void OnMidiSystemExclusive(byte* array, unsigned size) {
-    N_DEBUG_PRINT(F("Incoming SysEx: "));
-    N_DEBUG_PRINT(getSysExStatus(array, size));
+    DBG(F("Incoming SysEx: "));
+    DBG(getSysExStatus(array, size));
     unsigned i = 0;
     for (; i < size - 1; i++)
     {
-        N_DEBUG_PRINT(F(" 0x"));
-        N_DEBUG_PRINT(array[i], HEX);
+        DBG(F(" 0x"));
+        DBG(array[i], HEX);
     }
-    N_DEBUG_PRINT(F(" 0x"));
-    N_DEBUG_PRINT(array[i], HEX);
-    N_DEBUG_PRINTLN();
+    DBG(F(" 0x"));
+    DBG(array[i], HEX);
+    DBG();
 }
 
 void begin()
@@ -103,7 +102,6 @@ void begin()
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
 	MIDI.begin();
     

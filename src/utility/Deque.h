@@ -32,8 +32,6 @@ public:
     const T& at(size_t) const;
 
     void clear();
-        
-    
     
 //    iterator begin();
 //    iterator end();

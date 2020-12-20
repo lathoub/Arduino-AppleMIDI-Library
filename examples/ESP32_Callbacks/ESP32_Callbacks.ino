@@ -3,18 +3,15 @@
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
-USING_NAMESPACE_APPLEMIDI
 
-#include "arduino_secrets.h"
+#include "arduino_secrets.h" // contains SECRET_SSID and SECRET_PASS
 
 bool isConnected = false;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 void setup() {
-  SerialMon.begin(115200);
-  while (!SerialMon);
-
+  DBG_SETUP(115200);
   DBG("Booting");
 
   WiFi.begin(SECRET_SSID, SECRET_PASS);
@@ -28,7 +25,6 @@ void setup() {
   DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
   AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
@@ -65,7 +61,7 @@ void loop() {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected = true;
   DBG(F("Connected to session"), name);
 }
@@ -73,7 +69,7 @@ void OnAppleMidiConnected(const ssrc_t & ssrc, const char* name) {
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiDisconnected(const ssrc_t & ssrc) {
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected = false;
 DBG(F("Disconnected"));
 }
@@ -81,31 +77,31 @@ DBG(F("Disconnected"));
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiError(const ssrc_t& ssrc, int32_t err) {
+void OnAppleMidiError(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, int32_t err) {
   switch (err)
   {
-    case Exception::BufferFullException:
+    case APPLEMIDI_NAMESPACE::Exception::BufferFullException:
       DBG(F("*** BufferFullException"));
       break;
-    case Exception::ParseException:
+    case APPLEMIDI_NAMESPACE::Exception::ParseException:
       DBG(F("*** ParseException"));
       break;
-    case Exception::TooManyParticipantsException:
+    case APPLEMIDI_NAMESPACE::Exception::TooManyParticipantsException:
       DBG(F("*** TooManyParticipantsException"));
       break;
-    case Exception::UnexpectedInviteException:
+    case APPLEMIDI_NAMESPACE::Exception::UnexpectedInviteException:
       DBG(F("*** UnexpectedInviteException"));
       break;
-    case Exception::ParticipantNotFoundException:
+    case APPLEMIDI_NAMESPACE::Exception::ParticipantNotFoundException:
       DBG(F("*** ParticipantNotFoundException"));
       break;
-    case Exception::ListenerTimeOutException:
+    case APPLEMIDI_NAMESPACE::Exception::ListenerTimeOutException:
       DBG(F("*** ListenerTimeOutException"));
       break;
-    case Exception::MaxAttemptsException:
+    case APPLEMIDI_NAMESPACE::Exception::MaxAttemptsException:
       DBG(F("*** MaxAttemptsException"));
       break;
-    case Exception::NoResponseFromConnectionRequestException:
+    case APPLEMIDI_NAMESPACE::Exception::NoResponseFromConnectionRequestException:
       DBG(F("***:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
       break;
   }

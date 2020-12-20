@@ -126,7 +126,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
     participant.lastSyncExchangeTime = now;
-    participant.sequenceNr = random(1, UINT16_MAX); // // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, DefaultSettings::MaxSessionNameLen);
 #endif
@@ -345,7 +344,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback_t &receiverFeedback)
 {
-    // As we do not keep any recovery journals, no command history, nothing!
+    // We do not keep any recovery journals, no command history, nothing!
+    // If we did, then we can flush the previous sent buffer until receiverFeedback.sequenceNr
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -395,7 +395,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
             port.write((uint8_t *)command, sizeof(amInvitation));
             port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
             invitation.initiatorToken = htonl(invitation.initiatorToken);
-            invitation.ssrc = htonl(ssrc);
+            invitation.ssrc = ssrc;
+            invitation.ssrc = htonl(invitation.ssrc);
             port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
         
         port.endPacket();
@@ -429,7 +430,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const 
     {
         dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
         dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
-        synchronization.ssrc = htonl(this->ssrc);
+        synchronization.ssrc = ssrc;
+        synchronization.ssrc = htonl(synchronization.ssrc);
 
         synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
         synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
@@ -479,13 +481,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
         return;
-
-    participant->sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
-    
+  
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
-    rtp.ssrc = htonl(ssrc);
+    rtp.ssrc = ssrc;
+    rtp.ssrc = htonl(rtp.ssrc);
     
     // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
@@ -502,8 +503,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     // prepared to defer rendering the messages until the proper time.)
     //
     rtp.timestamp = (Settings::TimestampRtpPackets) ? htonl(rtpMidiClock.Now()) : 0;
-    
-    rtp.sequenceNr = htons(participant->sequenceNr);
+ 
+    // 
+    sequenceNr++; // (modulo 2^16) modulo is automatically done for us ()
+
+    rtp.sequenceNr = sequenceNr;
+    rtp.sequenceNr = htons(rtp.sequenceNr);
+
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
     // only now the length is known
@@ -532,7 +538,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     }
     
     // write out the MIDI Section
-    for (auto i = 0; i < bufferLen; i++)
+    for (size_t i = 0; i < bufferLen; i++)
         dataPort.write(outMidiBuffer[i]);
     
     // *No* journal section (Not supported)
@@ -841,7 +847,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         auto latency = 0;
 #endif
         participant->sequenceNr = rtp.sequenceNr;
-        
+
         if (NULL != _receivedRtpCallback)
             _receivedRtpCallback(0, rtp, latency);
     }
