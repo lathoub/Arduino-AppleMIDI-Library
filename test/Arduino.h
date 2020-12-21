@@ -19,7 +19,7 @@ public:
     void print(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
     void print(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a; };
     void print(double a, int = 2) { std::cout << a; };
-    void print(struct tm * timeinfo, const char * format = NULL) {};
+    void print(struct tm * timeinfo, const char * format = nullptr) {};
     void print(IPAddress) {};
 
     void println(const char a[]) { std::cout << a << "\n"; };
@@ -30,7 +30,7 @@ public:
     void println(long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
     void println(unsigned long a, int format = DEC) { std::cout << (format == DEC ? std::dec : std::hex) << a << "\n"; };
     void println(double a, int format = 2) { std::cout << a << "\n"; };
-    void println(struct tm * timeinfo, const char * format = NULL) {};
+    void println(struct tm * timeinfo, const char * format = nullptr) {};
     void println(IPAddress) {};
     void println(void) { std::cout << "\n"; };
 };

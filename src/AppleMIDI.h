@@ -150,7 +150,7 @@ public:
             }
 			else
 			{
-                if (NULL != _exceptionCallback)
+                if (nullptr != _exceptionCallback)
                     _exceptionCallback(ssrc, BufferFullException, 0);
 			}
 		}

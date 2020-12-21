@@ -30,7 +30,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal == parserReturn::UnexpectedData)
         {
-            if (NULL != _exceptionCallback)
+            if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ParseException, 0);
             
             controlBuffer.pop_front();
@@ -81,7 +81,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
             break; // one or the other buffer does not have enough data
         
-        if (NULL != _exceptionCallback)
+        if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, UnexpectedParseException, 0);
 
          dataBuffer.pop_front();
@@ -101,7 +101,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
     // ignore invitation of a participant already in the participant list
-    if (NULL != getParticipantBySSRC(invitation.ssrc))
+    if (nullptr != getParticipantBySSRC(invitation.ssrc))
         return;
 
     // advertise our own session name
@@ -114,7 +114,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     {
         writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
         
-        if (NULL != _exceptionCallback)
+        if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, TooManyParticipantsException, 0);
 
         return;
@@ -139,11 +139,11 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(AppleMIDI_Invitation &invitation)
 {
     auto participant = getParticipantBySSRC(invitation.ssrc);
-    if (NULL == participant)
+    if (nullptr == participant)
     {
         writeInvitation(dataPort, dataPort.remoteIP(), dataPort.remotePort(), invitation, amInvitationRejected);
 
-        if (NULL != _exceptionCallback)
+        if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, ParticipantNotFoundException, invitation.ssrc);
         
         return;
@@ -159,11 +159,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     participant->kind = Listener;
     
     // Inform that we have an established connection
-    if (NULL != _connectedCallback)
+    if (nullptr != _connectedCallback)
 #ifdef KEEP_SESSION_NAME
         _connectedCallback(ssrc_, invitation.sessionName);
 #else
-        _connectedCallback(ssrc_, NULL);
+        _connectedCallback(ssrc_, nullptr);
 #endif
 }
 
@@ -185,7 +185,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
     auto participant = this->getParticipantByInitiatorToken(invitationAccepted.initiatorToken);
-    if (NULL == participant)
+    if (nullptr == participant)
     {
         return;
     }
@@ -204,7 +204,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
     auto participant = this->getParticipantByInitiatorToken(invitationAccepted.initiatorToken);
-    if (NULL == participant)
+    if (nullptr == participant)
     {
         return;
     }
@@ -257,7 +257,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(AppleMIDI_Synchronization_t &synchronization)
 {
     auto participant = getParticipantBySSRC(synchronization.ssrc);
-    if (NULL == participant)
+    if (nullptr == participant)
     {
         return;
     }
@@ -348,12 +348,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
     // Here is where you would correct if packets are dropped (send them again)
 
     auto participant = getParticipantBySSRC(receiverFeedback.ssrc);
-    if (NULL != participant) {
+    if (nullptr != participant) {
         if (participant->sendSequenceNr != receiverFeedback.sequenceNr)
         {
             Serial.print("ERRORRORORORORORORRROROROROROROR");
 
-            if (NULL != _exceptionCallback)
+            if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, SendPacketsDropped, participant->sendSequenceNr - receiverFeedback.sequenceNr);
 
             Serial.print(participant->sendSequenceNr);
@@ -374,7 +374,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
 
             participants.erase(i);
             
-            if (NULL != _disconnectedCallback)
+            if (nullptr != _disconnectedCallback)
                 _disconnectedCallback(ssrc);
 
             return;
@@ -388,7 +388,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
     for (size_t i = 0; i < participants.size(); i++)
         if (ssrc == participants[i].ssrc)
             return &participants[i];
-    return NULL;
+    return nullptr;
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -397,7 +397,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
     for (auto i = 0; i < participants.size(); i++)
         if (initiatorToken == participants[i].initiatorToken)
             return &participants[i];
-    return NULL;
+    return nullptr;
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -601,7 +601,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationListen
     // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::CK_MaxTimeOut)
     {
-        if (NULL != _exceptionCallback)
+        if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, ListenerTimeOutException, 0);
 
         sendEndSession(participant);
@@ -667,7 +667,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
     {
         if (participant->synchronizationCount > DefaultSettings::MaxSynchronizationCK0Attempts)
         {
-            if (NULL != _exceptionCallback)
+            if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, MaxAttemptsException, 0);
 
             // After too many attempts, stop.
@@ -709,11 +709,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         if (participant->invitationStatus == DataInvitationAccepted)
         {
             // Inform that we have an established connection
-            if (NULL != _connectedCallback)
+            if (nullptr != _connectedCallback)
 #ifdef KEEP_SESSION_NAME
                 _connectedCallback(participant->ssrc, participant->sessionName);
 #else
-                _connectedCallback(participant->ssrc, NULL);
+                _connectedCallback(participant->ssrc, nullptr);
 #endif
             participant->invitationStatus = Connected;
         }
@@ -726,7 +726,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         {
             if (participant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
             {
-                if (NULL != _exceptionCallback)
+                if (nullptr != _exceptionCallback)
                     _exceptionCallback(ssrc, NoResponseFromConnectionRequestException, 0);
 
                 // After too many attempts, stop.
@@ -840,7 +840,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession(Participant<
     endSession.ssrc = this->ssrc;
     writeEndSession(participant->remoteIP, participant->remotePort, endSession);
     
-    if (NULL != _disconnectedCallback)
+    if (nullptr != _disconnectedCallback)
         _disconnectedCallback(participant->ssrc);
 }
 
@@ -849,7 +849,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 {
     auto participant = getParticipantBySSRC(rtp.ssrc);
     
-    if (NULL != participant)
+    if (nullptr != participant)
     {
         if (participant->doReceiverFeedback == false)
             participant->receiverFeedbackStartTime = now;
@@ -864,7 +864,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 
         if (participant->receiveSequenceNr + 1 != rtp.sequenceNr) {
 
-            if (NULL != _exceptionCallback)
+            if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ReceivedPacketsDropped, participant->receiveSequenceNr + 1 - rtp.sequenceNr);
 
             Serial.print("___ERROR____");
@@ -875,7 +875,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 
         participant->receiveSequenceNr = rtp.sequenceNr;
 
-        if (NULL != _receivedRtpCallback)
+        if (nullptr != _receivedRtpCallback)
             _receivedRtpCallback(0, rtp, latency);
     }
     else
@@ -887,14 +887,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
-   if (NULL != _startReceivedMidiByteCallback)
+   if (nullptr != _startReceivedMidiByteCallback)
         _startReceivedMidiByteCallback(0);
 }
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
-    if (NULL != _receivedMidiByteCallback)
+    if (nullptr != _receivedMidiByteCallback)
         _receivedMidiByteCallback(0, value);
 
     inMidiBuffer.push_back(value);
@@ -903,7 +903,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
-    if (NULL != _endReceivedMidiByteCallback)
+    if (nullptr != _endReceivedMidiByteCallback)
         _endReceivedMidiByteCallback(0);
 }
 
