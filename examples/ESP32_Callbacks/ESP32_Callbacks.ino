@@ -23,7 +23,7 @@ void setup() {
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
+  DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   AppleMIDI.setHandleConnected(OnAppleMidiConnected);
