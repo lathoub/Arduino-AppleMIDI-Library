@@ -13,10 +13,12 @@ struct Participant
     ssrc_t          ssrc;
     IPAddress       remoteIP;
     uint16_t        remotePort;
-    
+
     unsigned long   receiverFeedbackStartTime;
     bool            doReceiverFeedback = false;
-    uint16_t        sequenceNr;
+
+    uint16_t        sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+    uint16_t        receiveSequenceNr;
     unsigned long   lastSyncExchangeTime;
 
 #ifdef APPLEMIDI_INITIATOR

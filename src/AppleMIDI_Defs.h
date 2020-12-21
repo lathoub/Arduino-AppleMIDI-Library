@@ -98,6 +98,8 @@ enum Exception : uint8_t
     ListenerTimeOutException,
     MaxAttemptsException,
     NoResponseFromConnectionRequestException,
+    SendPacketsDropped,
+    ReceivedPacketsDropped,
 };
 
 using connectedCallback             = void (*)(const ssrc_t&, const char *);
@@ -106,7 +108,8 @@ using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
 using disconnectedCallback          = void (*)(const ssrc_t&);
-using exceptionCallback             = void (*)(const ssrc_t&, int32_t);
+using errorCallback                 = void (*)(const ssrc_t&, int32_t);
+using exceptionCallback             = void (*)(const ssrc_t&, const Exception&, const int32_t value);
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};

@@ -19,11 +19,13 @@ void setup()
 
   ETH_startup();
 
-  MDNS.begin(AppleMIDI.getName());
+  if (!MDNS.begin(AppleMIDI.getName()))
+    DBG(F("Error setting up MDNS responder"));
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), ETH.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
+  DBG(F("Add device named Arduino with Host"), ETH.localIP(), "Port", AppleMIDI.getPort());
+  DBG(F("The device should also be visible in the directory as"), AppleMIDI.getName());
+  DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
@@ -36,7 +38,13 @@ void setup()
     isConnected = false;
     DBG(F("Disconnected"));
   });
-  
+  AppleMIDI.setHandleError([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, int32_t e) {
+    DBG(F("______________Error"), e);
+  });
+  AppleMIDI.setHandleException([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Exception & e, const int32_t value) {
+    DBG(F("______________Exception"), e, value);
+  });
+
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOn"), note);
   });
@@ -66,6 +74,6 @@ void loop()
     byte channel = 1;
 
     MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
+    // MIDI.sendNoteOff(note, velocity, channel);
   }
 }
