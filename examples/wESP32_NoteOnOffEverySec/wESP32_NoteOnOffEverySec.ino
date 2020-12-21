@@ -38,9 +38,6 @@ void setup()
     isConnected = false;
     DBG(F("Disconnected"));
   });
-  AppleMIDI.setHandleError([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, int32_t e) {
-    DBG(F("______________Error"), e);
-  });
   AppleMIDI.setHandleException([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Exception & e, const int32_t value) {
     DBG(F("______________Exception"), e, value);
   });

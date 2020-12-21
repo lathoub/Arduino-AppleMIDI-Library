@@ -13,7 +13,6 @@ AppleMidi	KEYWORD1
 
 setHandleConnected	 KEYWORD2
 setHandleDisconnected	 KEYWORD2
-setHandleError	         KEYWORD2
 setHandleException	         KEYWORD2
 setHandleStartReceivedMidi    KEYWORD2
 setHandleReceivedMidi    KEYWORD2

@@ -30,8 +30,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal == parserReturn::UnexpectedData)
         {
-            if (NULL != _errorCallback)
-                _errorCallback(ssrc, ParseException);
+            if (NULL != _exceptionCallback)
+                _exceptionCallback(ssrc, ParseException, 0);
             
             controlBuffer.pop_front();
         }
@@ -81,8 +81,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
             break; // one or the other buffer does not have enough data
         
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, UnexpectedParseException);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, UnexpectedParseException, 0);
 
          dataBuffer.pop_front();
     }
@@ -114,8 +114,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     {
         writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
         
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, TooManyParticipantsException);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, TooManyParticipantsException, 0);
 
         return;
     }
@@ -143,8 +143,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     {
         writeInvitation(dataPort, dataPort.remoteIP(), dataPort.remotePort(), invitation, amInvitationRejected);
 
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, ParticipantNotFoundException);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException, invitation.ssrc);
         
         return;
     }
@@ -601,8 +601,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationListen
     // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::CK_MaxTimeOut)
     {
-        if (NULL != _errorCallback)
-            _errorCallback(ssrc, ListenerTimeOutException);
+        if (NULL != _exceptionCallback)
+            _exceptionCallback(ssrc, ListenerTimeOutException, 0);
 
         sendEndSession(participant);
         
@@ -667,8 +667,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
     {
         if (participant->synchronizationCount > DefaultSettings::MaxSynchronizationCK0Attempts)
         {
-            if (NULL != _errorCallback)
-                _errorCallback(ssrc, MaxAttemptsException);
+            if (NULL != _exceptionCallback)
+                _exceptionCallback(ssrc, MaxAttemptsException, 0);
 
             // After too many attempts, stop.
             sendEndSession(participant);
@@ -726,8 +726,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         {
             if (participant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
             {
-                if (NULL != _errorCallback)
-                    _errorCallback(ssrc, NoResponseFromConnectionRequestException);
+                if (NULL != _exceptionCallback)
+                    _exceptionCallback(ssrc, NoResponseFromConnectionRequestException, 0);
 
                 // After too many attempts, stop.
                 sendEndSession(participant);

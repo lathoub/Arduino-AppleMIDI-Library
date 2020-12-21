@@ -55,7 +55,6 @@ public:
 
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
-    void setHandleError(void (*fptr)(const ssrc_t&, int32_t)) __attribute__ ((deprecated)) { _errorCallback = fptr; } // deprecated
     void setHandleException(void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
     void setHandleReceivedRtp(void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
     void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
@@ -151,8 +150,8 @@ public:
             }
 			else
 			{
-                if (NULL != _errorCallback)
-                    _errorCallback(ssrc, BufferFullException);
+                if (NULL != _exceptionCallback)
+                    _exceptionCallback(ssrc, BufferFullException, 0);
 			}
 		}
 
@@ -210,7 +209,6 @@ protected:
 	UdpClass dataPort;
 
 private:
-	// reading from the network
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
 
@@ -225,7 +223,6 @@ private:
     endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
     receivedRtpCallback _receivedRtpCallback = nullptr;
     disconnectedCallback _disconnectedCallback = nullptr;
-    errorCallback _errorCallback = nullptr;
     exceptionCallback _exceptionCallback = nullptr;
 
 	// buffer for incoming and outgoing MIDI messages
