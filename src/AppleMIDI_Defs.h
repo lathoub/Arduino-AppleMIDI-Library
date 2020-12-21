@@ -106,9 +106,10 @@ using connectedCallback             = void (*)(const ssrc_t&, const char *);
 using startReceivedMidiByteCallback = void (*)(const ssrc_t&);
 using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
-using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
+using receivedRtpCallback           = void (*)(const Rtp_t&, const int32_t&);
 using disconnectedCallback          = void (*)(const ssrc_t&);
 using exceptionCallback             = void (*)(const ssrc_t&, const Exception&, const int32_t value);
+using sendRtpCallback               = void (*)(const Rtp_t&);
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};

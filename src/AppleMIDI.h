@@ -56,10 +56,11 @@ public:
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
     void setHandleException(void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
-    void setHandleReceivedRtp(void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
+    void setHandleReceivedRtp(void (*fptr)(const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
     void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
     void setHandleEndReceivedMidi(void (*fptr)(const ssrc_t&)) { _endReceivedMidiByteCallback = fptr; }
+    void setHandleSendRtp(void (*fptr)(const Rtp_t&)) { _sendRtpCallback = fptr; }
 
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
@@ -224,6 +225,7 @@ private:
     receivedRtpCallback _receivedRtpCallback = nullptr;
     disconnectedCallback _disconnectedCallback = nullptr;
     exceptionCallback _exceptionCallback = nullptr;
+    sendRtpCallback _sendRtpCallback = nullptr;
 
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;

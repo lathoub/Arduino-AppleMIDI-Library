@@ -501,7 +501,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
     rtp.ssrc = ssrc;
-    rtp.ssrc = htonl(rtp.ssrc);
     
     // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
     // The time at which the events occurred, if receiving MIDI, or, if sending MIDI,
@@ -519,10 +518,15 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     //
     rtp.timestamp = (Settings::TimestampRtpPackets) ? htonl(rtpMidiClock.Now()) : 0;
  
-    // increament the sequenceNr
+    // increment the sequenceNr
     participant->sendSequenceNr++;
 
     rtp.sequenceNr = participant->sendSequenceNr;
+
+    if (_sendRtpCallback)
+        _sendRtpCallback(rtp);
+
+    rtp.ssrc       = htonl(rtp.ssrc);
     rtp.sequenceNr = htons(rtp.sequenceNr);
 
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
@@ -560,6 +564,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     
     dataPort.endPacket();
     dataPort.flush();
+
 }
 
 //
@@ -876,7 +881,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         participant->receiveSequenceNr = rtp.sequenceNr;
 
         if (nullptr != _receivedRtpCallback)
-            _receivedRtpCallback(0, rtp, latency);
+            _receivedRtpCallback(rtp, latency);
     }
     else
     {

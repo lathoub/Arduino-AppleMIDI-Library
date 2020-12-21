@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <ESPmDNS.h>
 
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
@@ -21,6 +22,8 @@ void setup() {
   }
   DBG("Connected to network");
 
+  MDNS.begin(AppleMIDI.getName());
+
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Select and then press the Connect button"));
@@ -34,6 +37,23 @@ void setup() {
     isConnected = false;
     DBG(F("Disconnected"));
   });
+
+  AppleMIDI.setHandleSendRtp([](const APPLEMIDI_NAMESPACE::Rtp_t& rtp) {
+    DBG(F("setHandleSendRtp"), rtp.sequenceNr);
+  });
+  AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::Rtp_t& rtp, const int32_t& latency) {
+    DBG(F("setHandleReceivedRtp"), rtp.sequenceNr ,latency);
+  });
+  AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&) {
+    DBG(F("setHandleStartReceivedMidi"));
+  });
+  AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&, byte value) {
+    DBG(F("setHandleReceivedMidi"), value);
+  });
+  AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&) {
+    DBG(F("setHandleEndReceivedMidi"));
+  });
+
   AppleMIDI.setHandleException(OnAppleMidiException);
 
   MIDI.begin();
@@ -56,6 +76,8 @@ void setup() {
   MIDI.setHandleStop(OnStop);
   MIDI.setHandleActiveSensing(OnActiveSensing);
   MIDI.setHandleSystemReset(OnSystemReset);
+
+  MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
 
   DBG(F("Ready"));
 }
@@ -151,7 +173,7 @@ static void OnSongPosition(unsigned beats) {
 }
 
 static void OnSongSelect(byte songNumber) {
-  DBG(F("SongSelect"),songNumber);
+  DBG(F("SongSelect"), songNumber);
 }
 
 static void OnTuneRequest() {

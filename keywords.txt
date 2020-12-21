@@ -18,6 +18,7 @@ setHandleStartReceivedMidi    KEYWORD2
 setHandleReceivedMidi    KEYWORD2
 setHandleEndReceivedMidi    KEYWORD2
 setHandleReceivedRtp     KEYWORD2
+setHandleSendRtp     KEYWORD2
 
 #######################################
 # Instances (KEYWORD3)
