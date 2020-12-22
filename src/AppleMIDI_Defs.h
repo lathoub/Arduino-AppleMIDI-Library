@@ -5,9 +5,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-#define APPLEMIDI_LIBRARY_VERSION 0x020100
-#define APPLEMIDI_LIBRARY_VERSION_MAJOR 2
-#define APPLEMIDI_LIBRARY_VERSION_MINOR 2
+#define APPLEMIDI_LIBRARY_VERSION 0x030000
+#define APPLEMIDI_LIBRARY_VERSION_MAJOR 3
+#define APPLEMIDI_LIBRARY_VERSION_MINOR 0
 #define APPLEMIDI_LIBRARY_VERSION_PATCH 0
 
 #define DEFAULT_CONTROL_PORT 5004
@@ -40,9 +40,16 @@ typedef const char* AppleMIDIConstStr;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-#define APPLEMIDI_LISTENER
+// Way to reduce memory usage, by giving up functionality
+#ifndef DISCARD_SESSION_NAME
 #define KEEP_SESSION_NAME
+#endif
+#ifndef NO_LATENCY_CALCULATION
 #define LATENCY_CALCULATION
+#endif
+#ifndef NO_EXT_CALLBACKS
+#define USE_EXT_CALLBACKS
+#endif
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
@@ -103,13 +110,15 @@ enum Exception : uint8_t
 };
 
 using connectedCallback             = void (*)(const ssrc_t&, const char *);
+using disconnectedCallback          = void (*)(const ssrc_t&);
+#ifdef USE_EXT_CALLBACKS
 using startReceivedMidiByteCallback = void (*)(const ssrc_t&);
 using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const Rtp_t&, const int32_t&);
-using disconnectedCallback          = void (*)(const ssrc_t&);
 using exceptionCallback             = void (*)(const ssrc_t&, const Exception&, const int32_t value);
 using sendRtpCallback               = void (*)(const Rtp_t&);
+#endif
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};

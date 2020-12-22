@@ -40,11 +40,7 @@ public:
 		command[0] = buffer[i++];
 		command[1] = buffer[i++];
 
-		if (false)
-		{
-		}
-#ifdef APPLEMIDI_LISTENER
-		else if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
+		if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
 			byte protocolVersion[4];
 
@@ -232,7 +228,6 @@ public:
 
             return parserReturn::Processed;
 		}
-#endif
 #ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amInvitationAccepted, sizeof(amInvitationAccepted)))
 		{
@@ -270,7 +265,7 @@ public:
             cb.buffer[3] = buffer[i++];
             invitationAccepted.ssrc = ntohl(cb.value32);
 
- #ifdef KEEP_SESSION_NAME
+#ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {

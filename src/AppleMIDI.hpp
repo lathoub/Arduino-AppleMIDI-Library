@@ -30,9 +30,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
         if (retVal == parserReturn::UnexpectedData)
         {
+#ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ParseException, 0);
-            
+#endif            
             controlBuffer.pop_front();
         }
     }
@@ -81,9 +82,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
         ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
             break; // one or the other buffer does not have enough data
         
+#ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, UnexpectedParseException, 0);
-
+#endif
          dataBuffer.pop_front();
     }
 }
@@ -114,9 +116,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     {
         writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
         
+#ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, TooManyParticipantsException, 0);
-
+#endif
         return;
     }
     
@@ -143,9 +146,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     {
         writeInvitation(dataPort, dataPort.remoteIP(), dataPort.remotePort(), invitation, amInvitationRejected);
 
+#ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, ParticipantNotFoundException, invitation.ssrc);
-        
+#endif  
         return;
     }
 
@@ -259,6 +263,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
     auto participant = getParticipantBySSRC(synchronization.ssrc);
     if (nullptr == participant)
     {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException, synchronization.ssrc);
+#endif  
+
         return;
     }
 
@@ -313,19 +322,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
 #ifdef LATENCY_CALCULATION
         // each party can estimate the offset between the two clocks using the following formula
         participant->offsetEstimate = (uint32_t)(((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1]);
-/*
-        uint64_t remoteAverage   = ((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2);
-        uint64_t localAverage    =   synchronization.timestamps[1];
-
-        static uint64_t oldRemoteAverage = 0;
-        static uint64_t oldLocalAverage  = 0;
-
-        uint64_t r = (remoteAverage - oldRemoteAverage);
-        uint64_t l = (localAverage  - oldLocalAverage);
-
-        oldRemoteAverage = remoteAverage;
-        oldLocalAverage  = localAverage;
-*/
 #endif
         break;
     }
@@ -348,18 +344,20 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
     // Here is where you would correct if packets are dropped (send them again)
 
     auto participant = getParticipantBySSRC(receiverFeedback.ssrc);
-    if (nullptr != participant) {
-        if (participant->sendSequenceNr != receiverFeedback.sequenceNr)
-        {
-            Serial.print("ERRORRORORORORORORRROROROROROROR");
+    if (nullptr == participant) {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException, receiverFeedback.ssrc);
+#endif  
+        return;
+    }
 
-            if (nullptr != _exceptionCallback)
-                _exceptionCallback(ssrc, SendPacketsDropped, participant->sendSequenceNr - receiverFeedback.sequenceNr);
-
-            Serial.print(participant->sendSequenceNr);
-            Serial.print(" ");
-            Serial.println(receiverFeedback.sequenceNr);
-        }
+    if (participant->sendSequenceNr != receiverFeedback.sequenceNr)
+    {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, SendPacketsDropped, participant->sendSequenceNr - receiverFeedback.sequenceNr);
+#endif
     }
 }
 
@@ -516,16 +514,19 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     // have an option to not transmit messages with future timestamps, to accommodate hardware not
     // prepared to defer rendering the messages until the proper time.)
     //
-    rtp.timestamp = (Settings::TimestampRtpPackets) ? htonl(rtpMidiClock.Now()) : 0;
+    rtp.timestamp = (Settings::TimestampRtpPackets) ? rtpMidiClock.Now() : 0;
  
     // increment the sequenceNr
     participant->sendSequenceNr++;
 
     rtp.sequenceNr = participant->sendSequenceNr;
 
+#ifdef USE_EXT_CALLBACKS
     if (_sendRtpCallback)
         _sendRtpCallback(rtp);
+#endif
 
+    rtp.timestamp  = htonl(rtp.timestamp);
     rtp.ssrc       = htonl(rtp.ssrc);
     rtp.sequenceNr = htons(rtp.sequenceNr);
 
@@ -606,9 +607,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationListen
     // otherwise the responder may assume that the initiator has died and terminate the session.
     if (now - participant->lastSyncExchangeTime > Settings::CK_MaxTimeOut)
     {
+#ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, ListenerTimeOutException, 0);
-
+#endif
         sendEndSession(participant);
         
         participants.erase(i);
@@ -672,9 +674,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
     {
         if (participant->synchronizationCount > DefaultSettings::MaxSynchronizationCK0Attempts)
         {
+#ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, MaxAttemptsException, 0);
-
+#endif
             // After too many attempts, stop.
             sendEndSession(participant);
 
@@ -731,9 +734,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         {
             if (participant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
             {
+#ifdef USE_EXT_CALLBACKS
                 if (nullptr != _exceptionCallback)
                     _exceptionCallback(ssrc, NoResponseFromConnectionRequestException, 0);
-
+#endif
                 // After too many attempts, stop.
                 sendEndSession(participant);
                 
@@ -869,19 +873,18 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 
         if (participant->receiveSequenceNr + 1 != rtp.sequenceNr) {
 
+#ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ReceivedPacketsDropped, participant->receiveSequenceNr + 1 - rtp.sequenceNr);
-
-            Serial.print("___ERROR____");
-            Serial.print(participant->receiveSequenceNr);
-            Serial.print(" ");
-            Serial.println(rtp.sequenceNr);
+#endif
         }
 
         participant->receiveSequenceNr = rtp.sequenceNr;
 
+#ifdef USE_EXT_CALLBACKS
         if (nullptr != _receivedRtpCallback)
             _receivedRtpCallback(rtp, latency);
+#endif
     }
     else
     {
@@ -892,15 +895,19 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
+#ifdef USE_EXT_CALLBACKS
    if (nullptr != _startReceivedMidiByteCallback)
         _startReceivedMidiByteCallback(0);
+#endif
 }
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
+#ifdef USE_EXT_CALLBACKS
     if (nullptr != _receivedMidiByteCallback)
         _receivedMidiByteCallback(0, value);
+#endif
 
     inMidiBuffer.push_back(value);
 }
@@ -908,8 +915,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
+#ifdef USE_EXT_CALLBACKS
     if (nullptr != _endReceivedMidiByteCallback)
         _endReceivedMidiByteCallback(0);
+#endif
 }
 
 END_APPLEMIDI_NAMESPACE

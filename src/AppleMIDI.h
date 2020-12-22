@@ -55,12 +55,14 @@ public:
 
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
 	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
-    void setHandleException(void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
+#ifdef USE_EXT_CALLBACKS
+   void setHandleException(void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
     void setHandleReceivedRtp(void (*fptr)(const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
     void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
     void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
     void setHandleEndReceivedMidi(void (*fptr)(const ssrc_t&)) { _endReceivedMidiByteCallback = fptr; }
     void setHandleSendRtp(void (*fptr)(const Rtp_t&)) { _sendRtpCallback = fptr; }
+#endif
 
     const char*    getName() { return this->localName; };
     const uint16_t getPort() { return this->port; };
@@ -74,6 +76,7 @@ public:
     void sendEndSession();
     
 public:
+    // Override default thruActivated
     static const bool thruActivated = false;
 
 	void begin()
@@ -91,7 +94,6 @@ public:
 		// this is our SSRC
         //
         // NOTE: Arduino random only goes to INT32_MAX (not UINT32_MAX)
-        
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		controlPort.begin(port);
@@ -151,8 +153,10 @@ public:
             }
 			else
 			{
+#ifdef USE_EXT_CALLBACKS
                 if (nullptr != _exceptionCallback)
                     _exceptionCallback(ssrc, BufferFullException, 0);
+#endif
 			}
 		}
 
@@ -219,14 +223,15 @@ private:
 	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
 
     connectedCallback _connectedCallback = nullptr;
+    disconnectedCallback _disconnectedCallback = nullptr;
+#ifdef USE_EXT_CALLBACKS
     startReceivedMidiByteCallback _startReceivedMidiByteCallback = nullptr;
     receivedMidiByteCallback _receivedMidiByteCallback = nullptr;
     endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
     receivedRtpCallback _receivedRtpCallback = nullptr;
-    disconnectedCallback _disconnectedCallback = nullptr;
-    exceptionCallback _exceptionCallback = nullptr;
     sendRtpCallback _sendRtpCallback = nullptr;
-
+    exceptionCallback _exceptionCallback = nullptr;
+#endif
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;
 	MidiBuffer_t outMidiBuffer;
@@ -237,7 +242,7 @@ private:
     char localName[DefaultSettings::MaxSessionNameLen + 1];
 	uint16_t port = DEFAULT_CONTROL_PORT;
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
-    int32_t latencyAdjustment = 0;
+//    int32_t latencyAdjustment = 0; // not used
             
 private:
     void readControlPackets();
