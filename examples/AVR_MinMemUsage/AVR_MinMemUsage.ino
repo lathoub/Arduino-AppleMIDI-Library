@@ -1,7 +1,7 @@
 #include <Ethernet.h>
 
-#define DISCARD_SESSION_NAME
-#define NO_LATENCY_CALCULATION
+//#define DISCARD_SESSION_NAME
+//#define NO_LATENCY_CALCULATION
 #define NO_EXT_CALLBACKS
 #include <AppleMIDI.h>
 

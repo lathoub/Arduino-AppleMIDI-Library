@@ -1,6 +1,8 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 
+#define LATENCY_CALCULATION
+#define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>

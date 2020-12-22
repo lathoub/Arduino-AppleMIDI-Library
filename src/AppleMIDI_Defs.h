@@ -40,16 +40,9 @@ typedef const char* AppleMIDIConstStr;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-// Way to reduce memory usage, by giving up functionality
-#ifndef DISCARD_SESSION_NAME
-#define KEEP_SESSION_NAME
-#endif
-#ifndef NO_LATENCY_CALCULATION
-#define LATENCY_CALCULATION
-#endif
-#ifndef NO_EXT_CALLBACKS
-#define USE_EXT_CALLBACKS
-#endif
+// Add extended callbacks to enabling these #defines
+// #define LATENCY_CALCULATION
+// #define USE_EXT_CALLBACKS
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
