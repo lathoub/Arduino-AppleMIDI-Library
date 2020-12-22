@@ -59,9 +59,6 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
-Out of the box, this library has been setup to use a minimum amount of memory. Extended callbacks are not enabled by default, and can be anabled by USE_EXT_CALLBACKS (and 
-LATENCY_CALCULATION). See the callback examamples.
-
 This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
 
 The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
