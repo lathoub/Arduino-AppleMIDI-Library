@@ -67,17 +67,14 @@ The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the de
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
 
 ### 3 ways to reduce the memory footprint:
-* DISCARD_SESSION_NAME
 
-#define'ing DISCARD_SESSION_NAME remove the need for memory for `DefaultSettings::MaxSessionNameLen` bytes
+* #define NO_LATENCY_CALCULATION
 
-* NO_LATENCY_CALCULATION
+Saves 282 bytes, not calculating the latency from incoming messages.
 
-Saves about 100 bytes no calculating the latency from incoming messages.
+* #define NO_EXT_CALLBACKS
 
-* NO_EXT_CALLBACKS
-
-Saves 500 bytes if you do not want to use AppleMIDI callbacks (Connected and Disconnected remain)
+Saves 1150 bytes if you do not want to use AppleMIDI callbacks (but Connected and Disconnected remain)
  
 ## Network Shields
 * Arduino Ethernet shield (Wiznet W5100 and W5500)
