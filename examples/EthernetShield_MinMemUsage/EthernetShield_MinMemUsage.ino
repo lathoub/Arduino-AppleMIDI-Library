@@ -3,8 +3,6 @@
 #define DISCARD_SESSION_NAME
 #define NO_LATENCY_CALCULATION
 #define NO_EXT_CALLBACKS
-#define SerialMon Serial
-#define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -23,39 +21,29 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
 
-  if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
-    for (;;);
-  }
-
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));+-
+  if (Ethernet.begin(mac) == 0)  for (;;);
 
   MIDI.begin();
 
   // Stay informed on connection status
-  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char*) {
     isConnected = true;
-    DBG(F("Connected to session"), name);
+    digitalWrite(LED_BUILTIN, HIGH);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected = false;
-    DBG(F("Disconnected"));
-  });
-  
-  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
-  });
-  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    digitalWrite(LED_BUILTIN, LOW);
   });
 
-  DBG(F("Sending MIDI messages every second"));
+  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
+    digitalWrite(LED_BUILTIN, LOW);
+  });
+  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -72,11 +60,6 @@ void loop()
   {
     t1 = millis();
 
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-//    MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(54, 100, 1);
   }
 }
