@@ -1,6 +1,5 @@
 #include <Ethernet.h>
 
-#define ONE_PARTICIPANT
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
