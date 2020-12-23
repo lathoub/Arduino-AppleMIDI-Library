@@ -1,5 +1,5 @@
 # AppleMIDI (aka rtpMIDI) for Arduino
-[![arduino-library-badge](https://www.ardu-badge.com/badge/AppleMIDI.svg?)](https://www.ardu-badge.com/AppleMIDI) [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library) [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![GitHub version](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library.svg)](https://badge.fury.io/gh/lathoub%2FArduino-AppleMidi-Library) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c8be2ccc3f104e0588572a39f8106070)](https://app.codacy.com/app/lathoub/Arduino-AppleMIDI-Library?utm_source=github.com&utm_medium=referral&utm_content=lathoub/Arduino-AppleMIDI-Library&utm_campaign=Badge_Grade_Dashboard)
+[![arduino-library-badge](https://www.ardu-badge.com/badge/AppleMIDI.svg?)](https://www.ardu-badge.com/AppleMIDI) [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library) [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c8be2ccc3f104e0588572a39f8106070)](https://app.codacy.com/app/lathoub/Arduino-AppleMIDI-Library?utm_source=github.com&utm_medium=referral&utm_content=lathoub/Arduino-AppleMIDI-Library&utm_campaign=Badge_Grade_Dashboard)
 
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
 
@@ -59,12 +59,17 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
  
 ## Memory usage
+Out of the box, this library has been setup to use a minimum amount of memory. Extended callbacks are not enabled by default, and can be anabled by USE_EXT_CALLBACKS (and 
+LATENCY_CALCULATION). See the callback examamples.
+
 This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
 
 The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
 `MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
+
+Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
  
 ## Network Shields
 * Arduino Ethernet shield (Wiznet W5100 and W5500)
@@ -73,7 +78,7 @@ Beware: the number of sockets on the Arduino is limited. The W5100 support 4, th
 * Teensy WIZ820io W5200
  
 ## Arduino IDE (arduino.cc)
-* 1.8.10
+* 1.8.13
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
