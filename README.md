@@ -57,7 +57,13 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
- 
+
+## Network Shields
+* Arduino Ethernet shield (Wiznet W5100 and W5500)
+* Arduino Wifi R3 shield
+* MKR ETH shield
+* Teensy WIZ820io W5200
+
 ## Memory usage
 Out of the box, this library has been setup to use a minimum amount of memory. Extended callbacks are not enabled by default, and can be anabled by USE_EXT_CALLBACKS (and 
 LATENCY_CALCULATION). See the callback examamples.
@@ -72,13 +78,7 @@ Beware: the number of sockets on the Arduino is limited. The W5100 support 4, th
 Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
 
 Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting the number of particpants to just 1.
-On an UNO the absolute minimum memory footprint is 21976 bytes (68%) and 946 global variables (46%).
- 
-## Network Shields
-* Arduino Ethernet shield (Wiznet W5100 and W5500)
-* Arduino Wifi R3 shield
-* MKR ETH shield
-* Teensy WIZ820io W5200
+On an UNO the absolute minimum memory footprint is 21976 bytes (68%) and 946 global variables (46%). For a Leonardo that is 24916 bytes (86%) and 1112 bytes  (43%) of global variables.
  
 ## Arduino IDE (arduino.cc)
 * 1.8.13
