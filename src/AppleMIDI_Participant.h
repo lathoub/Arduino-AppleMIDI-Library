@@ -10,9 +10,9 @@ template <class Settings>
 struct Participant
 {
     ParticipantKind kind;
-    ssrc_t          ssrc;
-    IPAddress       remoteIP;
-    uint16_t        remotePort;
+    ssrc_t          ssrc = 0;
+    IPAddress       remoteIP = INADDR_NONE;
+    uint16_t        remotePort = 0;
 
     unsigned long   receiverFeedbackStartTime;
     bool            doReceiverFeedback = false;

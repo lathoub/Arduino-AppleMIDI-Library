@@ -1,8 +1,7 @@
 #include <Ethernet.h>
 
-//#define DISCARD_SESSION_NAME
-//#define NO_LATENCY_CALCULATION
-#define NO_EXT_CALLBACKS
+#define ONE_PARTICIPANT
+#define NO_SESSION_NAME
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.

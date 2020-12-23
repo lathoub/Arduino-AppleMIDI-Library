@@ -2,7 +2,9 @@
 namespace {
 static void DBG_SETUP(unsigned long baud) {
   APPLEMIDI_DEBUG.begin(baud);
+  #ifdef __AVR_ATmega32U4__
   while (!APPLEMIDI_DEBUG);
+  #endif
 }
 
 template <typename T>

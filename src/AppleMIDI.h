@@ -50,7 +50,9 @@ public:
 	AppleMIDISession(const char *sessionName, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
 		this->port = port;
+#ifdef KEEP_SESSION_NAME
         strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
+#endif
 	};
 
 	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
@@ -64,11 +66,15 @@ public:
     void setHandleSendRtp(void (*fptr)(const Rtp_t&)) { _sendRtpCallback = fptr; }
 #endif
 
+#ifdef KEEP_SESSION_NAME
     const char*    getName() { return this->localName; };
+    void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
+#else
+    const char*    getName() { return nullptr; };
+    void  setName(const char *sessionName) { };
+#endif
     const uint16_t getPort() { return this->port; };
     const ssrc_t   getSynchronizationSource() { return this->ssrc; };
-
-    void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
 
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
@@ -131,7 +137,11 @@ public:
 		// of what we are to send (The RtpMidi protocol start with writing the
 		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
 		// and actually serialize for real in the endTransmission method
+#ifndef ONE_PARTICIPANT
 		return (dataPort.remoteIP() != INADDR_NONE && participants.size() > 0);
+#else
+		return (dataPort.remoteIP() != INADDR_NONE && participant.remoteIP != INADDR_NONE);
+#endif
 	};
 
 	void write(byte byte)
@@ -239,11 +249,21 @@ private:
 	rtpMidi_Clock rtpMidiClock;
             
 	ssrc_t ssrc = 0;
-    char localName[DefaultSettings::MaxSessionNameLen + 1];
 	uint16_t port = DEFAULT_CONTROL_PORT;
+    WhoCanConnectToMe whoCanConnectToMe = Anyone;
+#ifdef ONE_PARTICIPANT
+    Participant<Settings> participant;
+#else
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
-//    int32_t latencyAdjustment = 0; // not used
-            
+#endif
+#ifdef USE_DIRECTORY
+    Deque<char*, Settings::MaxNumberOfComputersInDirectory> directory;
+#endif
+
+#ifdef KEEP_SESSION_NAME
+    char localName[DefaultSettings::MaxSessionNameLen + 1];
+#endif
+
 private:
     void readControlPackets();
     void readDataPackets();
@@ -285,15 +305,16 @@ private:
    
     void manageSessionInvites();
     void manageSynchronization();
-    void manageSynchronizationListener(size_t);
     void manageSynchronizationInitiator();
     void manageSynchronizationInitiatorHeartBeat(size_t);
     void manageSynchronizationInitiatorInvites(size_t);
     
     void sendSynchronization(Participant<Settings>*);
 
+#ifndef ONE_PARTICIPANT
     Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
+#endif
 };
 
 END_APPLEMIDI_NAMESPACE
