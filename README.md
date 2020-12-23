@@ -68,6 +68,8 @@ The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the de
 
 `MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
+
+Reduce the memory footprint by a further 500 by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
  
 ## Network Shields
 * Arduino Ethernet shield (Wiznet W5100 and W5500)
