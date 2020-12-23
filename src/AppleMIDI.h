@@ -140,7 +140,7 @@ public:
 #ifndef ONE_PARTICIPANT
 		return (dataPort.remoteIP() != INADDR_NONE && participants.size() > 0);
 #else
-		return (dataPort.remoteIP() != INADDR_NONE && participant.remoteIP != INADDR_NONE);
+		return (dataPort.remoteIP() != INADDR_NONE && participant.ssrc != 0);
 #endif
 	};
 

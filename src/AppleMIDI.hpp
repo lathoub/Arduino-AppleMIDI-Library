@@ -110,7 +110,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
 #endif
         return;
 
-    // advertise our own session name
 #ifdef KEEP_SESSION_NAME
     strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
     invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
@@ -119,7 +118,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
 #ifndef ONE_PARTICIPANT
     if (participants.full())
 #else
-    if (participant.remoteIP != INADDR_NONE)
+    if (participant.ssrc != 0)
 #endif
     {
         writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
@@ -252,7 +251,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(
             participants.erase(i);
 #else
             participant.ssrc = 0;
-            participant.remoteIP = INADDR_NONE;
 #endif
             return;
         }
@@ -416,7 +414,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
             participants.erase(i);
 #else
             participant.ssrc = 0;
-            participant.remoteIP = INADDR_NONE;
 #endif            
             if (nullptr != _disconnectedCallback)
                 _disconnectedCallback(ssrc);
@@ -632,10 +629,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
     {
 #ifndef ONE_PARTICIPANT
         auto pParticipant = &participants[i];
-        if (pParticipant->remoteIP == INADDR_NONE) continue;
+        if (pParticipant->ssrc == 0) continue;
 #else
         auto pParticipant = &participant;
-        if (pParticipant->remoteIP == INADDR_NONE) return;
+        if (pParticipant->ssrc == 0) return;
 #endif
 #ifdef APPLEMIDI_INITIATOR
         if (pParticipant->invitationStatus != Connected)
@@ -658,7 +655,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
                 participants.erase(i);
 #else
                 participant.ssrc = 0;
-                participant.remoteIP = INADDR_NONE;
 #endif  
             }
 #ifdef APPLEMIDI_INITIATOR
@@ -738,7 +734,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
             participants.erase(i);
 #else
             participant.ssrc = 0;
-            participant.remoteIP = INADDR_NONE;
 #endif
             return;
         }
@@ -818,7 +813,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
                 participants.erase(i);
 #else
                 participant.ssrc = 0;
-                pParticipant->remoteIP = INADDR_NONE;
 #endif
 #ifndef ONE_PARTICIPANT
                 continue;
@@ -870,10 +864,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
     {
 #ifndef ONE_PARTICIPANT
         auto pParticipant = &participants[i];
-        if (pParticipant->remoteIP == INADDR_NONE) continue;
+        if (pParticipant->ssrc == 0) continue;
 #else
         auto pParticipant = &participant;
-        if (pParticipant->remoteIP == INADDR_NONE) return;
+        if (pParticipant->ssrc == 0) return;
 #endif
        
         if (pParticipant->doReceiverFeedback == false)
@@ -904,7 +898,7 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
 #ifndef ONE_PARTICIPANT
     if (participants.full())
 #else
-    if (participant.remoteIP != INADDR_NONE)
+    if (participant.ssrc != 0)
 #endif
     {
         return false;
@@ -942,10 +936,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
         participants.pop_front();
     }
 #else
-    if (participant.remoteIP != INADDR_NONE)
+    if (participant.src != 0)
     {
         sendEndSession(&participant);
-        participant.remoteIP = INADDR_NONE;
+        participant.ssrc = 0;
     }
 #endif
 }
