@@ -125,6 +125,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
 #endif
             return;
         }
+    case Anyone:
+        break;
     }
 #endif
 
@@ -371,7 +373,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
         break;
     case SYNC_CK2: /* From session APPLEMIDI_INITIATOR */
             
-#ifdef LATENCY_CALCULATION
+#ifdef USE_EXT_CALLBACKS
         // each party can estimate the offset between the two clocks using the following formula
         pParticipant->offsetEstimate = (uint32_t)(((synchronization.timestamps[2] + synchronization.timestamps[0]) / 2) - synchronization.timestamps[1]);
 #endif
@@ -445,7 +447,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
 
 #ifdef USE_DIRECTORY
 template <class UdpClass, class Settings, class Platform>
-bool AppleMIDISession<UdpClass, Settings, Platform>::IsComputerInDirectory(const IPAddress& remoteIP)
+bool AppleMIDISession<UdpClass, Settings, Platform>::IsComputerInDirectory(IPAddress remoteIP) const
 {
     for (size_t i = 0; i < directory.size(); i++)
         if (remoteIP == directory[i])
@@ -890,7 +892,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
 {
 #ifndef ONE_PARTICIPANT
-    for (auto i = 0; i < participants.size(); i++)
+    for (uint8_t i = 0; i < participants.size(); i++)
 #endif
     {
 #ifndef ONE_PARTICIPANT
@@ -1002,13 +1004,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
             pParticipant->receiverFeedbackStartTime = now;
         pParticipant->doReceiverFeedback = true;
 
-#ifdef LATENCY_CALCULATION
-        auto offset = (rtp.timestamp - participant->offsetEstimate);
+#ifdef USE_EXT_CALLBACKS
+        auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
         auto latency = (int32_t)(rtpMidiClock.Now() - offset);
-#else
-        auto latency = 0;
 #endif
-
         if (pParticipant->receiveSequenceNr + 1 != rtp.sequenceNr) {
 
 #ifdef USE_EXT_CALLBACKS

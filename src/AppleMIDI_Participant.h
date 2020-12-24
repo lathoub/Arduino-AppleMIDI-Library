@@ -32,7 +32,7 @@ struct Participant
     bool            synchronizing = false;
 #endif
     
-#ifdef LATENCY_CALCULATION
+#ifdef USE_EXT_CALLBACKS
     uint32_t        offsetEstimate;
 #endif
     

@@ -41,7 +41,6 @@ typedef const char* AppleMIDIConstStr;
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
 // #define USE_EXT_CALLBACKS
-// #define LATENCY_CALCULATION // only usefull when declaring USE_EXT_CALLBACKS
 // #define ONE_PARTICIPANT // memory optimization
 // #define USE_DIRECTORY
 

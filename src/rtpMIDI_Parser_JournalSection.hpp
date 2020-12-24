@@ -48,7 +48,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // stream (modulo 2^16).
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
-        uint16_t checkPoint = ntohs(cb.value16); // unused
+    //    uint16_t checkPoint = ntohs(cb.value16); ; // unused
         
         // (RFC 4695, 5 Recovery Journal Format)
         // If A and Y are both zero, the recovery journal only contains its 3-
