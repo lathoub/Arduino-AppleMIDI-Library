@@ -143,9 +143,9 @@ public:
 		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
 		// and actually serialize for real in the endTransmission method
 #ifndef ONE_PARTICIPANT
-		return (dataPort.remoteIP() != INADDR_NONE && participants.size() > 0);
+		return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participants.size() > 0);
 #else
-		return (dataPort.remoteIP() != INADDR_NONE && participant.ssrc != 0);
+		return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participant.ssrc != 0);
 #endif
 	};
 
@@ -317,7 +317,7 @@ private:
     Participant<Settings>* getParticipantByInitiatorToken(const uint32_t& initiatorToken);
 #endif
 #ifdef USE_DIRECTORY
-    bool IsComputerInDirectory(const IPAddress&);
+    bool IsComputerInDirectory(IPAddress) const;
 #endif
 };
 
