@@ -119,6 +119,12 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMI
     case APPLEMIDI_NAMESPACE::Exception::ParticipantNotFoundException:
       DBG(F("*** ParticipantNotFoundException"), value);
       break;
+    case APPLEMIDI_NAMESPACE::Exception::ComputerNotInDirectory:
+      DBG(F("*** ComputerNotInDirectory"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::NotAcceptingAnyone:
+      DBG(F("*** NotAcceptingAnyone"), value);
+      break;
     case APPLEMIDI_NAMESPACE::Exception::ListenerTimeOutException:
       DBG(F("*** ListenerTimeOutException"));
       break;

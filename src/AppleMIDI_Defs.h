@@ -40,10 +40,9 @@ typedef const char* AppleMIDIConstStr;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-// Add extended callbacks to enabling these #defines
-// #define LATENCY_CALCULATION
 // #define USE_EXT_CALLBACKS
-// #define ONE_PARTICIPANT // TODO
+// #define LATENCY_CALCULATION // only usefull when declaring USE_EXT_CALLBACKS
+// #define ONE_PARTICIPANT // memory optimization
 // #define USE_DIRECTORY
 
 // By defining NO_SESSION_NAME in the sketch, you can save 100 bytes
@@ -58,12 +57,14 @@ typedef const char* AppleMIDIConstStr;
 struct Rtp;
 typedef Rtp Rtp_t;
 
+#ifdef USE_DIRECTORY
 enum WhoCanConnectToMe : uint8_t
 {
 	None,
 	OnlyComputersInMyDirectory,
 	Anyone,
 };
+#endif
 
 // from: https://en.wikipedia.org/wiki/RTP-MIDI
 // Apple decided to create their own protocol, imposing all parameters related to
@@ -107,6 +108,8 @@ enum Exception : uint8_t
     ParseException,
     UnexpectedParseException,
     TooManyParticipantsException,
+    ComputerNotInDirectory,
+    NotAcceptingAnyone,
     UnexpectedInviteException,
     ParticipantNotFoundException,
     ListenerTimeOutException,

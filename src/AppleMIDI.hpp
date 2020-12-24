@@ -102,6 +102,32 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMID
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
+#ifdef KEEP_SESSION_NAME
+    strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
+    invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+#endif
+
+#ifdef USE_DIRECTORY
+    switch (whoCanConnectToMe) {
+    case None:
+        writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, NotAcceptingAnyone, 0);
+#endif
+        return;
+    case OnlyComputersInMyDirectory:
+        if (!IsComputerInDirectory(controlPort.remoteIP())) {
+            writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
+#ifdef USE_EXT_CALLBACKS
+            if (nullptr != _exceptionCallback)
+                _exceptionCallback(ssrc, ComputerNotInDirectory, 0);
+#endif
+            return;
+        }
+    }
+#endif
+
     // ignore invitation of a participant already in the participant list
 #ifndef ONE_PARTICIPANT
     if (nullptr != getParticipantBySSRC(invitation.ssrc))
@@ -109,20 +135,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     if (participant.ssrc == invitation.ssrc)
 #endif
         return;
-
-#ifdef KEEP_SESSION_NAME
-    strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
-    invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
-#endif
-    
+   
 #ifndef ONE_PARTICIPANT
     if (participants.full())
 #else
     if (participant.ssrc != 0)
 #endif
     {
-        writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);
-        
+        writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);     
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, TooManyParticipantsException, 0);
@@ -423,9 +443,20 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
     }
 }
 
+#ifdef USE_DIRECTORY
+template <class UdpClass, class Settings, class Platform>
+bool AppleMIDISession<UdpClass, Settings, Platform>::IsComputerInDirectory(const IPAddress& remoteIP)
+{
+    for (size_t i = 0; i < directory.size(); i++)
+        if (remoteIP == directory[i])
+            return true;
+    return false;
+}
+#endif
+
 #ifndef ONE_PARTICIPANT
 template <class UdpClass, class Settings, class Platform>
-Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantBySSRC(const ssrc_t ssrc)
+Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantBySSRC(const ssrc_t& ssrc)
 {
     for (size_t i = 0; i < participants.size(); i++)
         if (ssrc == participants[i].ssrc)
@@ -434,7 +465,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
 }
 
 template <class UdpClass, class Settings, class Platform>
-Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantByInitiatorToken(const uint32_t initiatorToken)
+Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantByInitiatorToken(const uint32_t& initiatorToken)
 {
     for (auto i = 0; i < participants.size(); i++)
         if (initiatorToken == participants[i].initiatorToken)
@@ -444,7 +475,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
 #endif
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &port, IPAddress remoteIP, uint16_t remotePort, AppleMIDI_Invitation_t & invitation, const byte *command)
+void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &port, const IPAddress& remoteIP, const uint16_t& remotePort, AppleMIDI_Invitation_t & invitation, const byte *command)
 {
     if (port.beginPacket(remoteIP, remotePort))
     {

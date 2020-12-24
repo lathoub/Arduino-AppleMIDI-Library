@@ -14,7 +14,7 @@ struct DefaultSettings
 
     static const uint8_t MaxNumberOfParticipants = 2;
 
-    static const uint8_t MaxNumberOfComputersInDirectory = 2;
+    static const uint8_t MaxNumberOfComputersInDirectory = 5;
     
     // The recovery journal mechanism requires that the receiver periodically
     // inform the sender of the sequence number of the most recently received packet.

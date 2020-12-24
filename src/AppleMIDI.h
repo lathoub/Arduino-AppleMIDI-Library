@@ -85,6 +85,11 @@ public:
     // Override default thruActivated
     static const bool thruActivated = false;
 
+#ifdef USE_DIRECTORY
+    Deque<IPAddress, Settings::MaxNumberOfComputersInDirectory> directory;
+    WhoCanConnectToMe whoCanConnectToMe = Anyone;
+#endif
+
 	void begin()
 	{
         _appleMIDIParser.session = this;
@@ -250,14 +255,10 @@ private:
             
 	ssrc_t ssrc = 0;
 	uint16_t port = DEFAULT_CONTROL_PORT;
-    WhoCanConnectToMe whoCanConnectToMe = Anyone;
 #ifdef ONE_PARTICIPANT
     Participant<Settings> participant;
 #else
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
-#endif
-#ifdef USE_DIRECTORY
-    Deque<char*, Settings::MaxNumberOfComputersInDirectory> directory;
 #endif
 
 #ifdef KEEP_SESSION_NAME
@@ -291,7 +292,7 @@ private:
     void EndReceivedMidi();
 
 	// Helpers
-    void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command);
+    void writeInvitation      (UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
     void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
     void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
@@ -312,8 +313,11 @@ private:
     void sendSynchronization(Participant<Settings>*);
 
 #ifndef ONE_PARTICIPANT
-    Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
-    Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
+    Participant<Settings>* getParticipantBySSRC(const ssrc_t&);
+    Participant<Settings>* getParticipantByInitiatorToken(const uint32_t& initiatorToken);
+#endif
+#ifdef USE_DIRECTORY
+    bool IsComputerInDirectory(const IPAddress&);
 #endif
 };
 
