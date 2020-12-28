@@ -78,7 +78,10 @@ Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` 
 
 Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting the number of particpants to just 1.
 On an UNO the absolute minimum memory footprint is 21976 bytes (68%) and 946 global variables (46%). For a Leonardo that is 24916 bytes (86%) and 1112 bytes  (43%) of global variables.
- 
+
+## Notes
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty de von Ausfern-schplenden-schlitter-crasscrenbon-fried-digger-dingle-dangle-dongle-dungle-burstein-von-knacker-thrasher-apple-banger-horowitz-ticolensic-grander-knotty-spelltinkle-grandlich-grumblemeyer-spelterwasser-kurstlich-himbleeisen-bahnwagen-gutenabend-bitte-ein-nürnburger-bratwustle-gerspurten-mitzweimache-luber-hundsfut-gumberaber-shönendanker-kalbsfleisch-mittler-aucher von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
+
 ## Arduino IDE (arduino.cc)
 * 1.8.13
 
