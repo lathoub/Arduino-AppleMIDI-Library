@@ -67,14 +67,14 @@ public:
 #endif
 
 #ifdef KEEP_SESSION_NAME
-    const char*    getName() { return this->localName; };
+    const char*    getName() const { return this->localName; };
     void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
 #else
-    const char*    getName() { return nullptr; };
+    const char*    getName() const { return nullptr; };
     void  setName(const char *sessionName) { };
 #endif
-    const uint16_t getPort() { return this->port; };
-    const ssrc_t   getSynchronizationSource() { return this->ssrc; };
+    const uint16_t getPort() const { return this->port; };
+    const ssrc_t   getSynchronizationSource() const { return this->ssrc; };
 
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
