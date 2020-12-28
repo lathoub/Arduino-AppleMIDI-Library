@@ -289,9 +289,9 @@ private:
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);
-    void StartReceivedMidi();
-    void ReceivedMidi(byte data);
-    void EndReceivedMidi();
+    void StartReceivedMidi(const ssrc_t&);
+    void ReceivedMidi(const ssrc_t&, byte data);
+    void EndReceivedMidi(const ssrc_t&);
 
 	// Helpers
     void writeInvitation      (UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);

@@ -1035,31 +1035,31 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
+void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi(const ssrc_t& ssrc)
 {
 #ifdef USE_EXT_CALLBACKS
    if (nullptr != _startReceivedMidiByteCallback)
-        _startReceivedMidiByteCallback(0);
+        _startReceivedMidiByteCallback(ssrc);
 #endif
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
+void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(const ssrc_t& ssrc, byte value)
 {
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _receivedMidiByteCallback)
-        _receivedMidiByteCallback(0, value);
+        _receivedMidiByteCallback(ssrc, value);
 #endif
 
     inMidiBuffer.push_back(value);
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
+void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi(const ssrc_t& ssrc)
 {
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _endReceivedMidiByteCallback)
-        _endReceivedMidiByteCallback(0);
+        _endReceivedMidiByteCallback(ssrc);
 #endif
 }
 

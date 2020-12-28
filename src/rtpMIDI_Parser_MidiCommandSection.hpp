@@ -77,9 +77,9 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
      * not be intermingled with other MIDI-commands, so we handle this case right here and return */
     if (octet >= 0xf8)
     {
-        session->StartReceivedMidi();
-        session->ReceivedMidi(buffer[0]);
-        session->EndReceivedMidi();
+        session->StartReceivedMidi(session->getSynchronizationSource());
+        session->ReceivedMidi(session->getSynchronizationSource(), buffer[0]);
+        session->EndReceivedMidi(session->getSynchronizationSource());
         
         return 1;
     }
@@ -145,10 +145,10 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
             break;
         }
 
-        session->StartReceivedMidi();
+        session->StartReceivedMidi(session->getSynchronizationSource());
         for (size_t j = 0; j < consumed; j++)
-            session->ReceivedMidi(buffer[j]);
-        session->EndReceivedMidi();
+            session->ReceivedMidi(session->getSynchronizationSource(), buffer[j]);
+        session->EndReceivedMidi(session->getSynchronizationSource());
         
         return consumed;
     }
@@ -175,10 +175,10 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
         break;
     }
 
-    session->StartReceivedMidi();
+    session->StartReceivedMidi(session->getSynchronizationSource());
     for (size_t j = 0; j < consumed; j++)
-        session->ReceivedMidi(buffer[j]);
-    session->EndReceivedMidi();
+        session->ReceivedMidi(session->getSynchronizationSource(), buffer[j]);
+    session->EndReceivedMidi(session->getSynchronizationSource());
 
     return consumed;
 }
@@ -208,11 +208,11 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     consumed--;
     
     // send MIDI data
-    session->StartReceivedMidi();
+    session->StartReceivedMidi(session->getSynchronizationSource());
     for (size_t j = 0; j < consumed; j++)
-        session->ReceivedMidi(buffer[j]);
-    session->ReceivedMidi(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
-    session->EndReceivedMidi();
+        session->ReceivedMidi(session->getSynchronizationSource(), buffer[j]);
+    session->ReceivedMidi(session->getSynchronizationSource(), MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
+    session->EndReceivedMidi(session->getSynchronizationSource());
 
     // Remove the bytes that were submitted
     for (size_t j = 0; j < consumed; j++)
