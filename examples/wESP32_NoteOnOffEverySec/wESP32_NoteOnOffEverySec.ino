@@ -1,4 +1,3 @@
-#define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
@@ -38,9 +37,6 @@ void setup()
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected = false;
     DBG(F("Disconnected"));
-  });
-  AppleMIDI.setHandleException([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Exception & e, const int32_t value) {
-    DBG(F("______________Exception"), e, value);
   });
 
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
