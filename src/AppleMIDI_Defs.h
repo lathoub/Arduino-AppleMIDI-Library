@@ -56,6 +56,9 @@ typedef const char* AppleMIDIConstStr;
 struct Rtp;
 typedef Rtp Rtp_t;
 
+struct RtpMIDI;
+typedef RtpMIDI RtpMIDI_t;
+
 #ifdef USE_DIRECTORY
 enum WhoCanConnectToMe : uint8_t
 {
@@ -126,7 +129,8 @@ using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const Rtp_t&, const int32_t&);
 using exceptionCallback             = void (*)(const ssrc_t&, const Exception&, const int32_t value);
-using sendRtpCallback               = void (*)(const Rtp_t&);
+using sentRtpCallback               = void (*)(const Rtp_t&);
+using sentRtpMidiCallback           = void (*)(const RtpMIDI_t&);
 #endif
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */

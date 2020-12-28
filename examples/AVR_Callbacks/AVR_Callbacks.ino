@@ -22,7 +22,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 void setup()
 {
   DBG_SETUP(115200);
-  DBG("Booting");
+  DBG("Das Booting");
 
   if (Ethernet.begin(mac) == 0) {
     DBG(F("Failed DHCP, check network cable & reboot"));
@@ -36,6 +36,7 @@ void setup()
 
   MIDI.begin();
 
+  // Normal callbacks - always available
   // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected = true;
@@ -45,23 +46,26 @@ void setup()
     isConnected = false;
     DBG(F("Disconnected"));
   });
-  
-  AppleMIDI.setHandleSendRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp) {
-    DBG(F("setHandleSendRtp"), rtp.sequenceNr);
+
+  // Extended callback, only available when defining USE_EXT_CALLBACKS
+  AppleMIDI.setHandleSentRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp) {
+    DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
+  });
+  AppleMIDI.setHandleSentRtpMidi([](const APPLEMIDI_NAMESPACE::RtpMIDI_t& rtpMidi) {
+    DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
   });
   AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
-    DBG(F("setHandleReceivedRtp"), rtp.sequenceNr , latency);
+    DBG(F("setHandleReceivedRtp"), rtp.sequenceNr , "with", latency, "ms latency");
   });
-  AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&) {
-    DBG(F("setHandleStartReceivedMidi"));
+  AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
+    DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
   });
-  AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&, byte value) {
-    DBG(F("setHandleReceivedMidi"), value);
+  AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, byte value) {
+    DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
   });
-  AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t&) {
-    DBG(F("setHandleEndReceivedMidi"));
+  AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
+    DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
   });
-  
   AppleMIDI.setHandleException(OnAppleMidiException);
 
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {

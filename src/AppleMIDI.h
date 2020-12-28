@@ -63,7 +63,8 @@ public:
     void setHandleStartReceivedMidi (void (*fptr)(const ssrc_t&))                                        { _startReceivedMidiByteCallback = fptr; }
     void setHandleReceivedMidi      (void (*fptr)(const ssrc_t&, byte))                                  { _receivedMidiByteCallback = fptr; }
     void setHandleEndReceivedMidi   (void (*fptr)(const ssrc_t&))                                        { _endReceivedMidiByteCallback = fptr; }
-    void setHandleSendRtp           (void (*fptr)(const Rtp_t&))                                         { _sendRtpCallback = fptr; }
+    void setHandleSentRtp           (void (*fptr)(const Rtp_t&))                                         { _sentRtpCallback = fptr; }
+    void setHandleSentRtpMidi       (void (*fptr)(const RtpMIDI_t&))              { _sentRtpMidiCallback = fptr; }
 #endif
 
 #ifdef KEEP_SESSION_NAME
@@ -244,7 +245,8 @@ private:
     receivedMidiByteCallback _receivedMidiByteCallback = nullptr;
     endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
     receivedRtpCallback _receivedRtpCallback = nullptr;
-    sendRtpCallback _sendRtpCallback = nullptr;
+    sentRtpCallback _sentRtpCallback = nullptr;
+    sentRtpMidiCallback _sentRtpMidiCallback = nullptr;
     exceptionCallback _exceptionCallback = nullptr;
 #endif
 	// buffer for incoming and outgoing MIDI messages

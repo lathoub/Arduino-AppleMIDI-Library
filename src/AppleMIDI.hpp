@@ -605,8 +605,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     rtp.sequenceNr = participant->sendSequenceNr;
 
 #ifdef USE_EXT_CALLBACKS
-    if (_sendRtpCallback)
-        _sendRtpCallback(rtp);
+    if (_sentRtpCallback)
+        _sentRtpCallback(rtp);
 #endif
 
     rtp.timestamp  = htonl(rtp.timestamp);
@@ -643,8 +643,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     // write out the MIDI Section
     for (size_t i = 0; i < bufferLen; i++)
         dataPort.write(outMidiBuffer[i]);
-    
+
     // *No* journal section (Not supported)
+
+#ifdef USE_EXT_CALLBACKS
+    if (_sentRtpMidiCallback)
+        _sentRtpMidiCallback(rtpMidi);
+#endif
     
     dataPort.endPacket();
     dataPort.flush();
