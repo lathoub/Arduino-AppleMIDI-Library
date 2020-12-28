@@ -55,15 +55,15 @@ public:
 #endif
 	};
 
-	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
+	void setHandleConnected         (void (*fptr)(const ssrc_t&, const char*))                           { _connectedCallback = fptr; }
+	void setHandleDisconnected      (void (*fptr)(const ssrc_t&))                                        { _disconnectedCallback = fptr; }
 #ifdef USE_EXT_CALLBACKS
-   void setHandleException(void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
-    void setHandleReceivedRtp(void (*fptr)(const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
-    void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
-    void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
-    void setHandleEndReceivedMidi(void (*fptr)(const ssrc_t&)) { _endReceivedMidiByteCallback = fptr; }
-    void setHandleSendRtp(void (*fptr)(const Rtp_t&)) { _sendRtpCallback = fptr; }
+    void setHandleException         (void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
+    void setHandleReceivedRtp       (void (*fptr)(const Rtp_t&, const int32_t&))                         { _receivedRtpCallback = fptr; }
+    void setHandleStartReceivedMidi (void (*fptr)(const ssrc_t&))                                        { _startReceivedMidiByteCallback = fptr; }
+    void setHandleReceivedMidi      (void (*fptr)(const ssrc_t&, byte))                                  { _receivedMidiByteCallback = fptr; }
+    void setHandleEndReceivedMidi   (void (*fptr)(const ssrc_t&))                                        { _endReceivedMidiByteCallback = fptr; }
+    void setHandleSendRtp           (void (*fptr)(const Rtp_t&))                                         { _sendRtpCallback = fptr; }
 #endif
 
 #ifdef KEEP_SESSION_NAME
@@ -82,7 +82,7 @@ public:
     void sendEndSession();
     
 public:
-    // Override default thruActivated
+    // Override default thruActivated. Must be false for all packet based messages
     static const bool thruActivated = false;
 
 #ifdef USE_DIRECTORY
