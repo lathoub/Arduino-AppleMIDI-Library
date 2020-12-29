@@ -59,7 +59,7 @@ public:
 	void setHandleDisconnected      (void (*fptr)(const ssrc_t&))                                        { _disconnectedCallback = fptr; }
 #ifdef USE_EXT_CALLBACKS
     void setHandleException         (void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
-    void setHandleReceivedRtp       (void (*fptr)(const Rtp_t&, const int32_t&))                         { _receivedRtpCallback = fptr; }
+    void setHandleReceivedRtp       (void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&))          { _receivedRtpCallback = fptr; }
     void setHandleStartReceivedMidi (void (*fptr)(const ssrc_t&))                                        { _startReceivedMidiByteCallback = fptr; }
     void setHandleReceivedMidi      (void (*fptr)(const ssrc_t&, byte))                                  { _receivedMidiByteCallback = fptr; }
     void setHandleEndReceivedMidi   (void (*fptr)(const ssrc_t&))                                        { _endReceivedMidiByteCallback = fptr; }

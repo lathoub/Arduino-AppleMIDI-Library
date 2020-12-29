@@ -50,11 +50,11 @@ void setup()
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), name);
+    DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"));
+    DBG(F("Disconnected"), ssrc);
   });
 
   MIDI.begin();

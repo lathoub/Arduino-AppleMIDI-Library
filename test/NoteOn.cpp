@@ -34,7 +34,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected++;
-  DBG(F("Connected to session"), name);
+  DBG(F("Connected to session"), ssrc, name);
 }
 
 // -----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* 
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected--;
-  DBG(F("Disconnected"));
+  DBG(F("Disconnected"), ssrc);
 }
 
 // -----------------------------------------------------------------------------

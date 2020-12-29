@@ -40,11 +40,11 @@ void setup()
   // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), name);
+    DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"));
+    DBG(F("Disconnected"), ssrc);
   });
 
   // Extended callback, only available when defining USE_EXT_CALLBACKS
@@ -54,8 +54,8 @@ void setup()
   AppleMIDI.setHandleSentRtpMidi([](const APPLEMIDI_NAMESPACE::RtpMIDI_t& rtpMidi) {
     DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
   });
-  AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
-    DBG(F("setHandleReceivedRtp"), rtp.sequenceNr , "with", latency, "ms latency");
+  AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
+    DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr , "with", latency, "ms latency");
   });
   AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
     DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);

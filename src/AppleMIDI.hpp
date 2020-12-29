@@ -1025,7 +1025,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _receivedRtpCallback)
-            _receivedRtpCallback(rtp, latency);
+            _receivedRtpCallback(pParticipant->ssrc, rtp, latency);
 #endif
     }
     else
