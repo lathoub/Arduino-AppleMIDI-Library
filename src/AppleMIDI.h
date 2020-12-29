@@ -311,7 +311,7 @@ private:
     void manageSessionInvites();
     void manageSynchronization();
     void manageSynchronizationInitiator();
-    void manageSynchronizationInitiatorHeartBeat(size_t);
+    void manageSynchronizationInitiatorHeartBeat(Participant<Settings>*);
     void manageSynchronizationInitiatorInvites(size_t);
     
     void sendSynchronization(Participant<Settings>*);

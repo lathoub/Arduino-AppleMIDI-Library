@@ -1,8 +1,8 @@
 #include <Ethernet.h>
 
+#define APPLEMIDI_INITIATOR
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
-#define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -41,7 +41,7 @@ void setup()
     isConnected--;
     DBG(F("Disconnected"), ssrc);
   });
-  
+
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOn"), note);
   });
@@ -78,7 +78,7 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
- //   MIDI.sendNoteOn(note, velocity, channel);
- //   MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
   }
 }

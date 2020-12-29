@@ -951,7 +951,6 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
     participant.lastInviteSentTime = now - 1000; // forces invite to be send immediately
     participant.lastSyncExchangeTime = now;
     participant.initiatorToken = random(1, INT32_MAX) * 2;
-    participant.sequenceNr;
 
 #ifndef ONE_PARTICIPANT
     participants.push_back(participant);
