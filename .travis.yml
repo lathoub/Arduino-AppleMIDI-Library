@@ -13,4 +13,4 @@ install:
     - platformio lib -g install 62@5.0.0 870 872
 
 script:
-- pio ci --board=uno --lib=. examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino;
+- pio ci --board=uno --lib=. examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino examples/AVR_MinMemUsage/AVR_MinMemUsage.ino;
