@@ -11,7 +11,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI1, "Arduino1", DEFAULT_CONTROL_PORT);
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI2, "Arduino2", DEFAULT_CONTROL_PORT + 2);
@@ -63,7 +63,7 @@ void loop()
 
   // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
     t1 = millis();
 
@@ -83,7 +83,7 @@ void loop()
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected = true;
+  isConnected++;
   DBG(F("Connected to session"), name);
 }
 
@@ -91,7 +91,7 @@ void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* 
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected = false;
+  isConnected--;
   DBG(F("Disconnected"));
 }
 

@@ -64,7 +64,7 @@ public:
     void setHandleReceivedMidi      (void (*fptr)(const ssrc_t&, byte))                                  { _receivedMidiByteCallback = fptr; }
     void setHandleEndReceivedMidi   (void (*fptr)(const ssrc_t&))                                        { _endReceivedMidiByteCallback = fptr; }
     void setHandleSentRtp           (void (*fptr)(const Rtp_t&))                                         { _sentRtpCallback = fptr; }
-    void setHandleSentRtpMidi       (void (*fptr)(const RtpMIDI_t&))              { _sentRtpMidiCallback = fptr; }
+    void setHandleSentRtpMidi       (void (*fptr)(const RtpMIDI_t&))                                     { _sentRtpMidiCallback = fptr; }
 #endif
 
 #ifdef KEEP_SESSION_NAME
@@ -203,13 +203,15 @@ public:
         if (inMidiBuffer.size() > 0)
             return true;
         
-        // read packets from both UDP sockets
-        readDataPackets();    // from socket into dataBuffer
-        readControlPackets(); // from socket into controlBuffer
+        {
+            // read packets from both UDP sockets
+            readDataPackets();    // from socket into dataBuffer
+            readControlPackets(); // from socket into controlBuffer
 
-        // parses buffer and places MIDI into inMidiBuffer
-        parseDataPackets();    // from dataBuffer into inMidiBuffer
-        parseControlPackets(); // from controlBuffer
+            // parses buffer and places MIDI into inMidiBuffer
+            parseDataPackets();    // from dataBuffer into inMidiBuffer
+            parseControlPackets(); // from controlBuffer
+        }
 
         manageReceiverFeedback(); 
         manageSynchronization();
@@ -289,9 +291,9 @@ private:
     
 	// rtpMIDI callback from parser
     void ReceivedRtp(const Rtp_t &);
-    void StartReceivedMidi(const ssrc_t&);
-    void ReceivedMidi(const ssrc_t&, byte data);
-    void EndReceivedMidi(const ssrc_t&);
+    void StartReceivedMidi();
+    void ReceivedMidi(byte data);
+    void EndReceivedMidi();
 
 	// Helpers
     void writeInvitation      (UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);

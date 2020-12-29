@@ -11,7 +11,7 @@ char ssid[] = "ssid"; //  your network SSID (name)
 char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -40,11 +40,11 @@ void setup()
   MIDI.begin();
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
+    isConnected++;
     DBG(F("Connected to session"), name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
+    isConnected--;
     DBG(F("Disconnected"));
   });
   
@@ -68,7 +68,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t0) > 1000)
+  if ((isConnected > 0) && (millis() - t0) > 1000)
   {
     t0 = millis();
 

@@ -12,7 +12,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -39,11 +39,11 @@ void setup()
   // Normal callbacks - always available
   // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
+    isConnected++;
     DBG(F("Connected to session"), name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
+    isConnected--;
     DBG(F("Disconnected"));
   });
 
@@ -88,7 +88,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
     t1 = millis();
 
@@ -96,8 +96,10 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
+    DBG(F("\nsendNoteOn"), note, velocity, channel);
     MIDI.sendNoteOn(note, velocity, channel);
-    //    MIDI.sendNoteOff(note, velocity, channel);
+    //MIDI.sendNoteOff(note, velocity, channel);
+
   }
 }
 

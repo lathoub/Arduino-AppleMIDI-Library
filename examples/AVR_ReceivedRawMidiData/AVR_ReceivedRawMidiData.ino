@@ -11,7 +11,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -37,11 +37,11 @@ void setup()
 
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
+    isConnected++;
     DBG(F("Connected to session"), name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
+    isConnected--;
     DBG(F("Disconnected"));
   });
   AppleMIDI.setHandleStartReceivedMidi(OnAppleMidiStartReceived);

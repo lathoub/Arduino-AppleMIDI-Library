@@ -409,11 +409,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
         return;
     }
 
-    if (pParticipant->sendSequenceNr != receiverFeedback.sequenceNr)
+    if (pParticipant->sendSequenceNr < receiverFeedback.sequenceNr)
     {
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
-            _exceptionCallback(ssrc, SendPacketsDropped, pParticipant->sendSequenceNr - receiverFeedback.sequenceNr);
+            _exceptionCallback(pParticipant->ssrc, SendPacketsDropped, pParticipant->sendSequenceNr - receiverFeedback.sequenceNr);
 #endif
     }
 }
@@ -1035,7 +1035,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi(const ssrc_t& ssrc)
+void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
 #ifdef USE_EXT_CALLBACKS
    if (nullptr != _startReceivedMidiByteCallback)
@@ -1044,7 +1044,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi(const ssr
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(const ssrc_t& ssrc, byte value)
+void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _receivedMidiByteCallback)
@@ -1055,7 +1055,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(const ssrc_t& 
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi(const ssrc_t& ssrc)
+void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _endReceivedMidiByteCallback)

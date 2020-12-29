@@ -11,7 +11,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected;
+int8_t isConnected = 0;
 
 byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
 byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
@@ -49,11 +49,11 @@ void setup()
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
+    isConnected++;
     DBG(F("Connected to session"), name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
+    isConnected--;
     DBG(F("Disconnected"));
   });
 
@@ -73,9 +73,9 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
-    MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
+ //   MIDI.sendSysEx(sizeof(sysexBig), sysexBig, true);
     t1 = millis();
   }
 }
