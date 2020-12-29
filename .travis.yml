@@ -22,5 +22,5 @@ script:
 - pio ci --board=uno --lib=. examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino
 - pio ci --board=uno --lib=. examples/AVR_ReceivedRawMidiData/AVR_ReceivedRawMidiData.ino
 - pio ci --board=uno --lib=. examples/AVR_SysEx/AVR_SysEx.ino
-- pio ci --board=huzzah examples/ESP8266_NoteOnOffEverySec/ESP8266_NoteOnOffEverySec.ino
-- pio ci --board=featheresp32 examples/ESP32_NoteOnOffEverySec/ESP32_NoteOnOffEverySec.ino
+- pio ci --board=huzzah --lib=. examples/ESP8266_NoteOnOffEverySec/ESP8266_NoteOnOffEverySec.ino
+- pio ci --board=featheresp32 --lib=. examples/ESP32_NoteOnOffEverySec/ESP32_NoteOnOffEverySec.ino
