@@ -16,6 +16,10 @@ int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
+void OnAppleMidiStartReceived(const APPLEMIDI_NAMESPACE::ssrc_t&);
+void OnAppleMidiReceivedByte(const APPLEMIDI_NAMESPACE::ssrc_t&, byte);
+void OnAppleMidiEndReceive(const APPLEMIDI_NAMESPACE::ssrc_t&);
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------

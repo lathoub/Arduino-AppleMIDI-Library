@@ -16,6 +16,10 @@ int8_t isConnected = 0;
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI1, "Arduino1", DEFAULT_CONTROL_PORT);
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI2, "Arduino2", DEFAULT_CONTROL_PORT + 2);
 
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t&, const char*);
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t &);
+void OnMidiNoteOn(byte channel, byte note, byte velocity);
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------

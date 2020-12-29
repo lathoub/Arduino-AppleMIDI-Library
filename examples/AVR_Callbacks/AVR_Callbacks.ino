@@ -16,6 +16,8 @@ int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
+void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NAMESPACE::Exception&, const int32_t);
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
