@@ -77,7 +77,7 @@ Beware: the number of sockets on the Arduino is limited. The W5100 support 4, th
 Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
 
 Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting the number of particpants to just 1.
-On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24916 bytes (86%) and 1112 bytes  (43%) of global variables.
+On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24906 bytes (86%) and 1111 bytes  (43%) of global variables.
 
 ## Notes
 Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty de von Ausfern-schplenden-schlitter-crasscrenbon-fried-digger-dingle-dangle-dongle-dungle-burstein-von-knacker-thrasher-apple-banger-horowitz-ticolensic-grander-knotty-spelltinkle-grandlich-grumblemeyer-spelterwasser-kurstlich-himbleeisen-bahnwagen-gutenabend-bitte-ein-nürnburger-bratwustle-gerspurten-mitzweimache-luber-hundsfut-gumberaber-shönendanker-kalbsfleisch-mittler-aucher von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
