@@ -13,7 +13,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 
 ## New in 3.0.0
 * Bug Fixes (long session names get cropped)
-* Reduced memory footprint (see AVR_MinMemUsage example)
+* Reduced memory footprint (see AVR_MinMemUsage example and note below)
 * Extended and revised callbacks to receive AppleMIDI protocol feedback
 * Who may connect to me (Directory) (see AVR_Directory example)
 
@@ -86,7 +86,7 @@ Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting t
 On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24906 bytes (86%) and 1111 bytes  (43%) of global variables.
 
 ## Notes
-Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty de von Ausfern-schplenden-schlitter-crasscrenbon-fried-digger-dingle-dangle-dongle-dungle-burstein-von-knacker-thrasher-apple-banger-horowitz-ticolensic-grander-knotty-spelltinkle-grandlich-grumblemeyer-spelterwasser-kurstlich-himbleeisen-bahnwagen-gutenabend-bitte-ein-nürnburger-bratwustle-gerspurten-mitzweimache-luber-hundsfut-gumberaber-shönendanker-kalbsfleisch-mittler-aucher von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
 
 ## Arduino IDE (arduino.cc)
 * 1.8.13
