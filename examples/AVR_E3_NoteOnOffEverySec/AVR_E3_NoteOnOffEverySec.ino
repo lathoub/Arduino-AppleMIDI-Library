@@ -1,4 +1,4 @@
-#include <Ethernet.h>
+#include <Ethernet3.h> // from https://github.com/sstaub/Ethernet3
 
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
@@ -11,7 +11,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -30,30 +30,29 @@ void setup()
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
+  DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
 
-  // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
+  // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
-    DBG(F("Connected to session"), name);
+    isConnected++;
+    DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
-    DBG(F("Disconnected"));
+    isConnected--;
+    DBG(F("Disconnected"), ssrc);
   });
-  AppleMIDI.setHandleStartReceivedMidi(OnAppleMidiStartReceived);
-  AppleMIDI.setHandleReceivedMidi(OnAppleMidiReceivedByte);
-  AppleMIDI.setHandleEndReceivedMidi(OnAppleMidiEndReceive);
-
+  
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOff"), note);
   });
+
+  DBG(F("Sending MIDI messages every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -63,29 +62,18 @@ void loop()
 {
   // Listen to incoming notes
   MIDI.read();
-}
 
-// ====================================================================================
-// Event handlers for incoming MIDI messages
-// ====================================================================================
+  // send a note every second
+  // (dont cáll delay(1000) as it will stall the pipeline)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
+  {
+    t1 = millis();
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void OnAppleMidiStartReceived(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  DBG(F("Start receiving"), ssrc);
-}
+    byte note = random(1, 127);
+    byte velocity = 55;
+    byte channel = 1;
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void OnAppleMidiReceivedByte(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, byte data) {
-  SerialMon.println(data, HEX);
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-void OnAppleMidiEndReceive(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  DBG(F("End receiving"), ssrc);
+    MIDI.sendNoteOn(note, velocity, channel);
+//    MIDI.sendNoteOff(note, velocity, channel);
+  }
 }

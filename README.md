@@ -5,11 +5,17 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 
 ## Features
 * Build on top of the popular [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
-* Tested with AppleMIDI on Mac OS (Catalina) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Tested with AppleMIDI on Mac OS (Big Sur) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 * Compiles on Arduino, MacOS (XCode) and Windows (MSVS)
+
+## New in 3.0.0
+* Bug Fixes (long session names get cropped)
+* Reduced memory footprint (see AVR_MinMemUsage example and note below)
+* Extended and revised callbacks to receive AppleMIDI protocol feedback (see AVR_Callbacks example)
+* Who may connect to me (Directory) (see AVR_Directory example)
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
@@ -57,21 +63,31 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
 * Teensy 3.2
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
- 
+
+## Network Shields
+* Arduino Ethernet shield (Wiznet W5100 and W5500)
+* Arduino Wifi R3 shield
+* MKR ETH shield
+* Teensy WIZ820io W5200
+
 ## Memory usage
+Out of the box, this library has been setup to use a minimum amount of memory. Extended callbacks are not enabled by default, and can be anabled by USE_EXT_CALLBACKS. See the callback examamples.
+
 This library is not using any dynamic memory allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
 
 The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
 `MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
 Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
- 
-## Network Shields
-* Arduino Ethernet shield (Wiznet W5100 and W5500)
-* Arduino Wifi R3 shield
-* MKR ETH shield
-* Teensy WIZ820io W5200
- 
+
+Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
+
+Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting the number of particpants to just 1.
+On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24906 bytes (86%) and 1111 bytes  (43%) of global variables.
+
+## Notes
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
+
 ## Arduino IDE (arduino.cc)
 * 1.8.13
 

@@ -206,7 +206,7 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     
     // to compensate for adding the sysex at the end.
     consumed--;
-    
+
     // send MIDI data
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
@@ -221,7 +221,7 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
 
     midiCommandLength -= consumed;
     midiCommandLength += 1; // adding the manual SysEx SystemExclusiveEnd
-                          
+
     // indicates split SysEx
     return buffer.max_size() + 1;
 }

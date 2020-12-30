@@ -1,7 +1,7 @@
 #include <Ethernet.h>
 
-#define SerialMon Serial
-#define APPLEMIDI_DEBUG SerialMon
+#define ONE_PARTICIPANT
+#define NO_SESSION_NAME
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -11,7 +11,7 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
@@ -20,39 +20,29 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
 
-  if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
-    for (;;);
-  }
-
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  if (Ethernet.begin(mac) == 0)  for (;;);
 
   MIDI.begin();
 
   // Stay informed on connection status
-  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-    isConnected = true;
-    DBG(F("Connected to session"), name);
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char*) {
+    isConnected++;
+    digitalWrite(LED_BUILTIN, HIGH);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-    isConnected = false;
-    DBG(F("Disconnected"));
-  });
-  
-  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
-  });
-  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    isConnected--;
+    digitalWrite(LED_BUILTIN, LOW);
   });
 
-  DBG(F("Sending MIDI messages every second"));
+  MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
+    digitalWrite(LED_BUILTIN, LOW);
+  });
+  MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -65,15 +55,10 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
     t1 = millis();
 
-    byte note = random(1, 127);
-    byte velocity = 55;
-    byte channel = 1;
-
-    MIDI.sendNoteOn(note, velocity, channel);
-//    MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOn(54, 100, 1);
   }
 }

@@ -1,15 +1,16 @@
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiUdp.h>
+#include <Ethernet.h>
 
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
-char ssid[] = "yourNetwork"; //  your network SSID (name)
-char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
+// Enter a MAC address for your controller below.
+// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+byte mac[] = {
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+};
 
-unsigned long t0 = millis();
+unsigned long t1 = millis();
 int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
@@ -22,22 +23,19 @@ void setup()
   DBG_SETUP(115200);
   DBG("Booting");
 
-  WiFi.begin(ssid, pass);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    DBG("Establishing connection to WiFi..");
+  if (Ethernet.begin(mac) == 0) {
+    DBG(F("Failed DHCP, check network cable & reboot"));
+    for (;;);
   }
-  DBG("Connected to network");
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
 
   MIDI.begin();
 
+  // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
     DBG(F("Connected to session"), ssrc, name);
@@ -54,7 +52,7 @@ void setup()
     DBG(F("NoteOff"), note);
   });
 
-  DBG(F("Sending NoteOn/Off of note 45, every second"));
+  DBG(F("Sending MIDI messages every second"));
 }
 
 // -----------------------------------------------------------------------------
@@ -67,15 +65,15 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((isConnected > 0) && (millis() - t0) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
-    t0 = millis();
+    t1 = millis();
 
-    byte note = 45;
+    byte note = random(1, 127);
     byte velocity = 55;
     byte channel = 1;
 
     MIDI.sendNoteOn(note, velocity, channel);
-    MIDI.sendNoteOff(note, velocity, channel);
+//    MIDI.sendNoteOff(note, velocity, channel);
   }
 }

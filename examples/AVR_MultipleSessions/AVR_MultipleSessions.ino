@@ -11,10 +11,14 @@ byte mac[] = {
 };
 
 unsigned long t1 = millis();
-bool isConnected = false;
+int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI1, "Arduino1", DEFAULT_CONTROL_PORT);
 APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI2, "Arduino2", DEFAULT_CONTROL_PORT + 2);
+
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t&, const char*);
+void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t &);
+void OnMidiNoteOn(byte channel, byte note, byte velocity);
 
 // -----------------------------------------------------------------------------
 //
@@ -32,7 +36,7 @@ void setup()
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI1.getPort(), "(Name", AppleMIDI1.getName(), ")");
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI2.getPort(), "(Name", AppleMIDI2.getName(), ")");
-  DBG(F("Then press the Connect button"));
+  DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   // Listen for MIDI messages on channel 1
@@ -63,7 +67,7 @@ void loop()
 
   // send note on/off every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if (isConnected && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 1000)
   {
     t1 = millis();
 
@@ -83,16 +87,16 @@ void loop()
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected = true;
-  DBG(F("Connected to session"), name);
+  isConnected++;
+  DBG(F("Connected to session"), ssrc, name);
 }
 
 // -----------------------------------------------------------------------------
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected = false;
-  DBG(F("Disconnected"));
+  isConnected--;
+  DBG(F("Disconnected"), ssrc);
 }
 
 // -----------------------------------------------------------------------------

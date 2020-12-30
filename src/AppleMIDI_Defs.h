@@ -5,9 +5,9 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-#define APPLEMIDI_LIBRARY_VERSION 0x020100
-#define APPLEMIDI_LIBRARY_VERSION_MAJOR 2
-#define APPLEMIDI_LIBRARY_VERSION_MINOR 2
+#define APPLEMIDI_LIBRARY_VERSION 0x030000
+#define APPLEMIDI_LIBRARY_VERSION_MAJOR 3
+#define APPLEMIDI_LIBRARY_VERSION_MINOR 0
 #define APPLEMIDI_LIBRARY_VERSION_PATCH 0
 
 #define DEFAULT_CONTROL_PORT 5004
@@ -40,9 +40,14 @@ typedef const char* AppleMIDIConstStr;
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
 #define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
 
-#define APPLEMIDI_LISTENER
+// #define USE_EXT_CALLBACKS
+// #define ONE_PARTICIPANT // memory optimization
+// #define USE_DIRECTORY
+
+// By defining NO_SESSION_NAME in the sketch, you can save 100 bytes
+#ifndef NO_SESSION_NAME
 #define KEEP_SESSION_NAME
-#define LATENCY_CALCULATION
+#endif
 
 #define MIDI_SAMPLING_RATE_176K4HZ 176400
 #define MIDI_SAMPLING_RATE_192KHZ 192000
@@ -50,6 +55,18 @@ typedef const char* AppleMIDIConstStr;
 
 struct Rtp;
 typedef Rtp Rtp_t;
+
+struct RtpMIDI;
+typedef RtpMIDI RtpMIDI_t;
+
+#ifdef USE_DIRECTORY
+enum WhoCanConnectToMe : uint8_t
+{
+	None,
+	OnlyComputersInMyDirectory,
+	Anyone,
+};
+#endif
 
 // from: https://en.wikipedia.org/wiki/RTP-MIDI
 // Apple decided to create their own protocol, imposing all parameters related to
@@ -93,20 +110,28 @@ enum Exception : uint8_t
     ParseException,
     UnexpectedParseException,
     TooManyParticipantsException,
+    ComputerNotInDirectory,
+    NotAcceptingAnyone,
     UnexpectedInviteException,
     ParticipantNotFoundException,
     ListenerTimeOutException,
     MaxAttemptsException,
     NoResponseFromConnectionRequestException,
+    SendPacketsDropped,
+    ReceivedPacketsDropped,
 };
 
 using connectedCallback             = void (*)(const ssrc_t&, const char *);
+using disconnectedCallback          = void (*)(const ssrc_t&);
+#ifdef USE_EXT_CALLBACKS
 using startReceivedMidiByteCallback = void (*)(const ssrc_t&);
 using receivedMidiByteCallback      = void (*)(const ssrc_t&, byte);
 using endReceivedMidiByteCallback   = void (*)(const ssrc_t&);
 using receivedRtpCallback           = void (*)(const ssrc_t&, const Rtp_t&, const int32_t&);
-using disconnectedCallback          = void (*)(const ssrc_t&);
-using exceptionCallback             = void (*)(const ssrc_t&, int32_t);
+using exceptionCallback             = void (*)(const ssrc_t&, const Exception&, const int32_t value);
+using sentRtpCallback               = void (*)(const Rtp_t&);
+using sentRtpMidiCallback           = void (*)(const RtpMIDI_t&);
+#endif
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
 const byte amSignature[] = {0xff, 0xff};
@@ -131,12 +156,19 @@ typedef struct PACKED AppleMIDI_Invitation
 {
 	initiatorToken_t initiatorToken;
 	ssrc_t ssrc;
-    char sessionName[DefaultSettings::MaxSessionNameLen + 1];
 
+#ifdef KEEP_SESSION_NAME
+    char sessionName[DefaultSettings::MaxSessionNameLen + 1];
 	const size_t getLength() const
 	{
 		return sizeof(AppleMIDI_Invitation) - (DefaultSettings::MaxSessionNameLen) + strlen(sessionName);
 	}
+#else
+	const size_t getLength() const
+	{
+		return sizeof(AppleMIDI_Invitation);
+	}
+#endif
 } AppleMIDI_Invitation_t, AppleMIDI_InvitationAccepted_t, AppleMIDI_InvitationRejected_t;
 
 typedef struct PACKED AppleMIDI_BitrateReceiveLimit

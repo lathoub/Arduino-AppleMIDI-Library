@@ -10,13 +10,15 @@ template <class Settings>
 struct Participant
 {
     ParticipantKind kind;
-    ssrc_t          ssrc;
-    IPAddress       remoteIP;
-    uint16_t        remotePort;
-    
+    ssrc_t          ssrc = 0;
+    IPAddress       remoteIP = INADDR_NONE;
+    uint16_t        remotePort = 0;
+
     unsigned long   receiverFeedbackStartTime;
     bool            doReceiverFeedback = false;
-    uint16_t        sequenceNr;
+
+    uint16_t        sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+    uint16_t        receiveSequenceNr;
     unsigned long   lastSyncExchangeTime;
 
 #ifdef APPLEMIDI_INITIATOR
@@ -30,7 +32,7 @@ struct Participant
     bool            synchronizing = false;
 #endif
     
-#ifdef LATENCY_CALCULATION
+#ifdef USE_EXT_CALLBACKS
     uint32_t        offsetEstimate;
 #endif
     

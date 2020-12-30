@@ -50,22 +50,32 @@ public:
 	AppleMIDISession(const char *sessionName, const uint16_t port = DEFAULT_CONTROL_PORT)
 	{
 		this->port = port;
+#ifdef KEEP_SESSION_NAME
         strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
+#endif
 	};
 
-	void setHandleConnected(void (*fptr)(const ssrc_t&, const char*)) { _connectedCallback = fptr; }
-	void setHandleDisconnected(void (*fptr)(const ssrc_t&)) { _disconnectedCallback = fptr; }
-    void setHandleError(void (*fptr)(const ssrc_t&, int32_t)) { _exceptionCallback = fptr; }
-    void setHandleReceivedRtp(void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&)) { _receivedRtpCallback = fptr; }
-    void setHandleStartReceivedMidi(void (*fptr)(const ssrc_t&)) { _startReceivedMidiByteCallback = fptr; }
-    void setHandleReceivedMidi(void (*fptr)(const ssrc_t&, byte)) { _receivedMidiByteCallback = fptr; }
-    void setHandleEndReceivedMidi(void (*fptr)(const ssrc_t&)) { _endReceivedMidiByteCallback = fptr; }
+	void setHandleConnected         (void (*fptr)(const ssrc_t&, const char*))                           { _connectedCallback = fptr; }
+	void setHandleDisconnected      (void (*fptr)(const ssrc_t&))                                        { _disconnectedCallback = fptr; }
+#ifdef USE_EXT_CALLBACKS
+    void setHandleException         (void (*fptr)(const ssrc_t&, const Exception&, const int32_t value)) { _exceptionCallback = fptr; }
+    void setHandleReceivedRtp       (void (*fptr)(const ssrc_t&, const Rtp_t&, const int32_t&))          { _receivedRtpCallback = fptr; }
+    void setHandleStartReceivedMidi (void (*fptr)(const ssrc_t&))                                        { _startReceivedMidiByteCallback = fptr; }
+    void setHandleReceivedMidi      (void (*fptr)(const ssrc_t&, byte))                                  { _receivedMidiByteCallback = fptr; }
+    void setHandleEndReceivedMidi   (void (*fptr)(const ssrc_t&))                                        { _endReceivedMidiByteCallback = fptr; }
+    void setHandleSentRtp           (void (*fptr)(const Rtp_t&))                                         { _sentRtpCallback = fptr; }
+    void setHandleSentRtpMidi       (void (*fptr)(const RtpMIDI_t&))                                     { _sentRtpMidiCallback = fptr; }
+#endif
 
-    const char*    getName() { return this->localName; };
-    const uint16_t getPort() { return this->port; };
-    const ssrc_t   getSynchronizationSource() { return this->ssrc; };
-
+#ifdef KEEP_SESSION_NAME
+    const char*    getName() const { return this->localName; };
     void  setName(const char *sessionName) { strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen); };
+#else
+    const char*    getName() const { return nullptr; };
+    void  setName(const char *sessionName) { };
+#endif
+    const uint16_t getPort() const { return this->port; };
+    const ssrc_t   getSynchronizationSource() const { return this->ssrc; };
 
 #ifdef APPLEMIDI_INITIATOR
     bool sendInvite(IPAddress ip, uint16_t port = DEFAULT_CONTROL_PORT);
@@ -73,7 +83,13 @@ public:
     void sendEndSession();
     
 public:
+    // Override default thruActivated. Must be false for all packet based messages
     static const bool thruActivated = false;
+
+#ifdef USE_DIRECTORY
+    Deque<IPAddress, Settings::MaxNumberOfComputersInDirectory> directory;
+    WhoCanConnectToMe whoCanConnectToMe = Anyone;
+#endif
 
 	void begin()
 	{
@@ -90,7 +106,6 @@ public:
 		// this is our SSRC
         //
         // NOTE: Arduino random only goes to INT32_MAX (not UINT32_MAX)
-        
 		this->ssrc = random(1, INT32_MAX) * 2;
 
 		controlPort.begin(port);
@@ -128,7 +143,11 @@ public:
 		// of what we are to send (The RtpMidi protocol start with writing the
 		// length of the buffer). So we'll copy to a buffer in the 'write' method, 
 		// and actually serialize for real in the endTransmission method
-		return (dataPort.remoteIP() != INADDR_NONE && participants.size() > 0);
+#ifndef ONE_PARTICIPANT
+		return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participants.size() > 0);
+#else
+		return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participant.ssrc != 0);
+#endif
 	};
 
 	void write(byte byte)
@@ -150,8 +169,10 @@ public:
             }
 			else
 			{
-                if (NULL != _exceptionCallback)
-                    _exceptionCallback(ssrc, BufferFullException);
+#ifdef USE_EXT_CALLBACKS
+                if (nullptr != _exceptionCallback)
+                    _exceptionCallback(ssrc, BufferFullException, 0);
+#endif
 			}
 		}
 
@@ -182,13 +203,15 @@ public:
         if (inMidiBuffer.size() > 0)
             return true;
         
-        // read packets from both UDP sockets
-        readDataPackets();    // from socket into dataBuffer
-        readControlPackets(); // from socket into controlBuffer
+        {
+            // read packets from both UDP sockets
+            readDataPackets();    // from socket into dataBuffer
+            readControlPackets(); // from socket into controlBuffer
 
-        // parses buffer and places MIDI into inMidiBuffer
-        parseDataPackets();    // from dataBuffer into inMidiBuffer
-        parseControlPackets(); // from controlBuffer
+            // parses buffer and places MIDI into inMidiBuffer
+            parseDataPackets();    // from dataBuffer into inMidiBuffer
+            parseControlPackets(); // from controlBuffer
+        }
 
         manageReceiverFeedback(); 
         manageSynchronization();
@@ -209,7 +232,6 @@ protected:
 	UdpClass dataPort;
 
 private:
-	// reading from the network
 	RtpBuffer_t controlBuffer;
 	RtpBuffer_t dataBuffer;
 
@@ -219,13 +241,16 @@ private:
 	rtpMIDIParser<UdpClass, Settings, Platform> _rtpMIDIParser;
 
     connectedCallback _connectedCallback = nullptr;
+    disconnectedCallback _disconnectedCallback = nullptr;
+#ifdef USE_EXT_CALLBACKS
     startReceivedMidiByteCallback _startReceivedMidiByteCallback = nullptr;
     receivedMidiByteCallback _receivedMidiByteCallback = nullptr;
     endReceivedMidiByteCallback _endReceivedMidiByteCallback = nullptr;
     receivedRtpCallback _receivedRtpCallback = nullptr;
-    disconnectedCallback _disconnectedCallback = nullptr;
+    sentRtpCallback _sentRtpCallback = nullptr;
+    sentRtpMidiCallback _sentRtpMidiCallback = nullptr;
     exceptionCallback _exceptionCallback = nullptr;
-
+#endif
 	// buffer for incoming and outgoing MIDI messages
 	MidiBuffer_t inMidiBuffer;
 	MidiBuffer_t outMidiBuffer;
@@ -233,12 +258,17 @@ private:
 	rtpMidi_Clock rtpMidiClock;
             
 	ssrc_t ssrc = 0;
-    char localName[DefaultSettings::MaxSessionNameLen + 1];
 	uint16_t port = DEFAULT_CONTROL_PORT;
+#ifdef ONE_PARTICIPANT
+    Participant<Settings> participant;
+#else
     Deque<Participant<Settings>, Settings::MaxNumberOfParticipants> participants;
-    int32_t latencyAdjustment = 0;
-   	uint16_t sequenceNr = random(1, UINT16_MAX);
-            
+#endif
+
+#ifdef KEEP_SESSION_NAME
+    char localName[DefaultSettings::MaxSessionNameLen + 1];
+#endif
+
 private:
     void readControlPackets();
     void readDataPackets();
@@ -266,7 +296,7 @@ private:
     void EndReceivedMidi();
 
 	// Helpers
-    void writeInvitation      (UdpClass &, IPAddress, uint16_t, AppleMIDI_Invitation_t &, const byte *command);
+    void writeInvitation      (UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
     void writeSynchronization (const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
     void writeEndSession      (const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
@@ -280,15 +310,19 @@ private:
    
     void manageSessionInvites();
     void manageSynchronization();
-    void manageSynchronizationListener(size_t);
     void manageSynchronizationInitiator();
-    void manageSynchronizationInitiatorHeartBeat(size_t);
+    void manageSynchronizationInitiatorHeartBeat(Participant<Settings>*);
     void manageSynchronizationInitiatorInvites(size_t);
     
     void sendSynchronization(Participant<Settings>*);
 
-    Participant<Settings>* getParticipantBySSRC(const ssrc_t ssrc);
-    Participant<Settings>* getParticipantByInitiatorToken(const uint32_t initiatorToken);
+#ifndef ONE_PARTICIPANT
+    Participant<Settings>* getParticipantBySSRC(const ssrc_t&);
+    Participant<Settings>* getParticipantByInitiatorToken(const uint32_t& initiatorToken);
+#endif
+#ifdef USE_DIRECTORY
+    bool IsComputerInDirectory(IPAddress) const;
+#endif
 };
 
 END_APPLEMIDI_NAMESPACE

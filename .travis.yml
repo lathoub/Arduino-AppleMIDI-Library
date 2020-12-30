@@ -10,7 +10,18 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
-    - platformio lib -g install 62@5.0.0 870 872
+    - platformio lib -g install 62@5.0.0 870 872 236
 
 script:
-- pio ci --board=uno --lib=. examples/EthernetShield_NoteOnOffEverySec/EthernetShield_NoteOnOffEverySec.ino;
+- pio ci --board=uno --lib=. examples/AVR_Callbacks/AVR_Callbacks.ino
+- pio ci --board=uno --lib=. examples/AVR_Directory/AVR_Directory.ino
+- pio ci --board=uno --lib=. examples/AVR_Initiator/AVR_Initiator.ino
+- pio ci --board=uno --lib=. examples/AVR_MinMemUsage/AVR_MinMemUsage.ino
+- pio ci --board=uno --lib=. examples/AVR_MultipleSessions/AVR_MultipleSessions.ino
+- pio ci --board=uno --lib=. examples/AVR_NonDefaultSession/AVR_NonDefaultSession.ino
+- pio ci --board=uno --lib=. examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino
+- pio ci --board=uno --lib=. examples/AVR_ReceivedRawMidiData/AVR_ReceivedRawMidiData.ino
+- pio ci --board=uno --lib=. examples/AVR_SysEx/AVR_SysEx.ino
+- pio ci --board=mkrzero --lib=. examples/SAMD_Bonjour/SAMD_Bonjour.ino
+- pio ci --board=huzzah --lib=. examples/ESP8266_NoteOnOffEverySec/ESP8266_NoteOnOffEverySec.ino
+- pio ci --board=featheresp32 --lib=. examples/ESP32_NoteOnOffEverySec/ESP32_NoteOnOffEverySec.ino
