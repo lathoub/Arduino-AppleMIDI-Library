@@ -25,4 +25,3 @@ script:
 - pio ci --board=mkrzero --lib=. examples/SAMD_Bonjour/SAMD_Bonjour.ino
 - pio ci --board=huzzah --lib=. examples/ESP8266_NoteOnOffEverySec/ESP8266_NoteOnOffEverySec.ino
 - pio ci --board=featheresp32 --lib=. examples/ESP32_NoteOnOffEverySec/ESP32_NoteOnOffEverySec.ino
-- pio ci --board=wesp32 --lib=. examples/wESP32_NoteOnOffEverySec/wESP32_NoteOnOffEverySec.ino
