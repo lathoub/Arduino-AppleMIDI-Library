@@ -5,11 +5,16 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 
 ## Features
 * Build on top of the popular [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
-* Tested with AppleMIDI on Mac OS (Catalina) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Tested with AppleMIDI on Mac OS (Big Sur) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
 * Compiles on Arduino, MacOS (XCode) and Windows (MSVS)
+
+## New in 3.0.0
+* Bug Fixes (long session names get cropped)
+* Reduced memory footprint (see AVR_MinMemUsage example)
+* Extended and revised callbacks to receive AppleMIDI protocol feedback
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
