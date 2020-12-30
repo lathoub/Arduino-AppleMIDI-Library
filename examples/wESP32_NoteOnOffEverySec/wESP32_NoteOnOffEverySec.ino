@@ -2,7 +2,7 @@
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
-#include "ETH_Helper.h"
+#include "./ETH_Helper.h"
 
 unsigned long t0 = millis();
 int8_t isConnected = 0;
