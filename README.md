@@ -15,6 +15,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Bug Fixes (long session names get cropped)
 * Reduced memory footprint (see AVR_MinMemUsage example)
 * Extended and revised callbacks to receive AppleMIDI protocol feedback
+* Who may connect to me (Directory) (see AVR_Directory example)
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
