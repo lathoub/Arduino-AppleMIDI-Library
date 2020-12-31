@@ -77,10 +77,10 @@ This library is **not using any dynamic memory** allocation methods - all buffer
 
 The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
-`MaxNumberOfParticipants` is another way to cut memory - each particpants uses approx 300 bytes. Default number of participants is 1 (using 2 sockets). 
-Beware: the number of sockets on the Arduino is limited. The W5100 support 4, the W5200 and W5500 based IP chips can use 8 sockets. (Each participant uses 2 sockets: port 5004 and 5004+1). (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
+`MaxNumberOfParticipants` is another way to cut memory - each session particpant uses approx 300 bytes. Default number of participants is 2 (each using 2 sockets). 
+Beware: the number of sockets on the Arduino is limited. The W5100 support 4 (hance default number of participants is 2), the W5200 and W5500 based IP chips can use 8 sockets. (Base port can be set in `APPLEMIDI_CREATE_DEFAULT_INSTANCE`)
 
-Reduce the memory footprint by a further 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. By default the session name is kept.
+Reduce the memory footprint by a further wopping 500 bytes by `#define NO_SESSION_NAME` before `#include <AppleMIDI.h>`. This will leave out all the code to manage the optional session name. The RtpMIDI service client will show the name as (manually) defined in the directory.
 
 Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting the number of particpants to just 1.
 On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24906 bytes (86%) and 1111 bytes  (43%) of global variables.
