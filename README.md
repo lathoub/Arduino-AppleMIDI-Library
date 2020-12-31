@@ -74,7 +74,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * Teensy WIZ820io W5200
 
 ## Memory usage
-Out of the box, this library has been setup to 'medium' amount of memory (memory usage can be reduced, read below). Extended callbacks are not enabled by default, and can be anabled by `#USE_EXT_CALLBACKS`. See the callback examples.
+Out of the box, this library has been setup to use a 'medium' amount of memory (read below how to reduce the memory footprint). Extended callbacks are not enabled by default, and can be anabled by `#USE_EXT_CALLBACKS`. See the callback examples.
 
 This library is **not using any dynamic memory** allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation (also, no usage of the String() class).
 
