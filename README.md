@@ -44,8 +44,11 @@ void loop()
   // Listen to incoming notes
   MIDI.read();
   
-  // Send MIDI note 40 on, velocity 55 on channel 1
-  MIDI.sendNoteOn(40, 55, 1);
+  ....
+  if (something) {
+    // Send MIDI note 40 on, velocity 55 on channel 1
+    MIDI.sendNoteOn(40, 55, 1);
+  }
 }
 
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char*) {
