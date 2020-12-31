@@ -73,7 +73,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 ## Memory usage
 Out of the box, this library has been setup to 'medium' amount of memory (memory usage can be reduced, read below). Extended callbacks are not enabled by default, and can be anabled by `#USE_EXT_CALLBACKS`. See the callback examples.
 
-This library is **not using any dynamic memory allocation** methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation.
+This library is **not using any dynamic memory** allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation (also, no usage of the String() class).
 
 The minimum buffer size (`MaxBufferSize`) should be set to 64 bytes (also the default). Setting it to a higher value will make sending larger SysEx messages more efficiant (large SysEx messages are chopped in pieces, the larger the buffer, the less pieces needed), at the price of a bigger memory footprint.
 
