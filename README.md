@@ -25,7 +25,7 @@ From the Arduino IDE Library Manager, search for AppleMIDI
 This will also install [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
 
 ## Basic Usage
-```
+```cpp
 #include <Ethernet.h>
 #include <AppleMIDI.h>
 
@@ -48,7 +48,7 @@ void loop()
   MIDI.sendNoteOn(40, 55, 1);
 }
 
-void OnAppleMidiConnected(uint32_t ssrc, const char* name) {
+void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char*) {
 }
 ```
 
