@@ -1012,11 +1012,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
         auto latency = (int32_t)(rtpMidiClock.Now() - offset);
 #endif
-        if (pParticipant->receiveSequenceNr + 1 != rtp.sequenceNr) {
+        if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
 
 #ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
-                _exceptionCallback(ssrc, ReceivedPacketsDropped, pParticipant->receiveSequenceNr + 1 - rtp.sequenceNr);
+                _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
 #endif
         }
 
