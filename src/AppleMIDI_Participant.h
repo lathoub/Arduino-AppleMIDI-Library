@@ -18,7 +18,8 @@ struct Participant
     bool            doReceiverFeedback = false;
 
     uint16_t        sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
-    uint16_t        receiveSequenceNr;
+    uint16_t        receiveSequenceNr = 0;
+
     unsigned long   lastSyncExchangeTime;
 
 #ifdef APPLEMIDI_INITIATOR
@@ -33,6 +34,7 @@ struct Participant
 #endif
     
 #ifdef USE_EXT_CALLBACKS
+    bool            firstMessageReceived = true;
     uint32_t        offsetEstimate;
 #endif
     
