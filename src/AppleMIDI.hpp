@@ -1012,11 +1012,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
         auto latency = (int32_t)(rtpMidiClock.Now() - offset);
 
-        if (pParticipant->firstMessageReceived == false 
-        && rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
-             // avoids first message to generate sequence exception
-             // as we do not know the last sequenceNr received.
+        if (pParticipant->firstMessageReceived == true)
+            // avoids first message to generate sequence exception
+            // as we do not know the last sequenceNr received.
             pParticipant->firstMessageReceived = false;
+        else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
         }
