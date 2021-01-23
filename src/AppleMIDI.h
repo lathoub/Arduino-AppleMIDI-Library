@@ -201,22 +201,19 @@ public:
         // assert(outMidiBuffer.size() == 0); // must be empty
         
         if (inMidiBuffer.size() > 0)
-            return true;
+           return inMidiBuffer.size();
         
-        {
-            // read packets from both UDP sockets
-            readDataPackets();    // from socket into dataBuffer
-            readControlPackets(); // from socket into controlBuffer
+        // read packets from both UDP sockets
+        while (readDataPackets()) // from socket into dataBuffer
+            parseDataPackets();   // from dataBuffer into inMidiBuffer
 
-            // parses buffer and places MIDI into inMidiBuffer
-            parseDataPackets();    // from dataBuffer into inMidiBuffer
-            parseControlPackets(); // from controlBuffer
-        }
+        while (readControlPackets()) // from socket into controlBuffer
+            parseControlPackets();   // from controlBuffer to AppleMIDI
 
         manageReceiverFeedback(); 
         manageSynchronization();
 
-        return false;
+        return inMidiBuffer.size();
 	};
 
     byte read()
@@ -270,8 +267,8 @@ private:
 #endif
 
 private:
-    void readControlPackets();
-    void readDataPackets();
+    size_t readControlPackets();
+    size_t readDataPackets();
     
     void parseControlPackets();
     void parseDataPackets();

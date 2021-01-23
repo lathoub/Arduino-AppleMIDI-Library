@@ -5,7 +5,7 @@
 BEGIN_APPLEMIDI_NAMESPACE
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
+size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {
     size_t packetSize = controlPort.available();
     if (packetSize == 0)
@@ -20,6 +20,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
         for (auto i = 0; i < bytesRead; i++)
             controlBuffer.push_back(packetBuffer[i]);
     }
+
+    return controlBuffer.size();
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -40,7 +42,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
 }
 
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
+size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
 {
     size_t packetSize = dataPort.available();
     if (packetSize == 0)
@@ -55,6 +57,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
         for (auto i = 0; i < bytesRead; i++)
             dataBuffer.push_back(packetBuffer[i]);
     }
+
+    return dataBuffer.size();
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -1017,6 +1021,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
             // as we do not know the last sequenceNr received.
             pParticipant->firstMessageReceived = false;
         else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
+
+            DBG(F("*** rtp.sequenceNr"), rtp.sequenceNr);
+            DBG(F("*** pParticipant->receiveSequenceNr"), pParticipant->receiveSequenceNr);
+
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
         }
