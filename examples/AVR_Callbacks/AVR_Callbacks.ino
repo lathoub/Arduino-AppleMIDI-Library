@@ -1,11 +1,5 @@
 #include <Ethernet.h>
 
-  // * * * * * * * * * * * * * * * * * * * * * * 
-  // * * * * * * * * W A R N I N G * * * * * * *
-  // logging messages to the Serial port in callback
-  // can result in dropped UDP messages!
-  // * * * * * * * * * * * * * * * * * * * * * * 
-
 #define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
@@ -107,7 +101,6 @@ void loop()
     DBG(F("\nsendNoteOn"), note, velocity, channel);
     MIDI.sendNoteOn(note, velocity, channel);
     //MIDI.sendNoteOff(note, velocity, channel);
-
   }
 }
 

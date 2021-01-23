@@ -1,9 +1,3 @@
-  // * * * * * * * * * * * * * * * * * * * * * * 
-  // * * * * * * * * W A R N I N G * * * * * * *
-  // logging messages to the Serial port in callback
-  // can result in dropped UDP messages!
-  // * * * * * * * * * * * * * * * * * * * * * * 
-
 #define SerialMon Serial
 #define USE_EXT_CALLBACKS
 #define APPLEMIDI_DEBUG SerialMon

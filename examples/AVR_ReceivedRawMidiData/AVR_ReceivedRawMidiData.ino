@@ -1,11 +1,5 @@
 #include <Ethernet.h>
 
-  // * * * * * * * * * * * * * * * * * * * * * * 
-  // * * * * * * * * W A R N I N G * * * * * * *
-  // logging messages to the Serial port in callback
-  // can result in dropped UDP messages!
-  // * * * * * * * * * * * * * * * * * * * * * * 
-
 #define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
