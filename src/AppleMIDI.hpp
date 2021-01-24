@@ -489,9 +489,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
         
             port.write((uint8_t *)command, sizeof(amInvitation));
             port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
-            invitation.initiatorToken = htonl(invitation.initiatorToken);
+            invitation.initiatorToken = __htonl(invitation.initiatorToken);
             invitation.ssrc = ssrc;
-            invitation.ssrc = htonl(invitation.ssrc);
+            invitation.ssrc = __htonl(invitation.ssrc);
             port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
         
         port.endPacket();
@@ -508,8 +508,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const
         
             controlPort.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
         
-            receiverFeedback.ssrc       = htonl(receiverFeedback.ssrc);
-            receiverFeedback.sequenceNr = htons(receiverFeedback.sequenceNr);
+            receiverFeedback.ssrc       = __htonl(receiverFeedback.ssrc);
+            receiverFeedback.sequenceNr = __htons(receiverFeedback.sequenceNr);
         
             controlPort.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
         
@@ -526,11 +526,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const 
         dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
         dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
         synchronization.ssrc = ssrc;
-        synchronization.ssrc = htonl(synchronization.ssrc);
+        synchronization.ssrc = __htonl(synchronization.ssrc);
 
-        synchronization.timestamps[0] = htonll(synchronization.timestamps[0]);
-        synchronization.timestamps[1] = htonll(synchronization.timestamps[1]);
-        synchronization.timestamps[2] = htonll(synchronization.timestamps[2]);
+        synchronization.timestamps[0] = __htonll(synchronization.timestamps[0]);
+        synchronization.timestamps[1] = __htonll(synchronization.timestamps[1]);
+        synchronization.timestamps[2] = __htonll(synchronization.timestamps[2]);
         dataPort.write(reinterpret_cast<uint8_t *>(&synchronization), sizeof(synchronization));
         
         dataPort.endPacket();
@@ -547,8 +547,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAdd
         controlPort.write((uint8_t *)amEndSession, sizeof(amEndSession));
         controlPort.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
 
-        endSession.initiatorToken = htonl(endSession.initiatorToken);
-        endSession.ssrc           = htonl(endSession.ssrc);
+        endSession.initiatorToken = __htonl(endSession.initiatorToken);
+        endSession.ssrc           = __htonl(endSession.ssrc);
 
         controlPort.write(reinterpret_cast<uint8_t *>(&endSession), sizeof(endSession));
         
@@ -613,9 +613,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         _sentRtpCallback(rtp);
 #endif
 
-    rtp.timestamp  = htonl(rtp.timestamp);
-    rtp.ssrc       = htonl(rtp.ssrc);
-    rtp.sequenceNr = htons(rtp.sequenceNr);
+    rtp.timestamp  = __htonl(rtp.timestamp);
+    rtp.ssrc       = __htonl(rtp.ssrc);
+    rtp.sequenceNr = __htons(rtp.sequenceNr);
 
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 

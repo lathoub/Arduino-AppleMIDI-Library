@@ -48,7 +48,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // stream (modulo 2^16).
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
-    //    uint16_t checkPoint = ntohs(cb.value16); ; // unused
+    //    uint16_t checkPoint = __ntohs(cb.value16); ; // unused
         
         // (RFC 4695, 5 Recovery Journal Format)
         // If A and Y are both zero, the recovery journal only contains its 3-
@@ -90,7 +90,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
-            uint16_t systemflags = ntohs(cb.value16);
+            uint16_t systemflags = __ntohs(cb.value16);
             uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
             
             uint16_t remainingBytes = sysjourlen - 2;
@@ -129,7 +129,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         cb.buffer[1] = buffer[0];
         cb.buffer[2] = buffer[1];
         cb.buffer[3] = buffer[2];
-        uint32_t chanflags = ntohl(cb.value32);
+        uint32_t chanflags = __ntohl(cb.value32);
         
         uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
     //    uint16_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; // unused

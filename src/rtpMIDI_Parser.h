@@ -75,17 +75,17 @@ public:
             
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
-            rtp.sequenceNr = ntohs(cb.value16);
+            rtp.sequenceNr = __ntohs(cb.value16);
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            rtp.timestamp = ntohl(cb.value32);
+            rtp.timestamp = __ntohl(cb.value32);
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            rtp.ssrc = ntohl(cb.value32);
+            rtp.ssrc = __ntohl(cb.value32);
 
             uint8_t version = RTP_VERSION(rtp.vpxcc);
     #ifdef DEBUG

@@ -1,89 +1,78 @@
 #pragma once
 
-#if !defined(BYTE_ORDER) 
+#if !defined(_BYTE_ORDER) 
 
-    #ifndef BIG_ENDIANs
-    #define BIG_ENDIAN 4321
-    #endif
-    #ifndef LITTLE_ENDIAN
-    #define LITTLE_ENDIAN 1234
-    #endif
+    #define _BIG_ENDIAN 4321
+    #define _LITTLE_ENDIAN 1234
 
     #define TEST_LITTLE_ENDIAN (((union { unsigned x; unsigned char c; }){1}).c)
 
     #ifdef TEST_LITTLE_ENDIAN
-    #define BYTE_ORDER LITTLE_ENDIAN
+    #define _BYTE_ORDER _LITTLE_ENDIAN
     #else
-    #define BYTE_ORDER BIG_ENDIAN
+    #define _BYTE_ORDER _BIG_ENDIAN
     #endif
 
     #undef TEST_LITTLE_ENDIAN
-#endif
 
-#include <stdint.h>
+    #include <stdint.h>
 
-#ifndef __bswap16
-    #define __bswap16(x) ((uint16_t)((((uint16_t)(x)&0xff00) >> 8) | (((uint16_t)(x)&0x00ff) << 8)))
-#endif
+    #ifdef __GNUC__
+    #define	__bswap16(_x)	__builtin_bswap16(_x)
+    #define	__bswap32(_x)	__builtin_bswap32(_x)
+    #define	__bswap64(_x)	__builtin_bswap64(_x)
+    #else /* __GNUC__ */
 
-#ifndef __bswap32
-    #define __bswap32(x)                                                                     \
-        ((uint32_t)((((uint32_t)(x)&0xff000000) >> 24) | (((uint32_t)(x)&0x00ff0000) >> 8) | \
-                    (((uint32_t)(x)&0x0000ff00) << 8) | (((uint32_t)(x)&0x000000ff) << 24)))
-#endif
+    static __inline __uint16_t
+    __bswap16(__uint16_t _x)
+    {
+        return ((__uint16_t)((_x >> 8) | ((_x << 8) & 0xff00)));
+    }
 
-#ifndef __bswap64
-    #define __bswap64(x)                                            \
-        ((uint64_t)((((uint64_t)(x)&0xff00000000000000ULL) >> 56) | \
-                    (((uint64_t)(x)&0x00ff000000000000ULL) >> 40) | \
-                    (((uint64_t)(x)&0x0000ff0000000000ULL) >> 24) | \
-                    (((uint64_t)(x)&0x000000ff00000000ULL) >> 8) |  \
-                    (((uint64_t)(x)&0x00000000ff000000ULL) << 8) |  \
-                    (((uint64_t)(x)&0x0000000000ff0000ULL) << 24) | \
-                    (((uint64_t)(x)&0x000000000000ff00ULL) << 40) | \
-                    (((uint64_t)(x)&0x00000000000000ffULL) << 56)))
-#endif
+    static __inline __uint32_t
+    __bswap32(__uint32_t _x)
+    {
+        return ((__uint32_t)((_x >> 24) | ((_x >> 8) & 0xff00) |
+            ((_x << 8) & 0xff0000) | ((_x << 24) & 0xff000000)));
+    }
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+    static __inline __uint64_t
+    __bswap64(__uint64_t _x)
+    {
+        return ((__uint64_t)((_x >> 56) | ((_x >> 40) & 0xff00) |
+            ((_x >> 24) & 0xff0000) | ((_x >> 8) & 0xff000000) |
+            ((_x << 8) & ((__uint64_t)0xff << 32)) |
+            ((_x << 24) & ((__uint64_t)0xff << 40)) |
+            ((_x << 40) & ((__uint64_t)0xff << 48)) | ((_x << 56))));
+    }
+    #endif /* !__GNUC__ */
 
-#if !defined(ntohs)
-    #define ntohs(x) __bswap16(x)
-#endif
-#if !defined(htons)
-    #define htons(x) __bswap16(x)
-#endif
-#if !defined(ntohl)
-    #define ntohl(x) __bswap32(x)
-#endif
-#if !defined(htonl)
-    #define htonl(x) __bswap32(x)
-#endif
-#if !defined(ntohll)
-    #define ntohll(x) __bswap64(x)
-#endif
-#if !defined(htonll)
-    #define htonll(x) __bswap64(x)
-#endif
+    #ifndef __machine_host_to_from_network_defined
+    #if _BYTE_ORDER == _LITTLE_ENDIAN
+    #define __ntohs(x) __bswap16(x)
+    #define __htons(x) __bswap16(x)
+    #define __ntohl(x) __bswap32(x)
+    #define __htonl(x) __bswap32(x)
+    #define __ntohll(x) __bswap64(x)
+    #define __htonll(x) __bswap64(x)
+    #else // BIG_ENDIAN
+    #define __ntohl(x) ((uint32_t)(x))
+    #define __ntohs(x) ((uint16_t)(x))
+    #define __htonl(x) ((uint32_t)(x))
+    #define __htons(x) ((uint16_t)(x))
+    #define __ntohll(x) ((uint64_t)(x))
+    #define __htonll(x) ((uint64_t)(x))
+    #endif
+    #endif /* __machine_host_to_from_network_defined */
 
+#endif /* _BYTE_ORDER */
+
+#ifndef __machine_host_to_from_network_defined
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define __ntohll(x) __bswap64(x)
+#define __htonll(x) __bswap64(x)
 #else // BIG_ENDIAN
-
-#if !defined(ntohs)
-    #define ntohl(x) ((uint32_t)(x))
+#define __ntohll(x) ((uint64_t)(x))
+#define __htonll(x) ((uint64_t)(x))
 #endif
-#if !defined(ntohs)
-    #define ntohs(x) ((uint16_t)(x))
-#endif
-#if !defined(htonl)
-    #define htonl(x) ((uint32_t)(x))
-#endif
-#if !defined(htons)
-    #define htons(x) ((uint16_t)(x))
-#endif
-#if !defined(ntohll)
-    #define ntohll(x) ((uint64_t)(x))
-#endif
-#if !defined(htonll)
-    #define htonll(x) ((uint64_t)(x))
-#endif
-
-#endif
+#endif /* __machine_host_to_from_network_defined */

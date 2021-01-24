@@ -67,14 +67,14 @@ public:
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			invitation.initiatorToken = ntohl(cb.value32);
+			invitation.initiatorToken = __ntohl(cb.value32);
 			
 			// The sender's synchronization source identifier.
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			invitation.ssrc = ntohl(cb.value32);
+			invitation.ssrc = __ntohl(cb.value32);
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
@@ -127,14 +127,14 @@ public:
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			endSession.initiatorToken = ntohl(cb.value32);
+			endSession.initiatorToken = __ntohl(cb.value32);
             
 			// The sender's synchronization source identifier.
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			endSession.ssrc = ntohl(cb.value32);
+			endSession.ssrc = __ntohl(cb.value32);
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
@@ -157,7 +157,7 @@ public:
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			synchronization.ssrc = ntohl(cb.value32);
+			synchronization.ssrc = __ntohl(cb.value32);
 
 			synchronization.count = buffer[i++];
 			buffer[i++];
@@ -171,7 +171,7 @@ public:
 			cb.buffer[5] = buffer[i++];
 			cb.buffer[6] = buffer[i++];
 			cb.buffer[7] = buffer[i++];
-			synchronization.timestamps[0] = ntohll(cb.value64);
+			synchronization.timestamps[0] = __ntohll(cb.value64);
 
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
@@ -181,7 +181,7 @@ public:
 			cb.buffer[5] = buffer[i++];
 			cb.buffer[6] = buffer[i++];
 			cb.buffer[7] = buffer[i++];
-			synchronization.timestamps[1] = ntohll(cb.value64);
+			synchronization.timestamps[1] = __ntohll(cb.value64);
 
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
@@ -191,7 +191,7 @@ public:
 			cb.buffer[5] = buffer[i++];
 			cb.buffer[6] = buffer[i++];
 			cb.buffer[7] = buffer[i++];
-			synchronization.timestamps[2] = ntohll(cb.value64);
+			synchronization.timestamps[2] = __ntohll(cb.value64);
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
@@ -212,14 +212,14 @@ public:
 			cb.buffer[1] = buffer[i++];
 			cb.buffer[2] = buffer[i++];
 			cb.buffer[3] = buffer[i++];
-			receiverFeedback.ssrc = ntohl(cb.value32);
+			receiverFeedback.ssrc = __ntohl(cb.value32);
 
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
-			receiverFeedback.sequenceNr = ntohs(cb.value16);
+			receiverFeedback.sequenceNr = __ntohs(cb.value16);
 			cb.buffer[0] = buffer[i++];
 			cb.buffer[1] = buffer[i++];
-			receiverFeedback.dummy = ntohs(cb.value16);
+			receiverFeedback.dummy = __ntohs(cb.value16);
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
@@ -256,14 +256,14 @@ public:
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            invitationAccepted.initiatorToken = ntohl(cb.value32);
+            invitationAccepted.initiatorToken = __ntohl(cb.value32);
             
             // The sender's synchronization source identifier.
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            invitationAccepted.ssrc = ntohl(cb.value32);
+            invitationAccepted.ssrc = __ntohl(cb.value32);
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
@@ -318,14 +318,14 @@ public:
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            invitationRejected.initiatorToken = ntohl(cb.value32);
+            invitationRejected.initiatorToken = __ntohl(cb.value32);
             
             // The sender's synchronization source identifier.
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            invitationRejected.ssrc = ntohl(cb.value32);
+            invitationRejected.ssrc = __ntohl(cb.value32);
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
@@ -365,13 +365,13 @@ public:
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            bitrateReceiveLimit.ssrc = ntohl(cb.value32);
+            bitrateReceiveLimit.ssrc = __ntohl(cb.value32);
 
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             cb.buffer[2] = buffer[i++];
             cb.buffer[3] = buffer[i++];
-            bitrateReceiveLimit.bitratelimit = ntohl(cb.value32);
+            bitrateReceiveLimit.bitratelimit = __ntohl(cb.value32);
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
