@@ -203,12 +203,11 @@ public:
         if (inMidiBuffer.size() > 0)
            return inMidiBuffer.size();
         
-        // read packets from both UDP sockets
-         (readDataPackets()); // from socket into dataBuffer
+        if (readDataPackets()) // from socket into dataBuffer
             parseDataPackets();   // from dataBuffer into inMidiBuffer
 
-        (readControlPackets()); // from socket into controlBuffer
-            parseControlPackets();   // from controlBuffer to AppleMIDI
+        if (readControlPackets())  // from socket into controlBuffer
+            parseControlPackets(); // from controlBuffer to AppleMIDI
 
         manageReceiverFeedback(); 
         manageSynchronization();

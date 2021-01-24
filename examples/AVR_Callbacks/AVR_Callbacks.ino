@@ -36,7 +36,7 @@ void setup()
   DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
-  MIDI.begin();
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 
   // Normal callbacks - always available
   // Stay informed on connection status
@@ -51,30 +51,39 @@ void setup()
 
   // Extended callback, only available when defining USE_EXT_CALLBACKS
   AppleMIDI.setHandleSentRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp) {
-    DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
+    //  DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
   });
   AppleMIDI.setHandleSentRtpMidi([](const APPLEMIDI_NAMESPACE::RtpMIDI_t& rtpMidi) {
-    DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
+    //  DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
   });
   AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
-    DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr , "with", latency, "ms latency");
+    //  DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr , "with", latency, "ms latency");
   });
   AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
-    DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
+    //  DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
   });
   AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, byte value) {
-    DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
+    //  DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
   });
   AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
-    DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
+    //  DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
   });
   AppleMIDI.setHandleException(OnAppleMidiException);
 
+  MIDI.setHandleControlChange([](Channel channel, byte v1, byte v2) {
+    DBG(F("ControlChange"), channel, v1, v2);
+  });
+  MIDI.setHandleProgramChange([](Channel channel, byte v1) {
+    DBG(F("ProgramChange"), channel, v1);
+  });
+  MIDI.setHandlePitchBend([](Channel channel, int v1) {
+    DBG(F("PitchBend"), channel, v1);
+  });
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    DBG(F("NoteOn"), channel, note, velocity);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    DBG(F("NoteOff"), channel, note, velocity);
   });
 
   DBG(F("Sending MIDI messages every second"));
@@ -98,8 +107,8 @@ void loop()
     byte velocity = 55;
     byte channel = 1;
 
-    DBG(F("\nsendNoteOn"), note, velocity, channel);
-    MIDI.sendNoteOn(note, velocity, channel);
+    //   DBG(F("\nsendNoteOn"), note, velocity, channel);
+    //   MIDI.sendNoteOn(note, velocity, channel);
     //MIDI.sendNoteOff(note, velocity, channel);
   }
 }
