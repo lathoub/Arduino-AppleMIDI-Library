@@ -204,10 +204,10 @@ public:
            return inMidiBuffer.size();
         
         // read packets from both UDP sockets
-        while (readDataPackets()) // from socket into dataBuffer
+         (readDataPackets()); // from socket into dataBuffer
             parseDataPackets();   // from dataBuffer into inMidiBuffer
 
-        while (readControlPackets()) // from socket into controlBuffer
+        (readControlPackets()); // from socket into controlBuffer
             parseControlPackets();   // from controlBuffer to AppleMIDI
 
         manageReceiverFeedback(); 
