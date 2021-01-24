@@ -2,7 +2,6 @@
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
 
-#define NO_SESSION_NAME
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>

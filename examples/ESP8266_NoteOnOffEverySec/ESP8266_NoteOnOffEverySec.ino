@@ -6,7 +6,7 @@
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
-char ssid[] = "yourNetwork"; //  your network SSID (name)
+char ssid[] = "ssid"; //  your network SSID (name)
 char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
