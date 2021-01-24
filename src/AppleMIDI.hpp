@@ -1021,10 +1021,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
             // as we do not know the last sequenceNr received.
             pParticipant->firstMessageReceived = false;
         else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
-
-            DBG(F("*** rtp.sequenceNr"), rtp.sequenceNr);
-            DBG(F("*** pParticipant->receiveSequenceNr"), pParticipant->receiveSequenceNr);
-
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
         }
