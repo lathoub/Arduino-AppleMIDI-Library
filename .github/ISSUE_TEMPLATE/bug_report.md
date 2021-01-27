@@ -18,7 +18,7 @@ https://github.com/lathoub/Arduino-AppleMIDI-Library/discussions/new
 
 ## Context
 
-Please answer a few questions to help us understand your problem better and guide you to a solution:
+Using the English language, please answer a few questions to help us understand your problem better and guide you to a solution:
 
 <!-- Tip: place the letter x in the checkboxes to tick them:
 - [ ] Unticked checkbox
