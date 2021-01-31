@@ -1,3 +1,4 @@
+#define ETHERNET3
 #include "ETH_Helper.h"
 
 #define USE_EXT_CALLBACKS

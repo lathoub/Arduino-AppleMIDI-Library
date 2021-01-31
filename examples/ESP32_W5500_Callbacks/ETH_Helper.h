@@ -1,6 +1,11 @@
 #include <WiFi.h>
+#ifdef ETHERNET3
 #include <Ethernet3.h>
-//#include "AsyncUDP_Facade.h"
+#else
+#define MAX_SOCK_NUM 4
+#define ETHERNET_LARGE_BUFFERS
+#include <Ethernet.h>
+#endif
 
 #define RESET_PIN  26
 #define CS_PIN     5
@@ -15,54 +20,30 @@ byte mac[] = {
    Wiz W5500 reset function.  Change this for the specific reset
    sequence required for your particular board or module.
 */
-void WizReset() {
-  Serial.print("Resetting Wiz W5500 Ethernet Board...  ");
+void hardreset() {
   pinMode(RESET_PIN, OUTPUT);
   digitalWrite(RESET_PIN, HIGH);
-  delay(250);
+  delay(150);
+
   digitalWrite(RESET_PIN, LOW);
-  delay(50);
+  delay(1);
   digitalWrite(RESET_PIN, HIGH);
-  delay(350);
-  Serial.println("Done.");
-}
-
-/*
-   Print the result of the ethernet connection
-   status enum as a string.
-   Ethernet.h currently contains these values:-
-
-    enum EthernetLinkStatus {
-       Unknown,
-       LinkON,
-       LinkOFF
-    };
-*/
-void prt_ethval(uint8_t refval) {
-  switch (refval) {
-    case 0:
-      Serial.println("Uknown status.");
-      break;
-    case 1:
-      Serial.println("Link flagged as UP.");
-      break;
-    case 2:
-      Serial.println("Link flagged as DOWN. Check cable connection.");
-      break;
-    default:
-      Serial.println("UNKNOWN - Update espnow_gw.ino to match Ethernet.h");
-  }
+  delay(150);
 }
 
 bool ETH_startup()
 {
-  // Use Ethernet.init(pin) to configure the CS pin.
+#ifdef ETHERNET3
   Ethernet.setRstPin(RESET_PIN);
   Ethernet.setCsPin(CS_PIN);
   Ethernet.init(4); // maxSockNum = 4 Socket 0...3 -> RX/TX Buffer 4k
   Serial.println("Resetting Wiz W5500 Ethernet Board...  ");
   Ethernet.hardreset();
-  //  WizReset();
+#else
+  Ethernet.init(CS_PIN);
+  Serial.println("Resetting Wiz Ethernet Board...  ");
+  hardreset();
+#endif
 
   Serial.println(WiFi.macAddress());
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
@@ -87,7 +68,11 @@ bool ETH_startup()
   Serial.println("Checking connection.");
   bool rdy_flag = false;
   for (uint8_t i = 0; i <= 20; i++) {
+#ifdef ETHERNET3
     if ((Ethernet.link() == 0)) {
+#else
+    if ((Ethernet.linkStatus() == Unknown)) {
+#endif  
       Serial.print(".");
       rdy_flag = false;
       delay(80);
@@ -98,14 +83,12 @@ bool ETH_startup()
   }
   if (rdy_flag == false) {
     Serial.println("\n\r\tHardware fault, or cable problem... cannot continue.");
-    Serial.print("   Cable Status: ");
-    prt_ethval(Ethernet.link());
     while (true) {
       delay(10);          // Halt.
     }
   } else {
     Serial.println("OK");
   }
-  
+
   return true;
 }
