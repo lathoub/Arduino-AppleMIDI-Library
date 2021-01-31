@@ -200,11 +200,11 @@ public:
             writeRtpMidiToAllParticipants();
         // assert(outMidiBuffer.size() == 0); // must be empty
 
-        if (readDataPackets()) // from socket into dataBuffer
-            parseDataPackets();   // from dataBuffer into inMidiBuffer
-
         if (inMidiBuffer.size() > 0)
            return inMidiBuffer.size();
+
+        if (readDataPackets()) // from socket into dataBuffer
+            parseDataPackets();   // from dataBuffer into inMidiBuffer
 
         if (readControlPackets())  // from socket into controlBuffer
             parseControlPackets(); // from controlBuffer to AppleMIDI
