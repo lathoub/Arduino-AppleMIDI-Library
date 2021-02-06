@@ -119,6 +119,7 @@ enum Exception : uint8_t
     NoResponseFromConnectionRequestException,
     SendPacketsDropped,
     ReceivedPacketsDropped,
+    UdpBeginPacketFailed,
 };
 
 using connectedCallback             = void (*)(const ssrc_t&, const char *);

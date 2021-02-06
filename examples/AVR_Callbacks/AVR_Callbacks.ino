@@ -1,5 +1,7 @@
 #include <Ethernet.h>
+#include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
 
+#define ONE_PARTICIPANT
 #define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
@@ -31,6 +33,16 @@ void setup()
     for (;;);
   }
 
+  // Initialize the Bonjour/MDNS library. You can now reach or ping this
+  // Arduino via the host name "arduino.local", provided that your operating
+  // system is Bonjour-enabled (such as MacOS X).
+  // Always call this before any other method!
+  EthernetBonjour.begin("arduino");
+
+  EthernetBonjour.addServiceRecord("Arduino._apple-midi",
+                                   5004,
+                                   MDNSServiceUDP);
+
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
   DBG(F("Select and then press the Connect button"));
@@ -48,7 +60,7 @@ void setup()
     isConnected--;
     DBG(F("Disconnected"), ssrc);
   });
-
+/*
   // Extended callback, only available when defining USE_EXT_CALLBACKS
   AppleMIDI.setHandleSentRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp) {
     //  DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
@@ -85,7 +97,7 @@ void setup()
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
     DBG(F("NoteOff"), channel, note, velocity);
   });
-
+*/
   DBG(F("Sending MIDI messages every second"));
 }
 
@@ -99,18 +111,20 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((isConnected > 0) && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 100)
   {
     t1 = millis();
 
-    byte note = random(1, 127);
-    byte velocity = 55;
+    byte note = random(15, 80);
+    byte velocity = random(55, 100);
     byte channel = 1;
 
     //   DBG(F("\nsendNoteOn"), note, velocity, channel);
-    //   MIDI.sendNoteOn(note, velocity, channel);
+    MIDI.sendNoteOn(note, velocity, channel);
     //MIDI.sendNoteOff(note, velocity, channel);
   }
+
+  EthernetBonjour.run();
 }
 
 // -----------------------------------------------------------------------------
@@ -154,6 +168,9 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMI
       break;
     case APPLEMIDI_NAMESPACE::Exception::ReceivedPacketsDropped:
       DBG(F("*** ReceivedPacketsDropped"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::UdpBeginPacketFailed:
+      DBG(F("*** UdpBeginPacketFailed"), value);
       break;
   }
 }

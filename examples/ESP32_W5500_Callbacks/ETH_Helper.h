@@ -1,11 +1,12 @@
-#include <WiFi.h>
 #ifdef ETHERNET3
 #include <Ethernet3.h>
 #else
-#define MAX_SOCK_NUM 4
-#define ETHERNET_LARGE_BUFFERS
 #include <Ethernet.h>
+#include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
 #endif
+
+// to get the Mac address
+#include <WiFi.h>
 
 #define RESET_PIN  26
 #define CS_PIN     5
@@ -26,7 +27,7 @@ void hardreset() {
   delay(150);
 
   digitalWrite(RESET_PIN, LOW);
-  delay(1);
+  delay(500);
   digitalWrite(RESET_PIN, HIGH);
   delay(150);
 }
@@ -45,7 +46,6 @@ bool ETH_startup()
   hardreset();
 #endif
 
-  Serial.println(WiFi.macAddress());
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
 
   /*
@@ -56,9 +56,13 @@ bool ETH_startup()
                        comments to the contrary elsewhere). You
                        -must- supply a MAC address here.
   */
-  Serial.println("Starting ETHERNET connection...");
-  Ethernet.begin(mac);
+#ifdef ETHERNET3
+  Serial.println("Starting Ethernet3 connection...");
+#else
+  Serial.println("Starting Ethernet connection...");
+#endif
 
+  Ethernet.begin(mac);
   Serial.print("Ethernet IP is: ");
   Serial.println(Ethernet.localIP());
 
@@ -72,7 +76,7 @@ bool ETH_startup()
     if ((Ethernet.link() == 0)) {
 #else
     if ((Ethernet.linkStatus() == Unknown)) {
-#endif  
+#endif
       Serial.print(".");
       rdy_flag = false;
       delay(80);
@@ -89,6 +93,18 @@ bool ETH_startup()
   } else {
     Serial.println("OK");
   }
+
+#ifndef ETHERNET3
+  // Initialize the Bonjour/MDNS library. You can now reach or ping this
+  // Arduino via the host name "arduino.local", provided that your operating
+  // system is Bonjour-enabled (such as MacOS X).
+  // Always call this before any other method!
+  EthernetBonjour.begin("arduino");
+
+  EthernetBonjour.addServiceRecord("Arduino._apple-midi",
+                                   5004,
+                                   MDNSServiceUDP);
+#endif
 
   return true;
 }

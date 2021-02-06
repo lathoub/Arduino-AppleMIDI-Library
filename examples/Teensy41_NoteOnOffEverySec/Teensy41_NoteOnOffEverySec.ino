@@ -1,6 +1,7 @@
 #include <NativeEthernet.h>
 
 #define SerialMon Serial
+#define USE_EXT_CALLBACKS
 #define APPLEMIDI_DEBUG SerialMon
 #include <AppleMIDI.h>
 
@@ -14,6 +15,8 @@ unsigned long t1 = millis();
 int8_t isConnected = 0;
 
 APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
+
+void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NAMESPACE::Exception&, const int32_t);
 
 // -----------------------------------------------------------------------------
 //
@@ -45,7 +48,7 @@ void setup()
   DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
-  MIDI.begin();
+  MIDI.begin(MIDI_CHANNEL_OMNI);
 
   // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
@@ -57,11 +60,22 @@ void setup()
     DBG(F("Disconnected"), ssrc);
   });
   
+  AppleMIDI.setHandleException(OnAppleMidiException);
+
+  MIDI.setHandleControlChange([](Channel channel, byte v1, byte v2) {
+    DBG(F("ControlChange"), channel, v1, v2);
+  });
+  MIDI.setHandleProgramChange([](Channel channel, byte v1) {
+    DBG(F("ProgramChange"), channel, v1);
+  });
+  MIDI.setHandlePitchBend([](Channel channel, int v1) {
+    DBG(F("PitchBend"), channel, v1);
+  });
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    DBG(F("NoteOn"), channel, note, velocity);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    DBG(F("NoteOff"), channel, note, velocity);
   });
 
   DBG(F("Sending MIDI messages every second"));
@@ -87,5 +101,50 @@ void loop()
 
     MIDI.sendNoteOn(note, velocity, channel);
 //    MIDI.sendNoteOff(note, velocity, channel);
+  }
+}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMIDI_NAMESPACE::Exception& e, const int32_t value ) {
+  switch (e)
+  {
+    case APPLEMIDI_NAMESPACE::Exception::BufferFullException:
+      DBG(F("*** BufferFullException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::ParseException:
+      DBG(F("*** ParseException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::TooManyParticipantsException:
+      DBG(F("*** TooManyParticipantsException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::UnexpectedInviteException:
+      DBG(F("*** UnexpectedInviteException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::ParticipantNotFoundException:
+      DBG(F("*** ParticipantNotFoundException"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::ComputerNotInDirectory:
+      DBG(F("*** ComputerNotInDirectory"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::NotAcceptingAnyone:
+      DBG(F("*** NotAcceptingAnyone"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::ListenerTimeOutException:
+      DBG(F("*** ListenerTimeOutException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::MaxAttemptsException:
+      DBG(F("*** MaxAttemptsException"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::NoResponseFromConnectionRequestException:
+      DBG(F("***:yyy did't respond to the connection request. Check the address and port, and any firewall or router settings. (time)"));
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::SendPacketsDropped:
+      DBG(F("*** SendPacketsDropped"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::ReceivedPacketsDropped:
+      DBG(F("*** ReceivedPacketsDropped"), value);
+      break;
   }
 }

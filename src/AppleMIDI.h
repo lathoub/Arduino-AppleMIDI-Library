@@ -202,7 +202,7 @@ public:
 
         if (inMidiBuffer.size() > 0)
            return inMidiBuffer.size();
-
+           
         if (readDataPackets()) // from socket into dataBuffer
             parseDataPackets();   // from dataBuffer into inMidiBuffer
 

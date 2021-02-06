@@ -483,78 +483,102 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &port, const IPAddress& remoteIP, const uint16_t& remotePort, AppleMIDI_Invitation_t & invitation, const byte *command)
 {
-    if (port.beginPacket(remoteIP, remotePort))
+    if (!port.beginPacket(remoteIP, remotePort))
     {
-        port.write((uint8_t *)amSignature, sizeof(amSignature));
-        
-            port.write((uint8_t *)command, sizeof(amInvitation));
-            port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
-            invitation.initiatorToken = __htonl(invitation.initiatorToken);
-            invitation.ssrc = ssrc;
-            invitation.ssrc = __htonl(invitation.ssrc);
-            port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
-        
-        port.endPacket();
-        port.flush();
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 1);
+#endif
+        return;
     }
+
+    port.write((uint8_t *)amSignature, sizeof(amSignature));
+    
+        port.write((uint8_t *)command, sizeof(amInvitation));
+        port.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
+        invitation.initiatorToken = __htonl(invitation.initiatorToken);
+        invitation.ssrc = ssrc;
+        invitation.ssrc = __htonl(invitation.ssrc);
+        port.write(reinterpret_cast<uint8_t *>(&invitation), invitation.getLength());
+    
+    port.endPacket();
+    port.flush();
 }
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
-    if (controlPort.beginPacket(remoteIP, remotePort))
+    if (!controlPort.beginPacket(remoteIP, remotePort))
     {
-        controlPort.write((uint8_t *)amSignature, sizeof(amSignature));
-        
-            controlPort.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
-        
-            receiverFeedback.ssrc       = __htonl(receiverFeedback.ssrc);
-            receiverFeedback.sequenceNr = __htons(receiverFeedback.sequenceNr);
-        
-            controlPort.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
-        
-        controlPort.endPacket();
-        controlPort.flush();
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 2);
+#endif
+        return;
     }
+
+    controlPort.write((uint8_t *)amSignature, sizeof(amSignature));
+    
+        controlPort.write((uint8_t *)amReceiverFeedback, sizeof(amReceiverFeedback));
+    
+        receiverFeedback.ssrc       = __htonl(receiverFeedback.ssrc);
+        receiverFeedback.sequenceNr = __htons(receiverFeedback.sequenceNr);
+    
+        controlPort.write(reinterpret_cast<uint8_t *>(&receiverFeedback), sizeof(AppleMIDI_ReceiverFeedback));
+    
+    controlPort.endPacket();
+    controlPort.flush();
 }
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_Synchronization_t &synchronization)
 {
-    if (dataPort.beginPacket(remoteIP, remotePort))
+    if (!dataPort.beginPacket(remoteIP, remotePort))
     {
-        dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
-        dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
-        synchronization.ssrc = ssrc;
-        synchronization.ssrc = __htonl(synchronization.ssrc);
-
-        synchronization.timestamps[0] = __htonll(synchronization.timestamps[0]);
-        synchronization.timestamps[1] = __htonll(synchronization.timestamps[1]);
-        synchronization.timestamps[2] = __htonll(synchronization.timestamps[2]);
-        dataPort.write(reinterpret_cast<uint8_t *>(&synchronization), sizeof(synchronization));
-        
-        dataPort.endPacket();
-        dataPort.flush();
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 3);
+#endif
+        return;
     }
+
+    dataPort.write((uint8_t *)amSignature, sizeof(amSignature));
+    dataPort.write((uint8_t *)amSynchronization, sizeof(amSynchronization));
+    synchronization.ssrc = ssrc;
+    synchronization.ssrc = __htonl(synchronization.ssrc);
+
+    synchronization.timestamps[0] = __htonll(synchronization.timestamps[0]);
+    synchronization.timestamps[1] = __htonll(synchronization.timestamps[1]);
+    synchronization.timestamps[2] = __htonll(synchronization.timestamps[2]);
+    dataPort.write(reinterpret_cast<uint8_t *>(&synchronization), sizeof(synchronization));
+    
+    dataPort.endPacket();
+    dataPort.flush();
 }
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_EndSession_t &endSession)
 {
-    if (controlPort.beginPacket(remoteIP, remotePort))
+    if (!controlPort.beginPacket(remoteIP, remotePort))
     {
-        controlPort.write((uint8_t *)amSignature, sizeof(amSignature));
-        controlPort.write((uint8_t *)amEndSession, sizeof(amEndSession));
-        controlPort.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
-
-        endSession.initiatorToken = __htonl(endSession.initiatorToken);
-        endSession.ssrc           = __htonl(endSession.ssrc);
-
-        controlPort.write(reinterpret_cast<uint8_t *>(&endSession), sizeof(endSession));
-        
-        controlPort.endPacket();
-        controlPort.flush();
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 4);
+#endif
+        return;
     }
+
+    controlPort.write((uint8_t *)amSignature, sizeof(amSignature));
+    controlPort.write((uint8_t *)amEndSession, sizeof(amEndSession));
+    controlPort.write((uint8_t *)amProtocolVersion, sizeof(amProtocolVersion));
+
+    endSession.initiatorToken = __htonl(endSession.initiatorToken);
+    endSession.ssrc           = __htonl(endSession.ssrc);
+
+    controlPort.write(reinterpret_cast<uint8_t *>(&endSession), sizeof(endSession));
+    
+    controlPort.endPacket();
+    controlPort.flush();
 }
 
 template <class UdpClass, class Settings, class Platform>
@@ -580,8 +604,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     const uint16_t  remotePort = participant->remotePort + 1;
     
     if (!dataPort.beginPacket(remoteIP, remotePort))
+    {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 5);
+#endif
         return;
-  
+    }
+
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker

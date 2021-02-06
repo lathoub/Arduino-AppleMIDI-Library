@@ -63,11 +63,11 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((isConnected > 0) && (millis() - t0) > 1000)
+  if ((isConnected > 0) && (millis() - t0) > 100)
   {
     t0 = millis();
 
-    byte note = random(1, 127);
+    byte note = random(15, 100);
     byte velocity = 55;
     byte channel = 1;
 

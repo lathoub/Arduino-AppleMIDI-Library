@@ -6,7 +6,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 struct DefaultSettings
 {
-    static const size_t UdpTxPacketMaxSize = 24;
+    static const size_t UdpTxPacketMaxSize = 24; 
     
     static const size_t MaxBufferSize = 64;
     
@@ -32,7 +32,7 @@ struct DefaultSettings
 
     // when set to true, the lower 32-bits of the rtpClock ae send
     // when set to false, 0 will be set for immediate playout.
-    static const bool TimestampRtpPackets = true;
+    static const bool TimestampRtpPackets = false;
     
     static const uint8_t MaxSessionInvitesAttempts = 13;
     
