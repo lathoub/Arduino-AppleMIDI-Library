@@ -1,6 +1,6 @@
-#define ETHERNET3
 #include "ETH_Helper.h"
 
+#define ONE_PARTICIPANT
 #define USE_EXT_CALLBACKS
 #define SerialMon Serial
 #define APPLEMIDI_DEBUG SerialMon
@@ -46,7 +46,7 @@ void setup()
     //  DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
   });
   AppleMIDI.setHandleSentRtpMidi([](const APPLEMIDI_NAMESPACE::RtpMIDI_t& rtpMidi) {
-    //  DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
+    DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
   });
   AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
     //  DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr , "with", latency, "ms latency");
@@ -55,7 +55,7 @@ void setup()
     //  DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
   });
   AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, byte value) {
-    //  DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
+    //    DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
   });
   AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
     //  DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
@@ -91,7 +91,7 @@ void loop()
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((isConnected > 0) && (millis() - t1) > 1000)
+  if ((isConnected > 0) && (millis() - t1) > 100)
   {
     t1 = millis();
 
@@ -103,6 +103,10 @@ void loop()
     MIDI.sendNoteOn(note, velocity, channel);
     //MIDI.sendNoteOff(note, velocity, channel);
   }
+
+#ifndef ETHERNET3
+  EthernetBonjour.run();
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -146,6 +150,9 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMI
       break;
     case APPLEMIDI_NAMESPACE::Exception::ReceivedPacketsDropped:
       DBG(F("******************************************** ReceivedPacketsDropped"), value);
+      break;
+    case APPLEMIDI_NAMESPACE::Exception::UdpBeginPacketFailed:
+      DBG(F("*** UdpBeginPacketFailed"), value);
       break;
   }
 }
