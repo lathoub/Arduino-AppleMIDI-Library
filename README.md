@@ -73,7 +73,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * MKR ETH shield
 * Teensy WIZ820io W5200
 
-## Memory usage
+## Arduino Memory usage
 Out of the box, this library has been setup to use a 'medium' amount of memory (read below how to reduce the memory footprint). Extended callbacks are not enabled by default, and can be anabled by `#USE_EXT_CALLBACKS`. See the callback examples.
 
 This library is **not using any dynamic memory** allocation methods - all buffers have a fixed size, set in the `AppleMIDI_Settings.h` file, avoiding potential memory leaks and memory fragmentation (also, no usage of the String() class).
@@ -89,7 +89,14 @@ Even further reduce the memory footprint by `#define ONE_PARTICIPANT` limiting t
 On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 global variables (46%). For a Leonardo that is 24906 bytes (86%) and 1111 bytes  (43%) of global variables.
 
 ## Notes
+
+### Session names
+
 Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
+
+### Ethernet buffer size
+It's highly recommended to modify the Ethernet library or use the Ethernet3 library to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
+
 
 ## Arduino IDE (arduino.cc)
 * 1.8.13
