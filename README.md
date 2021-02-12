@@ -95,7 +95,7 @@ On an UNO the absolute minimum memory footprint is 21966 bytes (68%) and 945 glo
 Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
 
 ### Ethernet buffer size
-It's highly recommended to modify the Ethernet library or use the Ethernet3 library to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
+It's highly recommended to modify the [Ethernet library](https://github.com/arduino-libraries/Ethernet) or use the [Ethernet3 library](https://github.com/sstaub/Ethernet3) to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
 
 
 ## Arduino IDE (arduino.cc)
