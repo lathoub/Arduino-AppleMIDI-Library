@@ -18,7 +18,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Reduced memory footprint (see AVR_MinMemUsage example and note below)
 * Extended and revised callbacks to receive AppleMIDI protocol feedback (see AVR_Callbacks example)
 * Who may connect to me (Directory) (see AVR_Directory example)
-## New in 3.1.0
+### New in 3.1.0
 * Increased stability in high-throughput situations
 * Updated wiki
 
