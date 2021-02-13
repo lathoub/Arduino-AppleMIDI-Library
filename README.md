@@ -25,7 +25,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
 
-<img width="801" alt="Screenshot 2020-04-21 at 10 25 22 copy" src="https://user-images.githubusercontent.com/4082369/79904509-09b11000-8415-11ea-9b05-818373479625.png">
+<img width="786" alt="Installation" src="https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/master/res/Install.PNG">
 
 This will also install [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
 
