@@ -99,6 +99,8 @@ Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty
 ### Ethernet buffer size
 It's highly recommended to modify the [Ethernet library](https://github.com/arduino-libraries/Ethernet) or use the [Ethernet3 library](https://github.com/sstaub/Ethernet3) to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
 
+### Latency
+Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies. More of the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Keeping-Latency-under-control)  
 
 ## Arduino IDE (arduino.cc)
 * 1.8.13
