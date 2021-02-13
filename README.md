@@ -35,10 +35,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 
 void setup()
 {
-  MIDI.begin();
-  
-  // Optional
-  AppleMIDI.setHandleConnected(OnAppleMidiConnected);
+  MIDI.begin(); // listens on channel 1
 }
 
 void loop()
@@ -52,15 +49,9 @@ void loop()
     MIDI.sendNoteOn(40, 55, 1);
   }
 }
-
-void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char*) {
-}
 ```
 
-`APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();` creates 2 instance: `MIDI` and `AppleMIDI`. `MIDI` is the instance that manages all MIDI interaction, `AppleMIDI` is the instance this manages the rtp transport layer.
-
-
-More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Library/tree/master/examples) folder
+More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Library/tree/master/examples) folder and in the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki)
 
 ## Hardware
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
