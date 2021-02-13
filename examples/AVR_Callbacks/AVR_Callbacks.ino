@@ -1,5 +1,4 @@
 #include <Ethernet.h>
-#include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
 
 #define ONE_PARTICIPANT
 #define USE_EXT_CALLBACKS
@@ -32,16 +31,6 @@ void setup()
     DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
-
-  // Initialize the Bonjour/MDNS library. You can now reach or ping this
-  // Arduino via the host name "arduino.local", provided that your operating
-  // system is Bonjour-enabled (such as MacOS X).
-  // Always call this before any other method!
-  EthernetBonjour.begin("arduino");
-
-  EthernetBonjour.addServiceRecord("Arduino._apple-midi",
-                                   5004,
-                                   MDNSServiceUDP);
 
   DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
@@ -123,8 +112,6 @@ void loop()
     MIDI.sendNoteOn(note, velocity, channel);
     //MIDI.sendNoteOff(note, velocity, channel);
   }
-
-  EthernetBonjour.run();
 }
 
 // -----------------------------------------------------------------------------
