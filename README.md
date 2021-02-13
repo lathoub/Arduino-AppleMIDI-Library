@@ -65,15 +65,17 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 ## Hardware
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
-* ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board)
-* Teensy 3.2
+* ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board) Wi-Fi
+* ESP32 with W5500
+* Teensy 3.2 & 4.1
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
 
 ## Network Shields
 * Arduino Ethernet shield (Wiznet W5100 and W5500)
 * Arduino Wifi R3 shield
-* MKR ETH shield
+* MKR ETH shield (W5500 and W6100 based)
 * Teensy WIZ820io W5200
+* Teensy 4.1 with [Ethernet Kit](https://www.pjrc.com/store/ethernet_kit.html)
 
 ## Arduino Memory usage
 Out of the box, this library has been setup to use a 'medium' amount of memory (read below how to reduce the memory footprint). Extended callbacks are not enabled by default, and can be anabled by `#USE_EXT_CALLBACKS`. See the callback examples.
