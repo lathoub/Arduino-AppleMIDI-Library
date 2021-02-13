@@ -66,7 +66,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board) Wi-Fi
-* ESP32 with W5500
+* ESP32 with W5500 [Setup]()
 * Teensy 3.2 & 4.1
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
 
