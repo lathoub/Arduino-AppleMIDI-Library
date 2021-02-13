@@ -79,9 +79,9 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 
 ### Session names
 
-Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the `MaxSessionNameLen` (as set in the settings file).
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the [`MaxSessionNameLen`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/af4c7bd9a960a90e09e211f0ea00db2d9832d1f7/src/AppleMIDI_Settings.h#L13) 
 
-### memory footprint
+### Memory footprint
 The memory footprint of the library can be lowered significantly, read the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Memory-footprint) 
 
 ### Ethernet buffer size
