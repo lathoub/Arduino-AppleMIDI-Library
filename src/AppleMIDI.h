@@ -5,7 +5,7 @@
 #include <MIDI.h>
 using namespace MIDI_NAMESPACE;
 
-#include "IPAddress.h"
+#include <IPAddress.h>
 
 #include "AppleMIDI_Debug.h"
 

@@ -25,6 +25,15 @@ union conversionBuffer
     byte buffer[8];
 };
 
+
+enum parserReturn: uint8_t
+{
+    Processed,
+    NotSureGiveMeMoreData,
+    NotEnoughData,
+    UnexpectedData,
+};
+
 #if defined(__AVR__)
 #define APPLEMIDI_PROGMEM PROGMEM
 typedef const __FlashStringHelper* AppleMIDIConstStr;

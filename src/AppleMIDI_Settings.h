@@ -41,12 +41,4 @@ struct DefaultSettings
     static const unsigned long SynchronizationHeartBeat = 10000;
 };
 
-enum parserReturn: uint8_t
-{
-    Processed,
-    NotSureGiveMeMoreData,
-    NotEnoughData,
-    UnexpectedData,
-};
-
 END_APPLEMIDI_NAMESPACE

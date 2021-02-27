@@ -599,19 +599,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
 
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Participant<Settings>* participant)
-{
-    const IPAddress remoteIP   = participant->remoteIP;
-    const uint16_t  remotePort = participant->remotePort + 1;
-    
-    if (!dataPort.beginPacket(remoteIP, remotePort))
-    {
-#ifdef USE_EXT_CALLBACKS
-        if (nullptr != _exceptionCallback)
-            _exceptionCallback(ssrc, UdpBeginPacketFailed, 5);
-#endif
-        return;
-    }
-
+{ 
     Rtp rtp;
     rtp.vpxcc = 0b10000000;             // TODO: fun with flags
     rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
@@ -647,11 +635,21 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     rtp.ssrc       = __htonl(rtp.ssrc);
     rtp.sequenceNr = __htons(rtp.sequenceNr);
 
+    if (!dataPort.beginPacket(participant->remoteIP, participant->remotePort + 1))
+    {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, UdpBeginPacketFailed, 5);
+#endif
+        return;
+    }
+
+    // write rtp header
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
-    // only now the length is known
-    auto bufferLen = outMidiBuffer.size();
+    const auto bufferLen = outMidiBuffer.size();
 
+    // Write rtpMIDI section
     RtpMIDI_t rtpMidi;
 
     if (bufferLen <= 0x0F)
@@ -673,20 +671,20 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         dataPort.write(rtpMidi.flags);
         dataPort.write((uint8_t)(bufferLen));
     }
-    
+
     // write out the MIDI Section
     for (size_t i = 0; i < bufferLen; i++)
         dataPort.write(outMidiBuffer[i]);
 
     // *No* journal section (Not supported)
 
+    dataPort.endPacket();
+    dataPort.flush();
+
 #ifdef USE_EXT_CALLBACKS
     if (_sentRtpMidiCallback)
         _sentRtpMidiCallback(rtpMidi);
 #endif
-    
-    dataPort.endPacket();
-    dataPort.flush();
 }
 
 //
