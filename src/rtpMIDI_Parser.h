@@ -94,7 +94,7 @@ public:
             uint8_t csrc_count = RTP_CSRC_COUNT(rtp.vpxcc);
     #endif
             
-            if (2 != version)
+            if (RTP_VERSION_2 != version)
             {
                 return parserReturn::UnexpectedData;
             }

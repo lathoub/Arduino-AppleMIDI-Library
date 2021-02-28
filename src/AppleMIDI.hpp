@@ -600,9 +600,37 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Participant<Settings>* participant)
 { 
+    const auto bufferLen = outMidiBuffer.size();
+
     Rtp rtp;
-    rtp.vpxcc = 0b10000000;             // TODO: fun with flags
-    rtp.mpayload = PAYLOADTYPE_RTPMIDI; // TODO: set or unset marker
+
+    // First octet
+    rtp.vpxcc = ((RTP_VERSION_2) << 6); // RTP version 2
+    rtp.vpxcc &= ~RTP_P_FIELD; // no padding
+    rtp.vpxcc &= ~RTP_X_FIELD; // no extension
+    // No CSRC
+
+    // second octet
+    rtp.mpayload = PAYLOADTYPE_RTPMIDI; 
+
+/*
+    // The behavior of the 1-bit M field depends on the media type of the
+    // stream.  For native streams, the M bit MUST be set to 1 if the MIDI
+    // command section has a non-zero LEN field and MUST be set to 0
+    // otherwise.  For mpeg4-generic streams, the M bit MUST be set to 1 for
+    // all packets (to conform to [RFC3640]).
+    if (bufferLen != 0)
+        rtp.mpayload |= RTP_M_FIELD;
+    else
+        rtp.mpayload &= ~RTP_M_FIELD;
+*/
+    // Both https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
+    // and https://tools.ietf.org/html/rfc6295#section-2.1 indicate that the M field needs to be set
+    // if the len in the MIDI section is NON-ZERO.
+    // However, doing so on, MacOS does not take the given MIDI commands
+    // Clear the M field
+    rtp.mpayload &= ~RTP_M_FIELD;
+
     rtp.ssrc = ssrc;
     
     // https://developer.apple.com/library/ios/documentation/CoreMidi/Reference/MIDIServices_Reference/#//apple_ref/doc/uid/TP40010316-CHMIDIServiceshFunctions-SW30
@@ -647,27 +675,30 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     // write rtp header
     dataPort.write((uint8_t *)&rtp, sizeof(rtp));
 
-    const auto bufferLen = outMidiBuffer.size();
-
     // Write rtpMIDI section
     RtpMIDI_t rtpMidi;
 
+    //   0                   1                   2                   3
+    //   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    //  |B|J|Z|P|LEN... |  MIDI list ...                                |
+    //  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    rtpMidi.flags = 0;
+    rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_J; // no journal, clear J-FLAG
+    rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_Z; // no Delta Time 0 field, clear Z flag
+    rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_P; // no phantom flag
+
     if (bufferLen <= 0x0F)
     { // Short header
-        rtpMidi.flags = (uint8_t)bufferLen;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_B; // TODO: set or clear these flags (no journal)
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
+        rtpMidi.flags |= (uint8_t)bufferLen;
+        rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_B; // short header, clear B-FLAG
         dataPort.write(rtpMidi.flags);
     }
     else
     { // Long header
-        rtpMidi.flags = (uint8_t)(bufferLen >> 8);
-        rtpMidi.flags |= RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_J;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_Z;
-        // rtpMidi.flags &= RTP_MIDI_CS_FLAG_P;
+        rtpMidi.flags |= (uint8_t)(bufferLen >> 8);
+        rtpMidi.flags |=  RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
         dataPort.write(rtpMidi.flags);
         dataPort.write((uint8_t)(bufferLen));
     }
