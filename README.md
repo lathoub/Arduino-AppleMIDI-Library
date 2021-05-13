@@ -21,6 +21,8 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 ### New in 3.1.0
 * Increased stability in high-throughput situations
 * Updated wiki
+### New in 3.2.0
+* Support for Arduino IDE 2. The Ethernet library will no longer be loaded by default, so adding a dependancy.
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
