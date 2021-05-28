@@ -55,6 +55,11 @@ public:
 #endif
 	};
 
+    virtual ~AppleMIDISession() 
+    {
+
+    };
+
 	void setHandleConnected         (void (*fptr)(const ssrc_t&, const char*))                           { _connectedCallback = fptr; }
 	void setHandleDisconnected      (void (*fptr)(const ssrc_t&))                                        { _disconnectedCallback = fptr; }
 #ifdef USE_EXT_CALLBACKS
@@ -112,6 +117,12 @@ public:
 		dataPort.begin(port + 1);
 
 		rtpMidiClock.Init(rtpMidiClock.Now(), MIDI_SAMPLING_RATE_DEFAULT);
+    }
+
+    void end()
+    {
+ 		controlPort.stop();
+		dataPort.stop();
     }
 
 	bool beginTransmission(MIDI_NAMESPACE::MidiType)
