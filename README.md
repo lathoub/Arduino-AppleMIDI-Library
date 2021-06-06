@@ -93,7 +93,7 @@ It's highly recommended to modify the [Ethernet library](https://github.com/ardu
 Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies. More of the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Keeping-Latency-under-control)  
 
 ## Arduino IDE (arduino.cc)
-* 1.8.14
+* 1.8.15
 * 2.0.0-beta.6
 
 ## Contributing
