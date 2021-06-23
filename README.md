@@ -1,7 +1,7 @@
 # AppleMIDI (aka rtpMIDI) for Arduino
 [![arduino-library-badge](https://www.ardu-badge.com/badge/AppleMIDI.svg?)](https://www.ardu-badge.com/AppleMIDI) [![Build Status](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library.svg?branch=master)](https://travis-ci.org/lathoub/Arduino-AppleMIDI-Library) [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/)
 
-Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to particpate in an AppleMIDI session.
+Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to participate in an AppleMIDI session.
 
 **Important:** Please read the [note below](https://github.com/lathoub/Arduino-AppleMIDI-Library#ethernet-buffer-size) on enlarging the standard Ethernet library buffersize to avoid dropping MIDI messages!
 
@@ -81,7 +81,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 
 ### Session names
 
-Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be trunctated to the [`MaxSessionNameLen`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/af4c7bd9a960a90e09e211f0ea00db2d9832d1f7/src/AppleMIDI_Settings.h#L13) 
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be truncated to the [`MaxSessionNameLen`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/af4c7bd9a960a90e09e211f0ea00db2d9832d1f7/src/AppleMIDI_Settings.h#L13) 
 
 ### Memory footprint
 The memory footprint of the library can be lowered significantly, read the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Memory-footprint) 
