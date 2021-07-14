@@ -279,7 +279,7 @@ public:
             
             byte slecht[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
             
-     //       write(noteOnOff, sizeof(noteOnOff));
+            write(noteOnOff, sizeof(noteOnOff));
         }
 
         
@@ -401,6 +401,6 @@ public:
 
     void stop() { _buffer.clear(); };
 
-    uint32_t remoteIP() { return 1; }
-    uint16_t remotePort() { return _port; }
+    IPAddress remoteIP() { return IPAddress(127,0,0,1); }
+    uint16_t  remotePort() { return _port; }
 };

@@ -76,7 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\bart\Documents\Arduino\libraries\arduino_midi_library-master\src;C:\Users\bart\Documents\Arduino\libraries\Arduino-AppleMIDI-Library\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\bart\Documents\Arduino\libraries\Arduino-AppleMIDI-Library\test;C:\Users\bart\Documents\Arduino\libraries\arduino_midi_library-master\src;C:\Users\bart\Documents\Arduino\libraries\Arduino-AppleMIDI-Library\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
