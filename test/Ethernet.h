@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#define DEFAULT_CONTROL_PORT 5004
+
 class EthernetUDP
 {
     Deque<byte, 4096> _buffer;
@@ -313,8 +315,10 @@ public:
     {
         size = min(size, _buffer.size());
             
-        for (size_t i = 0; i < size; i++)
-            buffer[i] = _buffer.pop_front();
+        for (size_t i = 0; i < size; i++) {
+            buffer[i] = _buffer.front();
+            _buffer.pop_front();
+        }
 
         return size;
     };

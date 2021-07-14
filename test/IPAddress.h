@@ -9,4 +9,9 @@ public:
     IPAddress(uint32_t address) { }
     IPAddress(int address) { }
     IPAddress(const uint8_t *address) {};
+
+    bool operator==(const IPAddress&) const { return true; }
+    bool operator!=(const IPAddress&) const { return true; }
 };
+
+const IPAddress INADDR_NONE(0, 0, 0, 0);

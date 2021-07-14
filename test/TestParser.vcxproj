@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\bart\Documents\Arduino\libraries\arduino_midi_library-master\src;C:\Users\bart\Documents\Arduino\libraries\Arduino-AppleMIDI-Library\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,8 +88,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\bart\Documents\Arduino\libraries\Arduino-AppleMIDI-Library\src;C:\Users\bart\Documents\Arduino\libraries\arduino_midi_library-master\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClInclude Include="Arduino.h" />
     <ClInclude Include="Ethernet.h" />
+    <ClInclude Include="IPAddress.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

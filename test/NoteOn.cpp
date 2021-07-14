@@ -6,7 +6,7 @@
 #include "AppleMIDI.h"
 
 unsigned long t0 = millis();
-bool isConnected--;
+bool isConnected = false;
 
 byte sysex14[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0xF7 };
 byte sysex15[] = { 0xF0, 0x43, 0x20, 0x7E, 0x4C, 0x4D, 0x20, 0x20, 0x38, 0x39, 0x37, 0x33, 0x50, 0x4D, 0xF7 };
@@ -33,7 +33,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // rtpMIDI session. Device connected
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
-  isConnected++;
+  isConnected = true;
   DBG(F("Connected to session"), ssrc, name);
 }
 
@@ -41,7 +41,7 @@ void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* 
 // rtpMIDI session. Device disconnected
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  isConnected--;
+  isConnected = false;
   DBG(F("Disconnected"), ssrc);
 }
 
@@ -107,7 +107,7 @@ void begin()
     
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
-    AppleMIDI.setHandleReceivedMidi(OnAppleMidiByte);
+ //   AppleMIDI.setHandleReceivedMidi(OnAppleMidiByte);
     
     MIDI.setHandleNoteOn(OnMidiNoteOn);
     MIDI.setHandleNoteOff(OnMidiNoteOff);
@@ -123,7 +123,7 @@ void loop()
     
     // send a note every second
      // (dont cáll delay(1000) as it will stall the pipeline)
-     if ((isConnected > 0) && (millis() - t0) > 10000)
+     if ((isConnected) && (millis() - t0) > 10000)
      {
        t0 = millis();
 

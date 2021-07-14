@@ -22,5 +22,8 @@
     <ClInclude Include="Ethernet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IPAddress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
