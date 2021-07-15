@@ -34,6 +34,11 @@ parserReturn decodeMidiSection(RtpBuffer_t &buffer)
                 return parserReturn::NotEnoughData;
             }
 
+            if (consumed > midiCommandLength) {
+                buffer.clear();
+                return parserReturn::UnexpectedMidiData;
+            }
+
             midiCommandLength -= consumed;
 
             while (consumed--)
