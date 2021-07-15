@@ -103,7 +103,7 @@ void begin()
   DBG(F("Select and then press the Connect button"));
   DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
-	MIDI.begin();
+	MIDI.begin(MIDI_CHANNEL_OMNI);
     
     AppleMIDI.setHandleConnected(OnAppleMidiConnected);
     AppleMIDI.setHandleDisconnected(OnAppleMidiDisconnected);
