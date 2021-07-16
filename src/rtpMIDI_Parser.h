@@ -157,6 +157,7 @@ public:
             case parserReturn::Processed:
                 break;
             case parserReturn::UnexpectedMidiData:
+                // already processed MIDI data will be played
                 _rtpHeadersComplete = false;
             default:
                 return retVal;
