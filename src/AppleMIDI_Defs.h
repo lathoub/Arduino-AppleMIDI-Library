@@ -33,6 +33,7 @@ enum parserReturn: uint8_t
     NotEnoughData,
 	UnexpectedData,
 	UnexpectedMidiData,
+	UnexpectedJournalData,
 };
 
 #if defined(__AVR__)

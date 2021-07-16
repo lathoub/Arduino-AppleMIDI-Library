@@ -153,8 +153,14 @@ public:
 		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMidiSection(buffer);
-            if (retVal != parserReturn::Processed)
+            switch (retVal) {
+            case parserReturn::Processed:
+                break;
+            case parserReturn::UnexpectedMidiData:
+                _rtpHeadersComplete = false;
+            default:
                 return retVal;
+            }
         }
   
         // The payload MAY also contain a journal section. The journal section
@@ -165,8 +171,14 @@ public:
         if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
         {
             auto retVal = decodeJournalSection(buffer);
-            if (retVal != parserReturn::Processed)
+            switch (retVal) {
+            case parserReturn::Processed:
+                break;
+            case parserReturn::UnexpectedJournalData:
+                _rtpHeadersComplete = false;
+            default:
                 return retVal;
+            }
         }
 
         _rtpHeadersComplete = false;
