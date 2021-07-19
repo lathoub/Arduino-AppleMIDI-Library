@@ -116,6 +116,7 @@ public:
             if (buffer.size() < minimumLen)
                 return parserReturn::NotSureGiveMeMoreData;
 
+            // 2.2. MIDI Payload (https://www.ietf.org/rfc/rfc4695.html#section-2.2)
             // The payload MUST begin with the MIDI command section. The
             // MIDI command section codes a (possibly empty) list of timestamped
             // MIDI commands and provides the essential service of the payload
