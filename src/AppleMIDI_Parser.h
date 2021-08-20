@@ -78,26 +78,30 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
             {
                 if (bi < DefaultSettings::MaxSessionNameLen)
-                    invitation.sessionName[bi++] = buffer[i];
-                i++;
+                    invitation.sessionName[bi++] = buffer[i++];
+                else
+                    i++;
             }
             invitation.sessionName[bi++] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
                 i++;
 #endif
             parserReturn parserReturn = parserReturn::Processed;
 
-            if (i > minimumLen && i == buffer.size() && buffer[i] != 0x00)
-                parserReturn = parserReturn::SessionNameVeryLong;
+            if (i > minimumLen)
+                if (i == buffer.size() && buffer[i] != 0x00)
+                    parserReturn = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedInvitation(invitation, portType);
+
+            int yy = buffer.size();
 
             return parserReturn;
 		}
@@ -266,30 +270,29 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
             {
                 if (bi < DefaultSettings::MaxSessionNameLen)
-                    invitationAccepted.sessionName[bi++] = buffer[i];
-                i++;
+                    invitationAccepted.sessionName[bi++] = buffer[i++];
+                else
+                    i++;
             }
             invitationAccepted.sessionName[bi++] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
                 i++;
 #endif
-            //// session name is optional.
-            //// If i > minimum size (16), then a sessionName was provided and must include 0x00
-            //if (i > minimumLen)
-            //    if (i == buffer.size() || buffer[i++] != 0x00)
-            //        return parserReturn::NotEnoughData;
 
             parserReturn parserReturn = parserReturn::Processed;
 
-            if (i > minimumLen && i == buffer.size() && buffer[i] != 0x00)
-                parserReturn = parserReturn::SessionNameVeryLong;
+            if (i > minimumLen)
+                if (i == buffer.size() && buffer[i] != 0x00)
+                    parserReturn = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
+
+            int yy = buffer.size();
 
             session->ReceivedInvitationAccepted(invitationAccepted, portType);
 

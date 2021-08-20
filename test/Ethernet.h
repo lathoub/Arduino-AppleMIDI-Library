@@ -41,7 +41,7 @@ public:
                 0x6f, 0x72, 0x74, 0x20, 0x28, 0x36, 0x34, 0x37, 0x38, 0x3a, 0x30, 0x29, 0x00           
             };
 
-            write(notOKSessionName, sizeof(notOKSessionName));
+            write(okSessionName, sizeof(okSessionName));
 
         }
         
@@ -360,8 +360,6 @@ public:
 
     int read()
     {
-        int uu = _buffer.size();
-
         if (_buffer.size() == 0)
             return -1; 
 
