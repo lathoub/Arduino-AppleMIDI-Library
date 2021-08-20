@@ -90,20 +90,23 @@ public:
             while (i < buffer.size())
                 i++;
 #endif
-            parserReturn parserReturn = parserReturn::Processed;
+            auto retVal = parserReturn::Processed;
 
+            // when given a Session Name and the buffer has been fully processed and the 
+            // last character is not 'endl', then we got a very long sessionName. It will
+            // continue in the next memory chunk of the packet. We don't care, so indicated
+            // flush the remainder of the packet.
+            // First part if the session name is kept, processing continues
             if (i > minimumLen)
                 if (i == buffer.size() && buffer[i] != 0x00)
-                    parserReturn = parserReturn::SessionNameVeryLong;
+                    retVal = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedInvitation(invitation, portType);
 
-            int yy = buffer.size();
-
-            return parserReturn;
+            return retVal;
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
@@ -283,20 +286,23 @@ public:
                 i++;
 #endif
 
-            parserReturn parserReturn = parserReturn::Processed;
+            auto retVal = parserReturn::Processed;
 
+            // when given a Session Name and the buffer has been fully processed and the 
+            // last character is not 'endl', then we got a very long sessionName. It will
+            // continue in the next memory chunk of the packet. We don't care, so indicated
+            // flush the remainder of the packet.
+            // First part if the session name is kept, processing continues
             if (i > minimumLen)
                 if (i == buffer.size() && buffer[i] != 0x00)
-                    parserReturn = parserReturn::SessionNameVeryLong;
+                    retVal = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
-            int yy = buffer.size();
-
             session->ReceivedInvitationAccepted(invitationAccepted, portType);
 
-            return parserReturn;
+            return retVal;
 		}
 		else if (0 == memcmp(command, amInvitationRejected, sizeof(amInvitationRejected)))
 		{
