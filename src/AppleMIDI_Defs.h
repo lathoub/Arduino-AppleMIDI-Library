@@ -34,6 +34,7 @@ enum parserReturn: uint8_t
 	UnexpectedData,
 	UnexpectedMidiData,
 	UnexpectedJournalData,
+	SessionNameVeryLong,
 };
 
 #if defined(__AVR__)
