@@ -38,6 +38,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
 #endif            
             controlBuffer.pop_front();
         }
+        else if (retVal == parserReturn::SessionNameVeryLong)
+        {
+            // purge the rest of the data in controlPort
+            while (controlPort.read() >= 0) {}
+        }
     }
 }
 

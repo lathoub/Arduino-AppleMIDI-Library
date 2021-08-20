@@ -89,18 +89,17 @@ public:
             while ((i < buffer.size()) && (buffer[i] != 0x00))
                 i++;
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
-            if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+            parserReturn parserReturn = parserReturn::Processed;
+
+            if (i > minimumLen && i == buffer.size() && buffer[i] != 0x00)
+                parserReturn = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedInvitation(invitation, portType);
 
-            return parserReturn::Processed;
+            return parserReturn;
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
@@ -278,18 +277,23 @@ public:
             while ((i < buffer.size()) && (buffer[i] != 0x00))
                 i++;
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
-            if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+            //// session name is optional.
+            //// If i > minimum size (16), then a sessionName was provided and must include 0x00
+            //if (i > minimumLen)
+            //    if (i == buffer.size() || buffer[i++] != 0x00)
+            //        return parserReturn::NotEnoughData;
+
+            parserReturn parserReturn = parserReturn::Processed;
+
+            if (i > minimumLen && i == buffer.size() && buffer[i] != 0x00)
+                parserReturn = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
             session->ReceivedInvitationAccepted(invitationAccepted, portType);
 
-            return parserReturn::Processed;
+            return parserReturn;
 		}
 		else if (0 == memcmp(command, amInvitationRejected, sizeof(amInvitationRejected)))
 		{
