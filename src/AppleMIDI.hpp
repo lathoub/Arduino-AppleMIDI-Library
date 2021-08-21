@@ -30,7 +30,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
     while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        if (retVal == parserReturn::UnexpectedData)
+        if (retVal == parserReturn::Processed 
+        ||  retVal == parserReturn::NotEnoughData
+        ||  retVal == parserReturn::NotSureGiveMeMoreData)
+        {
+            break;
+        }
+        else if (retVal == parserReturn::UnexpectedData)
         {
 #ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
