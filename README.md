@@ -22,7 +22,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Increased stability in high-throughput situations
 * Updated wiki
 ### New in 3.2.0
-* Support for Arduino IDE 2. The Ethernet library will no longer be loaded by default, so adding a dependancy.
+* Bug fixes en enhancements
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
@@ -94,7 +94,6 @@ Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies
 
 ## Arduino IDE (arduino.cc)
 * 1.8.15
-* 2.0.0-beta.6
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
