@@ -116,6 +116,7 @@ public:
             if (buffer.size() < minimumLen)
                 return parserReturn::NotSureGiveMeMoreData;
 
+            // 2.2. MIDI Payload (https://www.ietf.org/rfc/rfc4695.html#section-2.2)
             // The payload MUST begin with the MIDI command section. The
             // MIDI command section codes a (possibly empty) list of timestamped
             // MIDI commands and provides the essential service of the payload
@@ -153,8 +154,15 @@ public:
 		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMidiSection(buffer);
-            if (retVal != parserReturn::Processed)
+            switch (retVal) {
+            case parserReturn::Processed:
+                break;
+            case parserReturn::UnexpectedMidiData:
+                // already processed MIDI data will be played
+                _rtpHeadersComplete = false;
+            default:
                 return retVal;
+            }
         }
   
         // The payload MAY also contain a journal section. The journal section
@@ -165,8 +173,14 @@ public:
         if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
         {
             auto retVal = decodeJournalSection(buffer);
-            if (retVal != parserReturn::Processed)
+            switch (retVal) {
+            case parserReturn::Processed:
+                break;
+            case parserReturn::UnexpectedJournalData:
+                _rtpHeadersComplete = false;
+            default:
                 return retVal;
+            }
         }
 
         _rtpHeadersComplete = false;

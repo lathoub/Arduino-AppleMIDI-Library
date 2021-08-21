@@ -1,6 +1,44 @@
+// https://www.ietf.org/rfc/rfc4695.html#section-3
+
 parserReturn decodeMidiSection(RtpBuffer_t &buffer)
 {
     int cmdCount = 0;
+
+    // https://www.ietf.org/rfc/rfc4695.html#section-3.2
+    // 
+    // The first MIDI channel command in the MIDI list MUST include a status
+    // octet.Running status coding, as defined in[MIDI], MAY be used for
+    // all subsequent MIDI channel commands in the list.As in[MIDI],
+    // System Commonand System Exclusive messages(0xF0 ... 0xF7) cancel
+    // the running status state, but System Real - time messages(0xF8 ...
+    // 0xFF) do not affect the running status state. All System commands in
+    // the MIDI list MUST include a status octet.
+
+    // As we note above, the first channel command in the MIDI list MUST
+    // include a status octet.However, the corresponding command in the
+    // original MIDI source data stream might not have a status octet(in
+    // this case, the source would be coding the command using running
+    // status). If the status octet of the first channel command in the
+    // MIDI list does not appear in the source data stream, the P(phantom)
+    // header bit MUST be set to 1.  In all other cases, the P bit MUST be
+    // set to 0.
+    //
+    // Note that the P bit describes the MIDI source data stream, not the
+    // MIDI list encoding; regardless of the state of the P bit, the MIDI
+    // list MUST include the status octet.
+    // 
+    // As receivers MUST be able to decode running status, sender
+    // implementors should feel free to use running status to improve
+    // bandwidth efficiency. However, senders SHOULD NOT introduce timing
+    // jitter into an existing MIDI command stream through an inappropriate
+    // use or removal of running status coding. This warning primarily
+    // applies to senders whose RTP MIDI streams may be transcoded onto a
+    // MIDI 1.0 DIN cable[MIDI] by the receiver : both the timestamps and
+    // the command coding (running status or not) must comply with the
+    // physical restrictions of implicit time coding over a slow serial
+    // line.
+
+    // (lathoub: RTP_MIDI_CS_FLAG_P((phantom) not implemented
 
     uint8_t runningstatus = 0;
     
@@ -32,6 +70,11 @@ parserReturn decodeMidiSection(RtpBuffer_t &buffer)
             {
                 // sysex split in decodeMidi
                 return parserReturn::NotEnoughData;
+            }
+
+            if (consumed > midiCommandLength) {
+                buffer.clear();
+                return parserReturn::UnexpectedMidiData;
             }
 
             midiCommandLength -= consumed;

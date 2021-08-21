@@ -78,29 +78,35 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
             {
                 if (bi < DefaultSettings::MaxSessionNameLen)
-                    invitation.sessionName[bi++] = buffer[i];
-                i++;
+                    invitation.sessionName[bi++] = buffer[i++];
+                else
+                    i++;
             }
             invitation.sessionName[bi++] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
                 i++;
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
+            auto retVal = parserReturn::Processed;
+
+            // when given a Session Name and the buffer has been fully processed and the 
+            // last character is not 'endl', then we got a very long sessionName. It will
+            // continue in the next memory chunk of the packet. We don't care, so indicated
+            // flush the remainder of the packet.
+            // First part if the session name is kept, processing continues
             if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+                if (i == buffer.size() && buffer[i] != 0x00)
+                    retVal = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
 			session->ReceivedInvitation(invitation, portType);
 
-            return parserReturn::Processed;
+            return retVal;
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
@@ -267,29 +273,36 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
             {
                 if (bi < DefaultSettings::MaxSessionNameLen)
-                    invitationAccepted.sessionName[bi++] = buffer[i];
-                i++;
+                    invitationAccepted.sessionName[bi++] = buffer[i++];
+                else
+                    i++;
             }
             invitationAccepted.sessionName[bi++] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            while (i < buffer.size())
                 i++;
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
+
+            auto retVal = parserReturn::Processed;
+
+            // when given a Session Name and the buffer has been fully processed and the 
+            // last character is not 'endl', then we got a very long sessionName. It will
+            // continue in the next memory chunk of the packet. We don't care, so indicated
+            // flush the remainder of the packet.
+            // First part if the session name is kept, processing continues
             if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+                if (i == buffer.size() && buffer[i] != 0x00)
+                    retVal = parserReturn::SessionNameVeryLong;
 
             while (i--)
                 buffer.pop_front(); // consume all the bytes that made up this message
 
             session->ReceivedInvitationAccepted(invitationAccepted, portType);
 
-            return parserReturn::Processed;
+            return retVal;
 		}
 		else if (0 == memcmp(command, amInvitationRejected, sizeof(amInvitationRejected)))
 		{

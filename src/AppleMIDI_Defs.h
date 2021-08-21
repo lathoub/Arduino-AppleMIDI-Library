@@ -31,7 +31,10 @@ enum parserReturn: uint8_t
     Processed,
     NotSureGiveMeMoreData,
     NotEnoughData,
-    UnexpectedData,
+	UnexpectedData,
+	UnexpectedMidiData,
+	UnexpectedJournalData,
+	SessionNameVeryLong,
 };
 
 #if defined(__AVR__)
