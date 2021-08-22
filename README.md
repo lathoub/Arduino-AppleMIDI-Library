@@ -21,7 +21,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 ### New in 3.1.0
 * Increased stability in high-throughput situations
 * Updated wiki
-### New in 3.2.0
+### New in 3.1.1
 * Bug fixes en enhancements
 
 ## Installation
