@@ -117,7 +117,20 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMID
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
+#ifndef ONE_PARTICIPANT
+    Participant<Settings> participant;
+#endif
+    participant.kind = Listener;
+    participant.ssrc = invitation.ssrc;
+    participant.remoteIP   = controlPort.remoteIP();
+    participant.remotePort = controlPort.remotePort();
+    participant.lastSyncExchangeTime = now;
 #ifdef KEEP_SESSION_NAME
+    strncpy(participant.sessionName, invitation.sessionName, DefaultSettings::MaxSessionNameLen);
+#endif
+
+#ifdef KEEP_SESSION_NAME
+    // Re-use the invitation for acceptance. Overwrite sessionName with ours
     strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
     invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
 #endif
@@ -166,19 +179,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
 #endif
         return;
     }
-    
-#ifndef ONE_PARTICIPANT
-    Participant<Settings> participant;
-#endif
-    participant.kind = Listener;
-    participant.ssrc = invitation.ssrc;
-    participant.remoteIP   = controlPort.remoteIP();
-    participant.remotePort = controlPort.remotePort();
-    participant.lastSyncExchangeTime = now;
-#ifdef KEEP_SESSION_NAME
-    strncpy(participant.sessionName, invitation.sessionName, DefaultSettings::MaxSessionNameLen);
-#endif
-    
+        
 #ifndef ONE_PARTICIPANT
     participants.push_back(participant);
 #endif
@@ -205,6 +206,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
         return;
     }
 
+#ifdef KEEP_SESSION_NAME
+    // Re-use the invitation for acceptance. Overwrite sessionName with ours
+    strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
+    invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+#endif
+
     // writeInvitation will alter the values of the invitation,
     // in order to safe memory and computing cycles its easier to make a copy
     // of the ssrc here.
@@ -217,7 +224,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     // Inform that we have an established connection
     if (nullptr != _connectedCallback)
 #ifdef KEEP_SESSION_NAME
-        _connectedCallback(ssrc_, invitation.sessionName);
+        _connectedCallback(ssrc_, pParticipant->sessionName);
 #else
         _connectedCallback(ssrc_, nullptr);
 #endif
