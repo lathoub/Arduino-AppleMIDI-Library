@@ -117,6 +117,28 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMID
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
+    // ignore invitation of a participant already in the participant list
+#ifndef ONE_PARTICIPANT
+    if (nullptr != getParticipantBySSRC(invitation.ssrc))
+#else
+    if (participant.ssrc == invitation.ssrc)
+#endif
+        return;
+
+#ifndef ONE_PARTICIPANT
+    if (participants.full())
+#else
+    if (participant.ssrc != 0)
+#endif
+    {
+        writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);     
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, TooManyParticipantsException, 0);
+#endif
+        return;
+    }
+
 #ifndef ONE_PARTICIPANT
     Participant<Settings> participant;
 #endif
@@ -157,29 +179,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
         break;
     }
 #endif
-
-    // ignore invitation of a participant already in the participant list
-#ifndef ONE_PARTICIPANT
-    if (nullptr != getParticipantBySSRC(invitation.ssrc))
-#else
-    if (participant.ssrc == invitation.ssrc)
-#endif
-        return;
-   
-#ifndef ONE_PARTICIPANT
-    if (participants.full())
-#else
-    if (participant.ssrc != 0)
-#endif
-    {
-        writeInvitation(controlPort, controlPort.remoteIP(), controlPort.remotePort(), invitation, amInvitationRejected);     
-#ifdef USE_EXT_CALLBACKS
-        if (nullptr != _exceptionCallback)
-            _exceptionCallback(ssrc, TooManyParticipantsException, 0);
-#endif
-        return;
-    }
-        
+           
 #ifndef ONE_PARTICIPANT
     participants.push_back(participant);
 #endif

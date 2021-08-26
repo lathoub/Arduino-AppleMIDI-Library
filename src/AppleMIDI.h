@@ -53,6 +53,10 @@ public:
 #ifdef KEEP_SESSION_NAME
         strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
 #endif
+
+#ifdef ONE_PARTICIPANT
+    participant.ssrc = 0;
+#endif
 	};
 
     virtual ~AppleMIDISession() 
@@ -121,6 +125,9 @@ public:
 
     void end()
     {
+#ifdef ONE_PARTICIPANT
+        participant.ssrc = 0;
+#endif
  		controlPort.stop();
 		dataPort.stop();
     }
