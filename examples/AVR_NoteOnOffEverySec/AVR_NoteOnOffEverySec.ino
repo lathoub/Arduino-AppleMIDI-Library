@@ -36,11 +36,12 @@ void setup()
   MIDI.begin();
 
   // Stay informed on connection status
-  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+  AppleMIDI
+  .setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
     DBG(F("Connected to session"), ssrc, name);
-  });
-  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+  })
+  .setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
     DBG(F("Disconnected"), ssrc);
   });
