@@ -21,7 +21,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 ### New in 3.1.0
 * Increased stability in high-throughput situations
 * Updated wiki
-### New in 3.1.1
+### New in 3.1.1 and 3.1.2
 * Bug fixes en enhancements
 
 ## Installation
@@ -66,7 +66,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * Arduino/Genuino (Mega, Uno, Arduino Ethernet, MKRZERO, ...)
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board) Wi-Fi
-* ESP32 with W5500 [Setup]()
+* ESP32 with W5500 [Setup](https://github.com/lathoub/Arduino-AppleMIDI-Library/discussions/135)
 * Teensy 3.2 & 4.1
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
 
@@ -93,7 +93,7 @@ It's highly recommended to modify the [Ethernet library](https://github.com/ardu
 Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies. More of the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Keeping-Latency-under-control)  
 
 ## Arduino IDE (arduino.cc)
-* 1.8.15
+* 1.8.16
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
