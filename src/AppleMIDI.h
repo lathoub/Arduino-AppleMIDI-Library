@@ -72,7 +72,7 @@ public:
         return *this;
     }
 #ifdef USE_EXT_CALLBACKS
-    void setHandleException(void (*fptr)(const ssrc_t &, const Exception &, const int32_t value))
+    AppleMIDISession &setHandleException(void (*fptr)(const ssrc_t &, const Exception &, const int32_t value))
     {
         _exceptionCallback = fptr;
         return *this;
