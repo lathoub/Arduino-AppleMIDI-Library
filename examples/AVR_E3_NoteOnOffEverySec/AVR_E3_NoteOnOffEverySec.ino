@@ -1,7 +1,8 @@
 #include <Ethernet3.h> // from https://github.com/sstaub/Ethernet3
 
 #define SerialMon Serial
-#define APPLEMIDI_DEBUG SerialMon
+#include <AppleMIDI_Debug.h>
+
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.

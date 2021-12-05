@@ -1,8 +1,9 @@
 #include <Ethernet.h>
 
-#define APPLEMIDI_INITIATOR
 #define SerialMon Serial
-#define APPLEMIDI_DEBUG SerialMon
+#include <AppleMIDI_Debug.h>
+
+#define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.

@@ -1,21 +1,21 @@
 #pragma once
 
-#ifdef APPLEMIDI_DEBUG
+#ifdef SerialMon
 namespace {
 static void DBG_SETUP(unsigned long baud) {
-  APPLEMIDI_DEBUG.begin(baud);
-  while (!APPLEMIDI_DEBUG);
+  SerialMon.begin(baud);
+  while (!SerialMon);
 }
 
 template <typename T>
 static void DBG_PLAIN(T last) {
-  APPLEMIDI_DEBUG.println(last);
+  SerialMon.println(last);
 }
 
 template <typename T, typename... Args>
 static void DBG_PLAIN(T head, Args... tail) {
-  APPLEMIDI_DEBUG.print(head);
-  APPLEMIDI_DEBUG.print(' ');
+  SerialMon.print(head);
+  SerialMon.print(' ');
   DBG_PLAIN(tail...);
 }
 
