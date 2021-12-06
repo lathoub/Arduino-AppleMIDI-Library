@@ -17,6 +17,7 @@ arduino-cli core update-index
 
 # Install Arduino AVR core
 arduino-cli core install arduino:avr
+arduino-cli core install esp32:esp32
 
 # Link Arduino library
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
