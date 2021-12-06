@@ -20,6 +20,8 @@ arduino-cli core install arduino:avr
 # Link Arduino library
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
+arduino-cli lib install Ethernet
+
 # Compile all *.ino files for the Arduino Uno
 for f in **/*.ino ; do
     arduino-cli compile -b arduino:avr:uno $f
