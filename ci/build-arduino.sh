@@ -12,7 +12,7 @@ mkdir $HOME/Arduino/libraries
 export PATH=$PATH:$GITHUB_WORKSPACE/bin
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
 arduino-cli config init
-arduino-cli config library enable_unsafe_install=true
+arduino-cli config set library.enable_unsafe_install true
 arduino-cli core update-index
 
 # Install Arduino AVR core
