@@ -23,7 +23,7 @@ ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 export enable_unsafe_install=true
 
 arduino-cli lib install Ethernet
-arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3
+arduino-cli lib install --zip-path https://github.com/sstaub/Ethernet3/archive/refs/heads/master.zip
 arduino-cli lib install 'MIDI library'
 
 # Compile all *.ino files for the Arduino Uno
