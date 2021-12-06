@@ -35,3 +35,8 @@ arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
 for f in **/AVR_*.ino ; do
     arduino-cli compile -b arduino:avr:uno $f
 done
+
+# Compile all *.ino files for the Arduino Uno
+for f in **/SAMD_*.ino ; do
+    arduino-cli compile -b arduino:samd:mkrzero $f
+done
