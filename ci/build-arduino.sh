@@ -21,7 +21,7 @@ arduino-cli core install arduino:avr
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
 arduino-cli lib install Ethernet
-arduino-cli lib install MIDI Library
+arduino-cli lib install --git-url https://github.com/FortySevenEffects/arduino_midi_library
 
 # Compile all *.ino files for the Arduino Uno
 for f in **/*.ino ; do
