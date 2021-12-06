@@ -21,6 +21,7 @@ arduino-cli core install arduino:avr
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
 arduino-cli lib install Ethernet
+arduino-cli lib install Ethernet3
 arduino-cli lib install 'MIDI library'
 
 # Compile all *.ino files for the Arduino Uno
