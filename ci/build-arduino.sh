@@ -20,18 +20,18 @@ arduino-cli core update-index
 # Install Arduino AVR core
 arduino-cli core install arduino:avr
 arduino-cli core install arduino:samd
-arduino-cli core install esp8266:esp8266
-arduino-cli core search esp32
-arduino-cli core install esp32:esp32
+arduino-cli core install arduino:esp8266
+# arduino-cli core search esp32
+# arduino-cli core install esp32:esp32
 
 # Link Arduino library
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
 arduino-cli lib install Ethernet
-arduino-cli lib install 'MIDI library'
+arduino-cli lib install "MIDI library"
 arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
 
 # Compile all *.ino files for the Arduino Uno
-for f in **/*.ino ; do
+for f in **/AVR_*.ino ; do
     arduino-cli compile -b arduino:avr:uno $f
 done
