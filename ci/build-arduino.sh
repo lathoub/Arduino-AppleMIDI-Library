@@ -30,6 +30,7 @@ ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 arduino-cli lib install Ethernet
 arduino-cli lib install "MIDI library"
 arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
+arduino-cli lib install EthernetBonjour
 
 # Compile all *.ino files for the Arduino Uno
 for f in **/AVR_*.ino ; do
