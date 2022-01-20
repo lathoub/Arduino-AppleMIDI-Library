@@ -21,7 +21,7 @@ arduino-cli core update-index
 arduino-cli core install arduino:avr
 arduino-cli core install arduino:samd
 # arduino-cli core install arduino:esp8266
-# arduino-cli core install esp32:esp32
+# arduino-cli core install esp32:esp32:esp32doit-devkit-v1
 
 # Link Arduino library
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
