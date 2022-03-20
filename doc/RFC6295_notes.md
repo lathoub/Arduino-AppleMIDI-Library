@@ -88,7 +88,7 @@ One for each (TOTCHAN + 1)
 | ------ | :----: | ------------------------------------------------------------------------ |
 | S      |   0    | Single packet loss. To indicate only one packet is described in journal. |
 | CHAN   |  1-4   | Channel number                                                           |
-| H      |   5    | Whether contollers are Ehhanced Chapter C.                               |
+| H      |   5    | Whether controllers are Enhanced Chapter C.                               |
 | LENGTH |  6-15  | Lenght of the journal                                                    |
 | P      | 16 / 0 | Chapter P. Program Change.                                               |
 | C      | 17 / 1 | Chapter C. Control Change.                                               |
