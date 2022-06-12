@@ -131,9 +131,10 @@ public:
     };
 
     // call this method *before* calling begin()
-    void setPort(const uint16_t port)
+    AppleMIDISession & setPort(const uint16_t port)
     {
         this->port = port;
+        return *this;
     }
 
     const ssrc_t getSynchronizationSource() const { return this->ssrc; };

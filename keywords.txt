@@ -11,6 +11,7 @@ AppleMidi	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 setName KEYWORD2
+setPort KEYWORD2
 setHandleConnected	 KEYWORD2
 setHandleDisconnected	 KEYWORD2
 setHandleException	         KEYWORD2
