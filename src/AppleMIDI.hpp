@@ -148,13 +148,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.remotePort = controlPort.remotePort();
     participant.lastSyncExchangeTime = now;
 #ifdef KEEP_SESSION_NAME
-    strncpy(participant.sessionName, invitation.sessionName, DefaultSettings::MaxSessionNameLen);
+    strncpy(participant.sessionName, invitation.sessionName, Settings::MaxSessionNameLen);
 #endif
 
 #ifdef KEEP_SESSION_NAME
     // Re-use the invitation for acceptance. Overwrite sessionName with ours
-    strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
-    invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+    strncpy(invitation.sessionName, localName, Settings::MaxSessionNameLen);
+    invitation.sessionName[Settings::MaxSessionNameLen] = '\0';
 #endif
 
 #ifdef USE_DIRECTORY
@@ -208,8 +208,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
 
 #ifdef KEEP_SESSION_NAME
     // Re-use the invitation for acceptance. Overwrite sessionName with ours
-    strncpy(invitation.sessionName, localName, DefaultSettings::MaxSessionNameLen);
-    invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+    strncpy(invitation.sessionName, localName, Settings::MaxSessionNameLen);
+    invitation.sessionName[Settings::MaxSessionNameLen] = '\0';
 #endif
 
     // writeInvitation will alter the values of the invitation,
@@ -263,8 +263,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitationAc
     pParticipant->connectionAttempts = 0; // reset back to 0
     pParticipant->invitationStatus   = ControlInvitationAccepted; // step it up
 #ifdef KEEP_SESSION_NAME
-    strncpy(pParticipant->sessionName, invitationAccepted.sessionName, DefaultSettings::MaxSessionNameLen);
-    pParticipant->sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+    strncpy(pParticipant->sessionName, invitationAccepted.sessionName, Settings::MaxSessionNameLen);
+    pParticipant->sessionName[Settings::MaxSessionNameLen] = '\0';
 #endif
 }
 
@@ -820,7 +820,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
            doSyncronize = true;
        }
     }
-    else if (now - pParticipant->lastInviteSentTime >  DefaultSettings::SynchronizationHeartBeat)
+    else if (now - pParticipant->lastInviteSentTime >  Settings::SynchronizationHeartBeat)
     {
        doSyncronize = true;
     }
@@ -840,7 +840,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
 
     if (now - pParticipant->lastInviteSentTime >  10000)
     {
-        if (pParticipant->synchronizationCount > DefaultSettings::MaxSynchronizationCK0Attempts)
+        if (pParticipant->synchronizationCount > Settings::MaxSynchronizationCK0Attempts)
         {
 #ifdef USE_EXT_CALLBACKS
             if (nullptr != _exceptionCallback)
@@ -919,7 +919,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
         // try to connect every 1 second (1000 ms)
         if (now - pParticipant->lastInviteSentTime >  1000)
         {
-            if (pParticipant->connectionAttempts >= DefaultSettings::MaxSessionInvitesAttempts)
+            if (pParticipant->connectionAttempts >= Settings::MaxSessionInvitesAttempts)
             {
 #ifdef USE_EXT_CALLBACKS
                 if (nullptr != _exceptionCallback)
@@ -947,8 +947,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
             invitation.ssrc = this->ssrc;
             invitation.initiatorToken = pParticipant->initiatorToken;
 #ifdef KEEP_SESSION_NAME
-            strncpy(invitation.sessionName, this->localName, DefaultSettings::MaxSessionNameLen);
-            invitation.sessionName[DefaultSettings::MaxSessionNameLen] = '\0';
+            strncpy(invitation.sessionName, this->localName, Settings::MaxSessionNameLen);
+            invitation.sessionName[Settings::MaxSessionNameLen] = '\0';
 #endif
             if (pParticipant->invitationStatus == Initiating
             ||  pParticipant->invitationStatus == AwaitingControlInvitationAccepted)

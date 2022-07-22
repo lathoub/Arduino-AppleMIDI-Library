@@ -39,7 +39,7 @@ struct Participant
 #endif
     
 #ifdef KEEP_SESSION_NAME
-    char            sessionName[DefaultSettings::MaxSessionNameLen + 1];
+    char            sessionName[Settings::MaxSessionNameLen + 1];
 #endif
 } ;
 

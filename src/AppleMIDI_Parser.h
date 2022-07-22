@@ -80,7 +80,7 @@ public:
             uint16_t bi = 0;
             while (i < buffer.size())
             {
-                if (bi < DefaultSettings::MaxSessionNameLen)
+                if (bi < Settings::MaxSessionNameLen)
                     invitation.sessionName[bi++] = buffer[i++];
                 else
                     i++;
@@ -275,7 +275,7 @@ public:
             uint16_t bi = 0;
             while (i < buffer.size())
             {
-                if (bi < DefaultSettings::MaxSessionNameLen)
+                if (bi < Settings::MaxSessionNameLen)
                     invitationAccepted.sessionName[bi++] = buffer[i++];
                 else
                     i++;
@@ -344,7 +344,7 @@ public:
             uint16_t bi = 0;
             while ((i < buffer.size()) && (buffer[i] != 0x00))
             {
-                if (bi < DefaultSettings::MaxSessionNameLen)
+                if (bi < Settings::MaxSessionNameLen)
                     invitationRejected.sessionName[bi++] = buffer[i];
                 i++;
             }

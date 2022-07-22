@@ -49,7 +49,7 @@ public:
     {
         this->port = port;
 #ifdef KEEP_SESSION_NAME
-        strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
+        strncpy(this->localName, sessionName, Settings::MaxSessionNameLen);
 #endif
 
 #ifdef ONE_PARTICIPANT
@@ -114,7 +114,7 @@ public:
     };
     AppleMIDISession &setName(const char *sessionName)
     {
-        strncpy(this->localName, sessionName, DefaultSettings::MaxSessionNameLen);
+        strncpy(this->localName, sessionName, Settings::MaxSessionNameLen);
         return *this;
     };
 #else
@@ -331,7 +331,7 @@ private:
 #endif
 
 #ifdef KEEP_SESSION_NAME
-    char localName[DefaultSettings::MaxSessionNameLen + 1];
+    char localName[Settings::MaxSessionNameLen + 1];
 #endif
 
 private:
