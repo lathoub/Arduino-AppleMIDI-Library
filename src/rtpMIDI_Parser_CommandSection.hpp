@@ -1,9 +1,7 @@
 // https://www.ietf.org/rfc/rfc4695.html#section-3
 
-parserReturn decodeMidiSection(RtpBuffer_t &buffer)
+parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 {
-    int cmdCount = 0;
-
     // https://www.ietf.org/rfc/rfc4695.html#section-3.2
     // 
     // The first MIDI channel command in the MIDI list MUST include a status
@@ -39,67 +37,61 @@ parserReturn decodeMidiSection(RtpBuffer_t &buffer)
     // line.
 
     // (lathoub: RTP_MIDI_CS_FLAG_P((phantom) not implemented
-
-    uint8_t runningstatus = 0;
     
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
     while (midiCommandLength)
     {
+        Serial.print("midiCommandLength: ");
+        Serial.print(midiCommandLength);
+        Serial.print(" cmdCount: ");
+        Serial.println(cmdCount);
+
         /* for the first command we only have a delta-time if Z-Flag is set */
         if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
-            auto consumed = decodeTime(buffer);
+            Serial.println("decoding time");
+
+            size_t consumed = 0;
+            auto retVal = decodeTime(buffer, consumed);
+            if (retVal != parserReturn::Processed) return retVal;
 
             midiCommandLength -= consumed;
-
             while (consumed--)
                 buffer.pop_front();
-              
-            if (midiCommandLength > 0 && 0 >= buffer.size())
-                return parserReturn::NotEnoughData;
         }
 
         if (midiCommandLength > 0)
         {
-            /* Decode a MIDI-command - if 0 is returned something went wrong */
-            size_t consumed = decodeMidi(buffer, runningstatus);
-            if (consumed == 0)
-            {
-            }
-            else if (consumed > buffer.size())
-            {
-                // sysex split in decodeMidi
-                return parserReturn::NotEnoughData;
-            }
+            Serial.println("decoding MIDIcommand section");
 
-            if (consumed > midiCommandLength) {
-                buffer.clear();
-                return parserReturn::UnexpectedMidiData;
+            cmdCount++;
+
+            size_t consumed = 0;
+            auto retVal = decodeMidi(buffer, runningstatus, consumed);
+            if (retVal == parserReturn::NotEnoughData) {
+                cmdCount = 0; // avoid first command again
+                return retVal;
             }
 
             midiCommandLength -= consumed;
-
             while (consumed--)
                 buffer.pop_front();
-
-            if (midiCommandLength > 0 && 0 >= buffer.size())
-                return parserReturn::NotEnoughData;
-
-            cmdCount++;
         }
     }
     
     return parserReturn::Processed;
 }
 
-size_t decodeTime(RtpBuffer_t &buffer)
+parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 {
-    uint8_t consumed = 0;
     uint32_t deltatime = 0;
 
     /* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
     for (uint8_t j = 0; j < 4; j++)
     {
+        if (buffer.size() < 1)
+            return parserReturn::NotEnoughData;
+
         uint8_t octet = buffer[consumed];
         deltatime = (deltatime << 7) | (octet & RTP_MIDI_DELTA_TIME_OCTET_MASK);
         consumed++;
@@ -107,24 +99,28 @@ size_t decodeTime(RtpBuffer_t &buffer)
         if ((octet & RTP_MIDI_DELTA_TIME_EXTENSION) == 0)
             break;
     }
-    return consumed;
+
+    return parserReturn::Processed;
 }
 
-size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
+parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &consumed)
 {
-    size_t consumed = 0;
+    if (buffer.size() < 1)
+        return parserReturn::NotEnoughData;
 
-    auto octet = buffer[0];
+    auto octet = buffer.front();
 
     /* MIDI realtime-data -> one octet  -- unlike serial-wired MIDI realtime-commands in RTP-MIDI will
      * not be intermingled with other MIDI-commands, so we handle this case right here and return */
     if (octet >= 0xf8)
     {
+        consumed = 1;
+
         session->StartReceivedMidi();
-        session->ReceivedMidi(buffer[0]);
+        session->ReceivedMidi(octet);
         session->EndReceivedMidi();
         
-        return 1;
+        return parserReturn::Processed;
     }
 
     /* see if this first octet is a status message */
@@ -133,7 +129,7 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
         /* if we have no running status yet -> error */
         if (((runningstatus)&RTP_MIDI_COMMAND_STATUS_FLAG) == 0)
         {
-            return 0;
+            return parserReturn::Processed;
         }
         /* our first octet is "virtual" coming from a preceding MIDI-command,
          * so actually we have not really consumed anything yet */
@@ -160,10 +156,8 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
     /* non-system MIDI-commands encode the command in the high nibble and the channel
      * in the low nibble - so we will take care of those cases next */
     if (octet < 0xf0)
-    {
-        uint8_t type = (octet & 0xf0);
-        
-        switch (type)
+    {      
+        switch (octet & 0xf0)
         {
         case MIDI_NAMESPACE::MidiType::NoteOff:
             consumed += 2;
@@ -188,12 +182,15 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
             break;
         }
 
+        if (buffer.size() < consumed)
+            return parserReturn::NotEnoughData;
+
         session->StartReceivedMidi();
         for (size_t j = 0; j < consumed; j++)
             session->ReceivedMidi(buffer[j]);
         session->EndReceivedMidi();
         
-        return consumed;
+        return parserReturn::Processed;
     }
 
     /* Here we catch the remaining system-common commands */
@@ -201,9 +198,9 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
     case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
-        consumed = decodeMidiSysEx(buffer);
-        if (consumed > buffer.max_size())
-            return consumed;
+        consumed = decodeMidiSysEx(buffer, consumed);
+  //      if (consumed > buffer.max_size())
+  //          return consumed;
         break;
     case MIDI_NAMESPACE::MidiType::TimeCodeQuarterFrame:
         consumed += 1;
@@ -218,17 +215,20 @@ size_t decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus)
         break;
     }
 
+    if (buffer.size() < consumed)
+        return parserReturn::NotEnoughData;
+
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
     session->EndReceivedMidi();
 
-    return consumed;
+    return parserReturn::Processed;
 }
 
-size_t decodeMidiSysEx(RtpBuffer_t &buffer)
+parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 {
-    size_t consumed = 1; // beginning SysEx Token is not counted (as it could remain)
+    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
     size_t i = 0;
     auto octet = buffer[++i];
 
@@ -237,9 +237,9 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
         consumed++;
         octet = buffer[i++];
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
-            return consumed;
+            return parserReturn::Processed;
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
-            return consumed;
+            return parserReturn::Processed;
     }
     
     // begin of the SysEx is found, not the end.
@@ -266,5 +266,7 @@ size_t decodeMidiSysEx(RtpBuffer_t &buffer)
     midiCommandLength += 1; // adding the manual SysEx SystemExclusiveEnd
 
     // indicates split SysEx
-    return buffer.max_size() + 1;
+    consumed = buffer.max_size() + 1;
+
+    return parserReturn::Processed;
 }

@@ -48,25 +48,30 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // stream (modulo 2^16).
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
-    //    uint16_t checkPoint = __ntohs(cb.value16); ; // unused
-        
+        //    uint16_t checkPoint = __ntohs(cb.value16); ; // unused
+
         // (RFC 4695, 5 Recovery Journal Format)
         // If A and Y are both zero, the recovery journal only contains its 3-
         // octet header and is considered to be an "empty" journal.
         if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
         {
+            Serial.println("A and Y both zero");
+
             // Big fixed by @hugbug
             while (minimumLen-- > 0)
                 buffer.pop_front();
 
+            _journalSectionComplete = true;
             return parserReturn::Processed;
         }
-        
+
         // By default, the payload format does not use enhanced Chapter C
         // encoding. In this default case, the H bit MUST be set to 0 for all
         // packets in the stream.
         if (flags & RTP_MIDI_JS_FLAG_H)
         {
+            Serial.println("H flag, not implemented");
+
             // The H bit indicates if MIDI channels in the stream have been
             // configured to use the enhanced Chapter C encoding
         }
@@ -77,6 +82,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // of the loss of a single packet.
         if (flags & RTP_MIDI_JS_FLAG_S)
         {
+            Serial.println("S flag, not implemented");
             // special encoding
         }
 
@@ -84,20 +90,34 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // recovery journal, directly following the recovery journal header.
         if (flags & RTP_MIDI_JS_FLAG_Y)
         {
+            Serial.println("Y flag");
+
             minimumLen += 2;
             if (buffer.size() < minimumLen)
+            {
+                Serial.print(". minimumLen: ");
+                Serial.println(minimumLen);
+                Serial.print("bufferSize: ");
+                Serial.println(buffer.size());
                 return parserReturn::NotEnoughData;
+            }
 
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             uint16_t systemflags = __ntohs(cb.value16);
             uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
-            
+
             uint16_t remainingBytes = sysjourlen - 2;
-            
+
             minimumLen += remainingBytes;
             if (buffer.size() < minimumLen)
+            {
+                Serial.print("; minimumLen: ");
+                Serial.println(minimumLen);
+                Serial.print("bufferSize: ");
+                Serial.println(buffer.size());
                 return parserReturn::NotEnoughData;
+            }
 
             i += remainingBytes;
         }
@@ -107,47 +127,103 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // field is interpreted as an unsigned integer).
         if (flags & RTP_MIDI_JS_FLAG_A)
         {
+            Serial.println("A flag");
+
             /* At the same place we find the total channels encoded in the channel journal */
             _journalTotalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
-
-            // do channel reading below, so we can already purge bytes here
         }
-        
+
+        Serial.print("flushing journal top: ");
+        Serial.println(i);
+
         while (i-- > 0) // is that the same as while (i--) ??
             buffer.pop_front();
-                
+
+        Serial.println("remaining bytes: ");
+        Serial.println(buffer.size());
+
         _journalSectionComplete = true;
     }
 
     // iterate through all the channels specified in header
     while (_journalTotalChannels > 0)
     {
-        if (buffer.size() < 3)
-            return parserReturn::NotEnoughData;
+        Serial.print("_journalTotalChannels: ");
+        Serial.println(_journalTotalChannels);
 
-        cb.buffer[0] = 0x00;
-        cb.buffer[1] = buffer[0];
-        cb.buffer[2] = buffer[1];
-        cb.buffer[3] = buffer[2];
-        uint32_t chanflags = __ntohl(cb.value32);
-        
-        uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
-    //    uint16_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; // unused
+        if (false == _channelJournalSectionComplete) { 
 
-        // We have the most important bit of information - the length of the channel information
-        // no more need to further parse.
+            Serial.print("Parsing channeljournal ");
 
-        if (buffer.size() < chanjourlen)
-        {
-            return parserReturn::NotEnoughData;
+            if (buffer.size() < 3)
+                return parserReturn::NotEnoughData;
+
+            // 3 bytes for channel journal
+            cb.buffer[0] = 0x00;
+            cb.buffer[1] = buffer[0];
+            cb.buffer[2] = buffer[1];
+            cb.buffer[3] = buffer[2];
+            uint32_t chanflags = __ntohl(cb.value32);
+
+            bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
+            uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
+            bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
+            uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
+
+            Serial.print("; chanjourlen: ");
+            Serial.println(chanjourlen);
+
+            if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
+                Serial.println("P flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_C)) {
+                Serial.println("C flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_M)) {
+                Serial.println("M flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_W)) {
+                Serial.println("W flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_N)) {
+                Serial.println("N flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_E)) {
+                Serial.println("E flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_T)) {
+                Serial.println("T flag");
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_A)) {
+                Serial.println("A flag");
+            }
+
+            _bytesToFlush = chanjourlen;
+
+            _channelJournalSectionComplete = true;
         }
-        
-        _journalTotalChannels--;
-        
-        // advance the pointer
-        while (chanjourlen--)
+
+        Serial.print("Flushing: ");
+        Serial.println(_bytesToFlush);
+        Serial.print("buffer.size(): ");
+        Serial.println(buffer.size());
+
+        while (buffer.size() > 0 && _bytesToFlush > 0) {
+            _bytesToFlush--;
             buffer.pop_front();
         }
-    
+
+        Serial.print("Remaining to be flushed: ");
+        Serial.println(_bytesToFlush);
+
+        if (_bytesToFlush > 0) {
+            Serial.println("breaking (retruneing)");
+            return parserReturn::NotEnoughData;
+        }
+
+        Serial.println("channel flushed");
+        _journalTotalChannels--;
+    }
+
     return parserReturn::Processed;
 }

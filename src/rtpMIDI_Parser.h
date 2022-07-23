@@ -21,9 +21,13 @@ class rtpMIDIParser
 private:
     bool _rtpHeadersComplete = false;
     bool _journalSectionComplete = false;
+    bool _channelJournalSectionComplete = false;
     uint16_t midiCommandLength;
     uint8_t _journalTotalChannels;
     uint8_t rtpMidi_Flags = 0;
+    int cmdCount = 0;
+    uint8_t runningstatus = 0;
+    size_t _bytesToFlush = 0;
 
 public:
 	AppleMIDISession<UdpClass, Settings, Platform> * session;
@@ -38,6 +42,15 @@ public:
 	// 
 	parserReturn parse(RtpBuffer_t &buffer)
 	{
+        Serial.print("bufferSize: ");
+        Serial.println(buffer.size());
+        for (int i = 0; i < buffer.size(); i++) 
+        {
+            Serial.print(" 0x");
+            Serial.print(buffer[i], HEX);
+        }
+        Serial.println("");
+
 		conversionBuffer cb;
         
         // [RFC3550] provides a complete description of the RTP header fields.
@@ -63,6 +76,8 @@ public:
             
         if (_rtpHeadersComplete == false)
         {
+            Serial.println("Parsing header");
+
             auto minimumLen = sizeof(Rtp_t);
             if (buffer.size() < minimumLen)
                 return parserReturn::NotSureGiveMeMoreData;
@@ -140,6 +155,9 @@ public:
                 midiCommandLength = (midiCommandLength << 8) | octet;
             }
 
+            cmdCount = 0;
+            runningstatus = 0;
+
             while (i--)
                 buffer.pop_front();
             
@@ -147,22 +165,15 @@ public:
                         
             // initialize the Journal Section
             _journalSectionComplete = false;
+            _channelJournalSectionComplete = false;
             _journalTotalChannels = 0;
         }
   
 		// Always a MIDI section
 		if (midiCommandLength > 0)
         {
-			auto retVal = decodeMidiSection(buffer);
-            switch (retVal) {
-            case parserReturn::Processed:
-                break;
-            case parserReturn::UnexpectedMidiData:
-                // already processed MIDI data will be played
-                _rtpHeadersComplete = false;
-            default:
-                return retVal;
-            }
+			auto retVal = decodeMIDICommandSection(buffer);
+            if (retVal != parserReturn::Processed) return retVal;
         }
   
         // The payload MAY also contain a journal section. The journal section
@@ -172,10 +183,15 @@ public:
 
         if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
         {
+            Serial.println("decoding Journal section");
+
             auto retVal = decodeJournalSection(buffer);
             switch (retVal) {
             case parserReturn::Processed:
                 break;
+            case parserReturn::NotEnoughData:
+                Serial.println("not enough joournal section");
+                return parserReturn::NotEnoughData;
             case parserReturn::UnexpectedJournalData:
                 _rtpHeadersComplete = false;
             default:
@@ -190,7 +206,7 @@ public:
 
     #include "rtpMIDI_Parser_JournalSection.hpp"
     
-    #include "rtpMIDI_Parser_MidiCommandSection.hpp"
+    #include "rtpMIDI_Parser_CommandSection.hpp"
 };
 
 END_APPLEMIDI_NAMESPACE
