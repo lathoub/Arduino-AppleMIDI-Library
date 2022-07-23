@@ -198,9 +198,7 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
     {
     case MIDI_NAMESPACE::MidiType::SystemExclusiveStart:
     case MIDI_NAMESPACE::MidiType::SystemExclusiveEnd:
-        consumed = decodeMidiSysEx(buffer, consumed);
-  //      if (consumed > buffer.max_size())
-  //          return consumed;
+        decodeMidiSysEx(buffer, consumed);
         break;
     case MIDI_NAMESPACE::MidiType::TimeCodeQuarterFrame:
         consumed += 1;
@@ -215,9 +213,15 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         break;
     }
 
+    Serial.print("consumed: ");
+    Serial.println(consumed);
+    Serial.print("buffer.size(): ");
+    Serial.println(buffer.size());
+
     if (buffer.size() < consumed)
         return parserReturn::NotEnoughData;
 
+    Serial.println("expose");
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
@@ -228,7 +232,11 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
 
 parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 {
-    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
+    Serial.print("buffer.size(): ");
+    Serial.println(buffer.size());
+    Serial.println("Start SysEx");
+
+//    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
     size_t i = 0;
     auto octet = buffer[++i];
 
@@ -236,12 +244,23 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
     {
         consumed++;
         octet = buffer[i++];
+
+        Serial.print(" 0x");
+        Serial.print(octet, HEX);
+
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
+        {
+            Serial.println("\nend SysEx");
             return parserReturn::Processed;
+        }
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
+        {
+            Serial.println("\nrestart SysEx ???");
             return parserReturn::Processed;
+        }
     }
-    
+            
+
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,
     // remove the byes, modify the length and indicate
