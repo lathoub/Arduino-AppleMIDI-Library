@@ -29,6 +29,28 @@ private:
     uint8_t runningstatus = 0;
     size_t _bytesToFlush = 0;
 
+protected:
+    void debugPrintBuffer(RtpBuffer_t &buffer)
+    {
+        Serial.print("bufferSize: ");
+        Serial.println(buffer.size());
+        for (int i = 0; i < buffer.size(); i++) 
+        {
+            Serial.print("  ");
+            Serial.print(i);
+            Serial.print(i < 10 ? "  " : " ");
+        }
+        Serial.println("");
+        for (int i = 0; i < buffer.size(); i++) 
+        {
+            Serial.print("0x");
+            Serial.print(buffer[i] < 16 ? "0" : "");
+            Serial.print(buffer[i], HEX);
+            Serial.print(" ");
+        }
+        Serial.println("");
+    }
+
 public:
 	AppleMIDISession<UdpClass, Settings, Platform> * session;
     
@@ -42,14 +64,9 @@ public:
 	// 
 	parserReturn parse(RtpBuffer_t &buffer)
 	{
-        Serial.print("bufferSize: ");
-        Serial.println(buffer.size());
-        for (int i = 0; i < buffer.size(); i++) 
-        {
-            Serial.print(" 0x");
-            Serial.print(buffer[i], HEX);
-        }
-        Serial.println("");
+        Serial.println("\n--------------------------------------------------------------");
+        Serial.println(__func__);
+        debugPrintBuffer(buffer);
 
 		conversionBuffer cb;
         

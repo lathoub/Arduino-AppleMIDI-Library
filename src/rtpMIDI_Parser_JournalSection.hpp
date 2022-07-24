@@ -19,6 +19,9 @@
 //
 parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 {
+    Serial.println(__func__);
+    debugPrintBuffer(buffer);
+
     size_t minimumLen = 0;
 
     conversionBuffer cb;

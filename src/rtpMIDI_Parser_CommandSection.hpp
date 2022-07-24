@@ -2,6 +2,9 @@
 
 parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 {
+    Serial.println(__func__);
+    debugPrintBuffer(buffer);
+
     // https://www.ietf.org/rfc/rfc4695.html#section-3.2
     // 
     // The first MIDI channel command in the MIDI list MUST include a status
@@ -84,6 +87,9 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 
 parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 {
+    Serial.println(__func__);
+    debugPrintBuffer(buffer);
+
     uint32_t deltatime = 0;
 
     /* RTP-MIDI deltatime is "compressed" using only the necessary amount of octets */
@@ -105,6 +111,9 @@ parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 
 parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &consumed)
 {
+    Serial.println(__func__);
+    debugPrintBuffer(buffer);
+
     if (buffer.size() < 1)
         return parserReturn::NotEnoughData;
 
@@ -160,30 +169,39 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         switch (octet & 0xf0)
         {
         case MIDI_NAMESPACE::MidiType::NoteOff:
+            Serial.println("noteOff");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::NoteOn:
+            Serial.println("noteOn");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchPoly:
+            Serial.println("AfterTouchPoly");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ControlChange:
+            Serial.println("ControlChange");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ProgramChange:
+            Serial.println("ProgramChange");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchChannel:
+            Serial.println("AfterTouchChannel");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::PitchBend:
+            Serial.println("PitchBend");
             consumed += 2;
             break;
         }
 
-        if (buffer.size() < consumed)
+        if (buffer.size() < consumed) {
+            Serial.println("parserReturn::NotEnoughData");
             return parserReturn::NotEnoughData;
+        }
 
         session->StartReceivedMidi();
         for (size_t j = 0; j < consumed; j++)
@@ -232,21 +250,22 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
 
 parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 {
-    Serial.print("buffer.size(): ");
-    Serial.println(buffer.size());
+    Serial.println(__func__);
+    debugPrintBuffer(buffer);
+
     Serial.println("Start SysEx");
 
 //    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
-    size_t i = 0;
-    auto octet = buffer[++i];
-
+    size_t i = 1; // 0 = start of SysEx, so we can start with 1
     while (i < buffer.size())
     {
         consumed++;
-        octet = buffer[i++];
+        auto octet = buffer[i++];
 
-        Serial.print(" 0x");
+        Serial.print("0x");
+        Serial.print(octet < 16 ? "0" : "");
         Serial.print(octet, HEX);
+        Serial.print(" ");
 
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
         {
@@ -260,10 +279,11 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
         }
     }
             
+    Serial.println("\n SysEx buffer not properly ended");
 
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,
-    // remove the byes, modify the length and indicate
+    // remove the bytes, modify the length and indicate
     // not-enough data, so we buffer gets filled with the remaining bytes.
     
     // to compensate for adding the sysex at the end.
@@ -279,10 +299,11 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
     // Remove the bytes that were submitted
     for (size_t j = 0; j < consumed; j++)
         buffer.pop_front();
+    // Start a new SysEx train
     buffer.push_front(MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 
     midiCommandLength -= consumed;
-    midiCommandLength += 1; // adding the manual SysEx SystemExclusiveEnd
+    midiCommandLength += 1; // for adding the manual SysEx SystemExclusiveEnd in front
 
     // indicates split SysEx
     consumed = buffer.max_size() + 1;
