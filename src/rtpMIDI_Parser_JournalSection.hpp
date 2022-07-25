@@ -19,7 +19,7 @@
 //
 parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 {
-    AM_DBG(__func__);
+    DBG(__func__);
     debugPrintBuffer(buffer);
 
     size_t minimumLen = 0;
@@ -58,7 +58,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // octet header and is considered to be an "empty" journal.
         if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
         {
-            AM_DBG("A and Y both zero");
+            DBG("A and Y both zero");
 
             // Big fixed by @hugbug
             while (minimumLen-- > 0)
@@ -73,7 +73,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // packets in the stream.
         if (flags & RTP_MIDI_JS_FLAG_H)
         {
-            AM_DBG("H flag, not implemented");
+            DBG("H flag, not implemented");
 
             // The H bit indicates if MIDI channels in the stream have been
             // configured to use the enhanced Chapter C encoding
@@ -85,7 +85,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // of the loss of a single packet.
         if (flags & RTP_MIDI_JS_FLAG_S)
         {
-            AM_DBG("S flag, not implemented");
+            DBG("S flag, not implemented");
             // special encoding
         }
 
@@ -93,12 +93,12 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // recovery journal, directly following the recovery journal header.
         if (flags & RTP_MIDI_JS_FLAG_Y)
         {
-            AM_DBG("Y flag");
+            DBG("Y flag");
 
             minimumLen += 2;
             if (buffer.size() < minimumLen)
             {
-                AM_DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
+                DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
                 return parserReturn::NotEnoughData;
             }
 
@@ -112,7 +112,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             minimumLen += remainingBytes;
             if (buffer.size() < minimumLen)
             {
-                AM_DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
+                DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
                 return parserReturn::NotEnoughData;
                 return parserReturn::NotEnoughData;
             }
@@ -125,18 +125,18 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // field is interpreted as an unsigned integer).
         if (flags & RTP_MIDI_JS_FLAG_A)
         {
-            AM_DBG("A flag");
+            DBG("A flag");
 
             /* At the same place we find the total channels encoded in the channel journal */
             _journalTotalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
         }
 
-        AM_DBG("flushing journal top: ", i);
+        DBG("flushing journal top: ", i);
 
         while (i-- > 0) // is that the same as while (i--) ??
             buffer.pop_front();
 
-        AM_DBG("remaining bytes:", buffer.size());
+        DBG("remaining bytes:", buffer.size());
 
         _journalSectionComplete = true;
     }
@@ -144,11 +144,11 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
     // iterate through all the channels specified in header
     while (_journalTotalChannels > 0)
     {
-        AM_DBG("_journalTotalChannels:", _journalTotalChannels);
+        DBG("_journalTotalChannels:", _journalTotalChannels);
 
         if (false == _channelJournalSectionComplete) { 
 
-            AM_DBG("Parsing channeljournal ");
+            DBG("Parsing channeljournal ");
 
             if (buffer.size() < 3)
                 return parserReturn::NotEnoughData;
@@ -165,31 +165,31 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
             uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
-            AM_DBG("; chanjourlen:", chanjourlen);
+            DBG("; chanjourlen:", chanjourlen);
 
             if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
-                AM_DBG("P flag");
+                DBG("P flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_C)) {
-                AM_DBG("C flag");
+                DBG("C flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_M)) {
-                AM_DBG("M flag");
+                DBG("M flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_W)) {
-                AM_DBG("W flag");
+                DBG("W flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_N)) {
-                AM_DBG("N flag");
+                DBG("N flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_E)) {
-                AM_DBG("E flag");
+                DBG("E flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_T)) {
-                AM_DBG("T flag");
+                DBG("T flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_A)) {
-                AM_DBG("A flag");
+                DBG("A flag");
             }
 
             _bytesToFlush = chanjourlen;
@@ -197,22 +197,22 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             _channelJournalSectionComplete = true;
         }
 
-        AM_DBG("Flushing:", _bytesToFlush);
-        AM_DBG("buffer.size():", buffer.size());
+        DBG("Flushing:", _bytesToFlush);
+        DBG("buffer.size():", buffer.size());
 
         while (buffer.size() > 0 && _bytesToFlush > 0) {
             _bytesToFlush--;
             buffer.pop_front();
         }
 
-        AM_DBG("Remaining to be flushed:", _bytesToFlush);
+        DBG("Remaining to be flushed:", _bytesToFlush);
 
         if (_bytesToFlush > 0) {
-            AM_DBG("breaking (retruneing)");
+            DBG("breaking (retruneing)");
             return parserReturn::NotEnoughData;
         }
 
-        AM_DBG("channel flushed");
+        DBG("channel flushed");
         _journalTotalChannels--;
     }
 
