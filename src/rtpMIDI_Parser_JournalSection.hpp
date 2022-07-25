@@ -19,7 +19,7 @@
 //
 parserReturn decodeJournalSection(RtpBuffer_t &buffer)
 {
-    Serial.println(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     size_t minimumLen = 0;
@@ -58,7 +58,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // octet header and is considered to be an "empty" journal.
         if ((flags & RTP_MIDI_JS_FLAG_Y) == 0 && (flags & RTP_MIDI_JS_FLAG_A) == 0)
         {
-            Serial.println("A and Y both zero");
+            AM_DBG("A and Y both zero");
 
             // Big fixed by @hugbug
             while (minimumLen-- > 0)
@@ -73,7 +73,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // packets in the stream.
         if (flags & RTP_MIDI_JS_FLAG_H)
         {
-            Serial.println("H flag, not implemented");
+            AM_DBG("H flag, not implemented");
 
             // The H bit indicates if MIDI channels in the stream have been
             // configured to use the enhanced Chapter C encoding
@@ -85,7 +85,7 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // of the loss of a single packet.
         if (flags & RTP_MIDI_JS_FLAG_S)
         {
-            Serial.println("S flag, not implemented");
+            AM_DBG("S flag, not implemented");
             // special encoding
         }
 
@@ -93,15 +93,12 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // recovery journal, directly following the recovery journal header.
         if (flags & RTP_MIDI_JS_FLAG_Y)
         {
-            Serial.println("Y flag");
+            AM_DBG("Y flag");
 
             minimumLen += 2;
             if (buffer.size() < minimumLen)
             {
-                Serial.print(". minimumLen: ");
-                Serial.println(minimumLen);
-                Serial.print("bufferSize: ");
-                Serial.println(buffer.size());
+                AM_DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
                 return parserReturn::NotEnoughData;
             }
 
@@ -115,10 +112,8 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             minimumLen += remainingBytes;
             if (buffer.size() < minimumLen)
             {
-                Serial.print("; minimumLen: ");
-                Serial.println(minimumLen);
-                Serial.print("bufferSize: ");
-                Serial.println(buffer.size());
+                AM_DBG("minimumLen:", minimumLen, "bufferSize:", buffer.size());
+                return parserReturn::NotEnoughData;
                 return parserReturn::NotEnoughData;
             }
 
@@ -130,20 +125,18 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // field is interpreted as an unsigned integer).
         if (flags & RTP_MIDI_JS_FLAG_A)
         {
-            Serial.println("A flag");
+            AM_DBG("A flag");
 
             /* At the same place we find the total channels encoded in the channel journal */
             _journalTotalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
         }
 
-        Serial.print("flushing journal top: ");
-        Serial.println(i);
+        AM_DBG("flushing journal top: ", i);
 
         while (i-- > 0) // is that the same as while (i--) ??
             buffer.pop_front();
 
-        Serial.println("remaining bytes: ");
-        Serial.println(buffer.size());
+        AM_DBG("remaining bytes:", buffer.size());
 
         _journalSectionComplete = true;
     }
@@ -151,12 +144,11 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
     // iterate through all the channels specified in header
     while (_journalTotalChannels > 0)
     {
-        Serial.print("_journalTotalChannels: ");
-        Serial.println(_journalTotalChannels);
+        AM_DBG("_journalTotalChannels:", _journalTotalChannels);
 
         if (false == _channelJournalSectionComplete) { 
 
-            Serial.print("Parsing channeljournal ");
+            AM_DBG("Parsing channeljournal ");
 
             if (buffer.size() < 3)
                 return parserReturn::NotEnoughData;
@@ -173,32 +165,31 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
             uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
-            Serial.print("; chanjourlen: ");
-            Serial.println(chanjourlen);
+            AM_DBG("; chanjourlen:", chanjourlen);
 
             if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
-                Serial.println("P flag");
+                AM_DBG("P flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_C)) {
-                Serial.println("C flag");
+                AM_DBG("C flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_M)) {
-                Serial.println("M flag");
+                AM_DBG("M flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_W)) {
-                Serial.println("W flag");
+                AM_DBG("W flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_N)) {
-                Serial.println("N flag");
+                AM_DBG("N flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_E)) {
-                Serial.println("E flag");
+                AM_DBG("E flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_T)) {
-                Serial.println("T flag");
+                AM_DBG("T flag");
             }
             if ((chanflags & RTP_MIDI_CJ_FLAG_A)) {
-                Serial.println("A flag");
+                AM_DBG("A flag");
             }
 
             _bytesToFlush = chanjourlen;
@@ -206,25 +197,22 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             _channelJournalSectionComplete = true;
         }
 
-        Serial.print("Flushing: ");
-        Serial.println(_bytesToFlush);
-        Serial.print("buffer.size(): ");
-        Serial.println(buffer.size());
+        AM_DBG("Flushing:", _bytesToFlush);
+        AM_DBG("buffer.size():", buffer.size());
 
         while (buffer.size() > 0 && _bytesToFlush > 0) {
             _bytesToFlush--;
             buffer.pop_front();
         }
 
-        Serial.print("Remaining to be flushed: ");
-        Serial.println(_bytesToFlush);
+        AM_DBG("Remaining to be flushed:", _bytesToFlush);
 
         if (_bytesToFlush > 0) {
-            Serial.println("breaking (retruneing)");
+            AM_DBG("breaking (retruneing)");
             return parserReturn::NotEnoughData;
         }
 
-        Serial.println("channel flushed");
+        AM_DBG("channel flushed");
         _journalTotalChannels--;
     }
 

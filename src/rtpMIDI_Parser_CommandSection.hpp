@@ -2,7 +2,7 @@
 
 parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 {
-    Serial.println(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     // https://www.ietf.org/rfc/rfc4695.html#section-3.2
@@ -44,15 +44,12 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
     while (midiCommandLength)
     {
-        Serial.print("midiCommandLength: ");
-        Serial.print(midiCommandLength);
-        Serial.print(" cmdCount: ");
-        Serial.println(cmdCount);
+        AM_DBG("midiCommandLength:", midiCommandLength, "cmdCount", cmdCount);
 
         /* for the first command we only have a delta-time if Z-Flag is set */
         if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
-            Serial.println("decoding time");
+            AM_DBG("decoding time");
 
             size_t consumed = 0;
             auto retVal = decodeTime(buffer, consumed);
@@ -65,7 +62,7 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 
         if (midiCommandLength > 0)
         {
-            Serial.println("decoding MIDIcommand section");
+            AM_DBG("decoding MIDIcommand section");
 
             cmdCount++;
 
@@ -87,7 +84,7 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 
 parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 {
-    Serial.println(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     uint32_t deltatime = 0;
@@ -111,7 +108,7 @@ parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 
 parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &consumed)
 {
-    Serial.println(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     if (buffer.size() < 1)
@@ -169,37 +166,37 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         switch (octet & 0xf0)
         {
         case MIDI_NAMESPACE::MidiType::NoteOff:
-            Serial.println("noteOff");
+            AM_DBG("noteOff");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::NoteOn:
-            Serial.println("noteOn");
+            AM_DBG("noteOn");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchPoly:
-            Serial.println("AfterTouchPoly");
+            AM_DBG("AfterTouchPoly");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ControlChange:
-            Serial.println("ControlChange");
+            AM_DBG("ControlChange");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ProgramChange:
-            Serial.println("ProgramChange");
+            AM_DBG("ProgramChange");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchChannel:
-            Serial.println("AfterTouchChannel");
+            AM_DBG("AfterTouchChannel");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::PitchBend:
-            Serial.println("PitchBend");
+            AM_DBG("PitchBend");
             consumed += 2;
             break;
         }
 
         if (buffer.size() < consumed) {
-            Serial.println("parserReturn::NotEnoughData");
+            AM_DBG("parserReturn::NotEnoughData");
             return parserReturn::NotEnoughData;
         }
 
@@ -231,15 +228,12 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         break;
     }
 
-    Serial.print("consumed: ");
-    Serial.println(consumed);
-    Serial.print("buffer.size(): ");
-    Serial.println(buffer.size());
+    AM_DBG("consumed:", consumed, "buffer.size():", buffer.size());
 
     if (buffer.size() < consumed)
         return parserReturn::NotEnoughData;
 
-    Serial.println("expose");
+    AM_DBG("expose");
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
@@ -250,10 +244,10 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
 
 parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 {
-    Serial.println(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
-    Serial.println("Start SysEx");
+    AM_DBG("Start SysEx");
 
 //    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
     size_t i = 1; // 0 = start of SysEx, so we can start with 1
@@ -269,17 +263,17 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
         {
-            Serial.println("\nend SysEx");
+            AM_DBG("\nend SysEx");
             return parserReturn::Processed;
         }
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
         {
-            Serial.println("\nrestart SysEx ???");
+            AM_DBG("\nrestart SysEx ???");
             return parserReturn::Processed;
         }
     }
             
-    Serial.println("\n SysEx buffer not properly ended");
+    AM_DBG("\n SysEx buffer not properly ended");
 
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,
