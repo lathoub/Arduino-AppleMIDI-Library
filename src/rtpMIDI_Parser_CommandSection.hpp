@@ -2,7 +2,7 @@
 
 parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 {
-    DBG(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     // https://www.ietf.org/rfc/rfc4695.html#section-3.2
@@ -44,12 +44,12 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
     /* Multiple MIDI-commands might follow - the exact number can only be discovered by really decoding the commands! */
     while (midiCommandLength)
     {
-        DBG("midiCommandLength:", midiCommandLength, "cmdCount", cmdCount);
+        AM_DBG("midiCommandLength:", midiCommandLength, "cmdCount", cmdCount);
 
         /* for the first command we only have a delta-time if Z-Flag is set */
         if ((cmdCount) || (rtpMidi_Flags & RTP_MIDI_CS_FLAG_Z))
         {
-            DBG("decoding time");
+            AM_DBG("decoding time");
 
             size_t consumed = 0;
             auto retVal = decodeTime(buffer, consumed);
@@ -62,7 +62,7 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 
         if (midiCommandLength > 0)
         {
-            DBG("decoding MIDIcommand section");
+            AM_DBG("decoding MIDIcommand section");
 
             cmdCount++;
 
@@ -84,7 +84,7 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
 
 parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 {
-    DBG(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     uint32_t deltatime = 0;
@@ -108,7 +108,7 @@ parserReturn decodeTime(RtpBuffer_t &buffer, size_t &consumed)
 
 parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &consumed)
 {
-    DBG(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
     if (buffer.size() < 1)
@@ -166,37 +166,37 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         switch (octet & 0xf0)
         {
         case MIDI_NAMESPACE::MidiType::NoteOff:
-            DBG("noteOff");
+            AM_DBG("noteOff");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::NoteOn:
-            DBG("noteOn");
+            AM_DBG("noteOn");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchPoly:
-            DBG("AfterTouchPoly");
+            AM_DBG("AfterTouchPoly");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ControlChange:
-            DBG("ControlChange");
+            AM_DBG("ControlChange");
             consumed += 2;
             break;
         case MIDI_NAMESPACE::MidiType::ProgramChange:
-            DBG("ProgramChange");
+            AM_DBG("ProgramChange");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::AfterTouchChannel:
-            DBG("AfterTouchChannel");
+            AM_DBG("AfterTouchChannel");
             consumed += 1;
             break;
         case MIDI_NAMESPACE::MidiType::PitchBend:
-            DBG("PitchBend");
+            AM_DBG("PitchBend");
             consumed += 2;
             break;
         }
 
         if (buffer.size() < consumed) {
-            DBG("parserReturn::NotEnoughData");
+            AM_DBG("parserReturn::NotEnoughData");
             return parserReturn::NotEnoughData;
         }
 
@@ -228,12 +228,12 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
         break;
     }
 
-    DBG("consumed:", consumed, "buffer.size():", buffer.size());
+    AM_DBG("consumed:", consumed, "buffer.size():", buffer.size());
 
     if (buffer.size() < consumed)
         return parserReturn::NotEnoughData;
 
-    DBG("expose");
+    AM_DBG("expose");
     session->StartReceivedMidi();
     for (size_t j = 0; j < consumed; j++)
         session->ReceivedMidi(buffer[j]);
@@ -244,10 +244,10 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
 
 parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 {
-    DBG(__func__);
+    AM_DBG(__func__);
     debugPrintBuffer(buffer);
 
-    DBG("Start SysEx");
+    AM_DBG("Start SysEx");
 
 //    consumed = 1; // beginning SysEx Token is not counted (as it could remain)
     size_t i = 1; // 0 = start of SysEx, so we can start with 1
@@ -263,17 +263,17 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
 
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
         {
-            DBG("\nend SysEx");
+            AM_DBG("\nend SysEx");
             return parserReturn::Processed;
         }
         else if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveStart) // Start
         {
-            DBG("\nrestart SysEx ???");
+            AM_DBG("\nrestart SysEx ???");
             return parserReturn::Processed;
         }
     }
             
-    DBG("\n SysEx buffer not properly ended");
+    AM_DBG("\n SysEx buffer not properly ended");
 
     // begin of the SysEx is found, not the end.
     // so transmit what we have, add a stop-token at the end,

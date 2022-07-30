@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #define APPLEMIDI_INITIATOR
 #include <AppleMIDI.h>
 
@@ -22,43 +20,43 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
+    AM_DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
 
   MIDI.begin();
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
 
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    AM_DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    AM_DBG(F("NoteOff"), note);
   });
 
   // Initiate the session
   IPAddress remote(192, 168, 1, 65);
   AppleMIDI.sendInvite(remote, DEFAULT_CONTROL_PORT); // port is 5004 by default
 
-  DBG(F("Connecting to "), remote, "Port", DEFAULT_CONTROL_PORT, "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Watch as this session is added to the Participants list"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("Connecting to "), remote, "Port", DEFAULT_CONTROL_PORT, "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Watch as this session is added to the Participants list"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
-  DBG(F("Sending a random NoteOn/Off every second"));
+  AM_DBG(F("Sending a random NoteOn/Off every second"));
 }
 
 // -----------------------------------------------------------------------------

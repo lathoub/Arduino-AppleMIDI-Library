@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -22,31 +20,31 @@ APPLEMIDI_CREATE_INSTANCE(EthernetUDP, MIDI, "MyNamedArduino", 5200);
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
+    AM_DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
 
-  DBG(F("Send MIDI messages every second"));
+  AM_DBG(F("Send MIDI messages every second"));
 }
 
 // -----------------------------------------------------------------------------

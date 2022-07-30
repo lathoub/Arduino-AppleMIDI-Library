@@ -12,8 +12,6 @@
 #include <WiFiUdp.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #include <AppleMIDI.h>
 
 char ssid[] = "ssid"; //  your network SSID (name)
@@ -29,45 +27,45 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG("Booting");
 
   WiFi.softAP(ssid, pass);
 
-  DBG(F("Started soft access point:"), WiFi.softAPIP(), "Port", AppleMIDI.getPort());
-  DBG(F("AppleMIDI device name:"), AppleMIDI.getName());
+  AM_DBG(F("Started soft access point:"), WiFi.softAPIP(), "Port", AppleMIDI.getPort());
+  AM_DBG(F("AppleMIDI device name:"), AppleMIDI.getName());
   // Set up mDNS responder:
   if (!MDNS.begin(AppleMIDI.getName()))
-    DBG(F("Error setting up MDNS responder!"));
+    AM_DBG(F("Error setting up MDNS responder!"));
   char str[128] = "";
   strcat(str, AppleMIDI.getName());
   strcat(str,".local");
-  DBG(F("mDNS responder started at:"), str);
+  AM_DBG(F("mDNS responder started at:"), str);
   MDNS.addService("apple-midi", "udp", AppleMIDI.getPort());
-  DBG(F("Open Wifi settings and connect to soft acess point using 'ssid'"));
-  DBG(F("Start MIDI Network app on iPhone/iPad or rtpMIDI on Windows"));
-  DBG(F("AppleMIDI-ESP8266 will show in the 'Directory' list (rtpMIDI) or"));
-  DBG(F("under 'Found on the network' list (iOS). Select and click 'Connect'"));
+  AM_DBG(F("Open Wifi settings and connect to soft acess point using 'ssid'"));
+  AM_DBG(F("Start MIDI Network app on iPhone/iPad or rtpMIDI on Windows"));
+  AM_DBG(F("AppleMIDI-ESP8266 will show in the 'Directory' list (rtpMIDI) or"));
+  AM_DBG(F("under 'Found on the network' list (iOS). Select and click 'Connect'"));
   
   MIDI.begin();
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
   
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    AM_DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    AM_DBG(F("NoteOff"), note);
   });
 
-  DBG(F("Sending NoteOn/Off of note 45, every second"));
+  AM_DBG(F("Sending NoteOn/Off of note 45, every second"));
 }
 
 // -----------------------------------------------------------------------------

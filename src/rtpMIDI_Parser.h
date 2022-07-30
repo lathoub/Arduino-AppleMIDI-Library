@@ -33,14 +33,14 @@ protected:
     void debugPrintBuffer(RtpBuffer_t &buffer)
     {
 #ifdef DEBUG
-        DBG("bufferSize:", buffer.size());
+        AM_DBG("bufferSize:", buffer.size());
         for (int i = 0; i < buffer.size(); i++) 
         {
             SerialMon.print("  ");
             SerialMon.print(i);
             SerialMon.print(i < 10 ? "  " : " ");
         }
-        DBG("");
+        AM_DBG("");
         for (int i = 0; i < buffer.size(); i++) 
         {
             SerialMon.print("0x");
@@ -48,7 +48,7 @@ protected:
             SerialMon.print(buffer[i], HEX);
             SerialMon.print(" ");
         }
-        DBG("");
+        AM_DBG("");
 #endif
     }
 
@@ -65,8 +65,8 @@ public:
 	// 
 	parserReturn parse(RtpBuffer_t &buffer)
 	{
-        DBG("\n--------------------------------------------------------------");
-        DBG(__func__);
+        AM_DBG("\n--------------------------------------------------------------");
+        AM_DBG(__func__);
         debugPrintBuffer(buffer);
 
 		conversionBuffer cb;
@@ -94,7 +94,7 @@ public:
             
         if (_rtpHeadersComplete == false)
         {
-            DBG("Parsing header");
+            AM_DBG("Parsing header");
 
             auto minimumLen = sizeof(Rtp_t);
             if (buffer.size() < minimumLen)
@@ -201,14 +201,14 @@ public:
 
         if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
         {
-            DBG("decoding Journal section");
+            AM_DBG("decoding Journal section");
 
             auto retVal = decodeJournalSection(buffer);
             switch (retVal) {
             case parserReturn::Processed:
                 break;
             case parserReturn::NotEnoughData:
-                DBG("not enough joournal section");
+                AM_DBG("not enough joournal section");
                 return parserReturn::NotEnoughData;
             case parserReturn::UnexpectedJournalData:
                 _rtpHeadersComplete = false;

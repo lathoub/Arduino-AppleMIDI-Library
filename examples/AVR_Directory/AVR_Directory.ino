@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #define USE_DIRECTORY
 #include <AppleMIDI.h>
 
@@ -22,11 +20,11 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG("Booting");
 
   if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
+    AM_DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
@@ -36,31 +34,31 @@ void setup()
   AppleMIDI.whoCanConnectToMe = APPLEMIDI_NAMESPACE::OnlyComputersInMyDirectory;
 //  AppleMIDI.whoCanConnectToMe = APPLEMIDI_NAMESPACE::Anyone;
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
 
   // Stay informed on connection status
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
 
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    AM_DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    AM_DBG(F("NoteOff"), note);
   });
 
-  DBG(F("Sending MIDI messages every second"));
+  AM_DBG(F("Sending MIDI messages every second"));
 }
 
 // -----------------------------------------------------------------------------
