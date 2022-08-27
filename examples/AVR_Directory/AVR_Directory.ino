@@ -21,7 +21,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Booting");
+  AM_DBG(F("Booting"));
 
   if (Ethernet.begin(mac) == 0) {
     AM_DBG(F("Failed DHCP, check network cable & reboot"));

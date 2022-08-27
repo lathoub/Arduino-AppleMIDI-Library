@@ -23,7 +23,7 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NA
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Booting");
+  AM_DBG(F("Booting"));
 
   if (Ethernet.begin(mac) == 0) {
     AM_DBG(F("Failed DHCP, check network cable & reboot"));
@@ -32,13 +32,13 @@ void setup()
 
   // Check for Ethernet hardware present
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    AM_DBG("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+    AM_DBG(F("Ethernet shield was not found.  Sorry, can't run without hardware. :("));
     while (true) {
       delay(1); // do nothing, no point running without Ethernet hardware
     }
   }
   while (Ethernet.linkStatus() == LinkOFF) {
-    AM_DBG("Ethernet cable is not connected.");
+    AM_DBG(F("Ethernet cable is not connected."));
     delay(500);
   }
   

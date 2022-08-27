@@ -19,15 +19,15 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Booting");
+  AM_DBG(F("Booting"));
 
   WiFi.begin(ssid, pass);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    AM_DBG("Establishing connection to WiFi..");
+    AM_DBG(F("Establishing connection to WiFi.."));
   }
-  AM_DBG("Connected to network");
+  AM_DBG(F("Connected to network"));
 
   AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
   AM_DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");

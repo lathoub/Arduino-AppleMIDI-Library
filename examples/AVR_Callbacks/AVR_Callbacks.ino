@@ -24,7 +24,7 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NA
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Das Booting");
+  AM_DBG(F("Das Booting"));
 
   if (Ethernet.begin(mac) == 0) {
     AM_DBG(F("Failed DHCP, check network cable & reboot"));

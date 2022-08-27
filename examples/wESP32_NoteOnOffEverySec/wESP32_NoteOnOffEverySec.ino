@@ -17,7 +17,7 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NA
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Booting");
+  AM_DBG(F("Booting"));
 
   ETH_startup();
 

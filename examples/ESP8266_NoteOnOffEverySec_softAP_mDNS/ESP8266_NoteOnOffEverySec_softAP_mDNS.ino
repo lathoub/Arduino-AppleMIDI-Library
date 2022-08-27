@@ -28,7 +28,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 void setup()
 {
   AM_DBG_SETUP(115200);
-  AM_DBG("Booting");
+  AM_DBG(F("Booting"));
 
   WiFi.softAP(ssid, pass);
 
