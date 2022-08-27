@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #define USE_EXT_CALLBACKS
 #include <AppleMIDI.h>
 
@@ -26,39 +24,39 @@ void OnAppleMidiEndReceive(const APPLEMIDI_NAMESPACE::ssrc_t&);
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG(F("Booting"));
 
   if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
+    AM_DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   MIDI.begin();
 
   // check: zien we de connecttion binnenkomen?? Anders terug een ref van maken
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
   AppleMIDI.setHandleStartReceivedMidi(OnAppleMidiStartReceived);
   AppleMIDI.setHandleReceivedMidi(OnAppleMidiReceivedByte);
   AppleMIDI.setHandleEndReceivedMidi(OnAppleMidiEndReceive);
 
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    AM_DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    AM_DBG(F("NoteOff"), note);
   });
 }
 
@@ -79,7 +77,7 @@ void loop()
 //
 // -----------------------------------------------------------------------------
 void OnAppleMidiStartReceived(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  DBG(F("Start receiving"), ssrc);
+  AM_DBG(F("Start receiving"), ssrc);
 }
 
 // -----------------------------------------------------------------------------
@@ -93,5 +91,5 @@ void OnAppleMidiReceivedByte(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, byte data
 //
 // -----------------------------------------------------------------------------
 void OnAppleMidiEndReceive(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
-  DBG(F("End receiving"), ssrc);
+  AM_DBG(F("End receiving"), ssrc);
 }

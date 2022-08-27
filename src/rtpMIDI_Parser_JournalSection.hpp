@@ -48,8 +48,8 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         // stream (modulo 2^16).
         cb.buffer[0] = buffer[i++];
         cb.buffer[1] = buffer[i++];
-    //    uint16_t checkPoint = __ntohs(cb.value16); ; // unused
-        
+        //    uint16_t checkPoint = __ntohs(cb.value16); ; // unused
+
         // (RFC 4695, 5 Recovery Journal Format)
         // If A and Y are both zero, the recovery journal only contains its 3-
         // octet header and is considered to be an "empty" journal.
@@ -59,9 +59,10 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             while (minimumLen-- > 0)
                 buffer.pop_front();
 
+            _journalSectionComplete = true;
             return parserReturn::Processed;
         }
-        
+
         // By default, the payload format does not use enhanced Chapter C
         // encoding. In this default case, the H bit MUST be set to 0 for all
         // packets in the stream.
@@ -86,18 +87,22 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         {
             minimumLen += 2;
             if (buffer.size() < minimumLen)
+            {
                 return parserReturn::NotEnoughData;
+            }
 
             cb.buffer[0] = buffer[i++];
             cb.buffer[1] = buffer[i++];
             uint16_t systemflags = __ntohs(cb.value16);
             uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
-            
+
             uint16_t remainingBytes = sysjourlen - 2;
-            
+
             minimumLen += remainingBytes;
             if (buffer.size() < minimumLen)
+            {
                 return parserReturn::NotEnoughData;
+            }
 
             i += remainingBytes;
         }
@@ -109,45 +114,67 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         {
             /* At the same place we find the total channels encoded in the channel journal */
             _journalTotalChannels = (flags & RTP_MIDI_JS_MASK_TOTALCHANNELS) + 1;
-
-            // do channel reading below, so we can already purge bytes here
         }
-        
+
         while (i-- > 0) // is that the same as while (i--) ??
             buffer.pop_front();
-                
+
         _journalSectionComplete = true;
     }
 
     // iterate through all the channels specified in header
     while (_journalTotalChannels > 0)
     {
-        if (buffer.size() < 3)
-            return parserReturn::NotEnoughData;
+        if (false == _channelJournalSectionComplete) { 
 
-        cb.buffer[0] = 0x00;
-        cb.buffer[1] = buffer[0];
-        cb.buffer[2] = buffer[1];
-        cb.buffer[3] = buffer[2];
-        uint32_t chanflags = __ntohl(cb.value32);
-        
-        uint16_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
-    //    uint16_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; // unused
+            if (buffer.size() < 3)
+                return parserReturn::NotEnoughData;
 
-        // We have the most important bit of information - the length of the channel information
-        // no more need to further parse.
+            // 3 bytes for channel journal
+            cb.buffer[0] = 0x00;
+            cb.buffer[1] = buffer[0];
+            cb.buffer[2] = buffer[1];
+            cb.buffer[3] = buffer[2];
+            uint32_t chanflags = __ntohl(cb.value32);
 
-        if (buffer.size() < chanjourlen)
-        {
-            return parserReturn::NotEnoughData;
+            bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
+            uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
+            bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
+            uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
+
+            if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_C)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_M)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_W)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_N)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_E)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_T)) {
+            }
+            if ((chanflags & RTP_MIDI_CJ_FLAG_A)) {
+            }
+
+            _bytesToFlush = chanjourlen;
+
+            _channelJournalSectionComplete = true;
         }
-        
-        _journalTotalChannels--;
-        
-        // advance the pointer
-        while (chanjourlen--)
+
+        while (buffer.size() > 0 && _bytesToFlush > 0) {
+            _bytesToFlush--;
             buffer.pop_front();
         }
-    
+
+        if (_bytesToFlush > 0) {
+            return parserReturn::NotEnoughData;
+        }
+
+        _journalTotalChannels--;
+    }
+
     return parserReturn::Processed;
 }

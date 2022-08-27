@@ -3,8 +3,6 @@
 #include <WiFiUdp.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #include <AppleMIDI.h>
 
 char ssid[] = "ssid"; //  your network SSID (name)
@@ -20,42 +18,42 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG(F("Booting"));
 
   WiFi.begin(ssid, pass);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    DBG("Establishing connection to WiFi..");
+    AM_DBG(F("Establishing connection to WiFi.."));
   }
-  DBG("Connected to network");
+  AM_DBG(F("Connected to network"));
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
-  DBG(F("Listen to incoming MIDI commands"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), WiFi.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("Listen to incoming MIDI commands"));
 
   MIDI.begin();
 
   AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
     isConnected++;
-    DBG(F("Connected to session"), ssrc, name);
+    AM_DBG(F("Connected to session"), ssrc, name);
   });
   AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
     isConnected--;
-    DBG(F("Disconnected"), ssrc);
+    AM_DBG(F("Disconnected"), ssrc);
   });
   
   MIDI.setHandleNoteOn([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOn"), note);
+    AM_DBG(F("NoteOn"), note);
   });
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
-    DBG(F("NoteOff"), note);
+    AM_DBG(F("NoteOff"), note);
   });
 
-  DBG(F("Sending NoteOn/Off of note 45, every second"));
+  AM_DBG(F("Sending NoteOn/Off of note 45, every second"));
 }
 
 // -----------------------------------------------------------------------------

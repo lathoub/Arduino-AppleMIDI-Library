@@ -1,8 +1,6 @@
 #include <Ethernet.h>
 
 #define SerialMon Serial
-#include <AppleMIDI_Debug.h>
-
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.
@@ -26,19 +24,19 @@ void OnMidiNoteOn(byte channel, byte note, byte velocity);
 // -----------------------------------------------------------------------------
 void setup()
 {
-  DBG_SETUP(115200);
-  DBG("Booting");
+  AM_DBG_SETUP(115200);
+  AM_DBG(F("Booting"));
 
   if (Ethernet.begin(mac) == 0) {
-    DBG(F("Failed DHCP, check network cable & reboot"));
+    AM_DBG(F("Failed DHCP, check network cable & reboot"));
     for (;;);
   }
 
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI1.getPort(), "(Name", AppleMIDI1.getName(), ")");
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI2.getPort(), "(Name", AppleMIDI2.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI1.getPort(), "(Name", AppleMIDI1.getName(), ")");
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI2.getPort(), "(Name", AppleMIDI2.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
   // Listen for MIDI messages on channel 1
   MIDI1.begin(1);
@@ -54,7 +52,7 @@ void setup()
   MIDI1.setHandleNoteOn(OnMidiNoteOn);
   MIDI2.setHandleNoteOn(OnMidiNoteOn);
 
-  DBG(F("Every second, send a random NoteOn/Off, from multiple sessions"));
+  AM_DBG(F("Every second, send a random NoteOn/Off, from multiple sessions"));
 }
 
 // -----------------------------------------------------------------------------
@@ -89,7 +87,7 @@ void loop()
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected++;
-  DBG(F("Connected to session"), ssrc, name);
+  AM_DBG(F("Connected to session"), ssrc, name);
 }
 
 // -----------------------------------------------------------------------------
@@ -97,12 +95,12 @@ void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* 
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected--;
-  DBG(F("Disconnected"), ssrc);
+  AM_DBG(F("Disconnected"), ssrc);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
+  AM_DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AppleMIDI_Debug.h"
+
 // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
 
 #include <MIDI.h>

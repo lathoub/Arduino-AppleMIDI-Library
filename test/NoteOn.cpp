@@ -34,7 +34,7 @@ APPLEMIDI_CREATE_DEFAULTSESSION_INSTANCE();
 // -----------------------------------------------------------------------------
 void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
   isConnected = true;
-  DBG(F("Connected to session"), ssrc, name);
+  AM_DBG(F("Connected to session"), ssrc, name);
 }
 
 // -----------------------------------------------------------------------------
@@ -42,29 +42,29 @@ void OnAppleMidiConnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* 
 // -----------------------------------------------------------------------------
 void OnAppleMidiDisconnected(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
   isConnected = false;
-  DBG(F("Disconnected"), ssrc);
+  AM_DBG(F("Disconnected"), ssrc);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 void OnAppleMidiByte(const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, byte data) {
-  DBG(F("MIDI: "));
-  DBG(data);
+  AM_DBG(F("MIDI: "));
+  AM_DBG(data);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOn(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
+  AM_DBG(F("in\tNote on"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 static void OnMidiNoteOff(byte channel, byte note, byte velocity) {
-  DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
+  AM_DBG(F("in\tNote off"), note, " Velocity", velocity, "\t", channel);
 }
 
 // -----------------------------------------------------------------------------
@@ -83,25 +83,25 @@ char getSysExStatus(const byte* data, uint16_t length)
 }
 
 static void OnMidiSystemExclusive(byte* array, unsigned size) {
-    DBG(F("Incoming SysEx: "));
-    DBG(getSysExStatus(array, size));
+    AM_DBG(F("Incoming SysEx: "));
+    AM_DBG(getSysExStatus(array, size));
     unsigned i = 0;
     for (; i < size - 1; i++)
     {
-        DBG(F(" 0x"));
-        DBG(array[i], HEX);
+        AM_DBG(F(" 0x"));
+        AM_DBG(array[i], HEX);
     }
-    DBG(F(" 0x"));
-    DBG(array[i], HEX);
-    DBG();
+    AM_DBG(F(" 0x"));
+    AM_DBG(array[i], HEX);
+    AM_DBG();
 }
 
 void begin()
 {
-  DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
-  DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
-  DBG(F("Select and then press the Connect button"));
-  DBG(F("Then open a MIDI listener and monitor incoming notes"));
+  AM_DBG(F("OK, now make sure you an rtpMIDI session that is Enabled"));
+  AM_DBG(F("Add device named Arduino with Host"), Ethernet.localIP(), "Port", AppleMIDI.getPort(), "(Name", AppleMIDI.getName(), ")");
+  AM_DBG(F("Select and then press the Connect button"));
+  AM_DBG(F("Then open a MIDI listener and monitor incoming notes"));
 
 	MIDI.begin(MIDI_CHANNEL_OMNI);
     
