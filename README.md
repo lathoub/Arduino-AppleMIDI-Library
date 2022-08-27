@@ -16,6 +16,9 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 ### New in 3.2.0
 * Event chaining
 
+### New in 3.3.0
+* Better parsing of large incoming MIDI messages with a small internal Arduino buffer
+
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
 
