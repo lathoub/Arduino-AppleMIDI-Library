@@ -36,17 +36,17 @@ for f in **/AVR_*.ino ; do
     arduino-cli compile -b arduino:avr:uno $f
 done
 
-# Compile all *.ino files for the Arduino Uno
+# Compile all *.ino files for the Arduino Zero
 for f in **/SAMD_*.ino ; do
     arduino-cli compile -b arduino:samd:mkrzero $f
 done
 
-# Compile all *.ino files for the Arduino Uno
+# Compile all *.ino files for the ESP8266
 # for f in **/ESP8266_*.ino ; do
 #     arduino-cli compile -b arduino:esp8266:??? $f
 # done
 
-# Compile all *.ino files for the Arduino Uno
+# Compile all *.ino files for the ESP32
 # for f in **/ESP32_*.ino ; do
 #     arduino-cli compile -b arduino:esp32:??? $f
 # done
