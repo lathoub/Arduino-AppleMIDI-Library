@@ -15,7 +15,7 @@ static void AM_DBG_PLAIN(T last) {
 template <typename T, typename... Args>
 static void AM_DBG_PLAIN(T head, Args... tail) {
   SerialMon.print(head);
-  SerialMon.print(' ');
+//  SerialMon.print(' ');
   AM_DBG_PLAIN(tail...);
 }
 

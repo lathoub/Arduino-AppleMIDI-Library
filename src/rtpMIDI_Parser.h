@@ -35,16 +35,11 @@ protected:
 #ifdef DEBUG
         for (int i = 0; i < buffer.size(); i++) 
         {
-            SerialMon.print("  ");
-            SerialMon.print(i);
-            SerialMon.print(i < 10 ? "  " : " ");
+            AM_DBG("  ", i, i < 10 ? "  " : " ");
         }
         for (int i = 0; i < buffer.size(); i++) 
         {
-            SerialMon.print("0x");
-            SerialMon.print(buffer[i] < 16 ? "0" : "");
-            SerialMon.print(buffer[i], HEX);
-            SerialMon.print(" ");
+            AM_DBG("0x", buffer[i] < 16 ? "0" : "", buffer[i], HEX, " ");
         }
 #endif
     }
