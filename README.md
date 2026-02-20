@@ -61,6 +61,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * ESP8266 (Adafruit HUZZAH ESP8266, Sparkfun ESP8266 Thing Dev)
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board) Wi-Fi
 * ESP32 with W5500 [Setup](https://github.com/lathoub/Arduino-AppleMIDI-Library/discussions/135)
+* ESP32 ETH W5500 (Native ESP32 W5500 support)
 * Teensy 3.2 & 4.1
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
 
@@ -70,6 +71,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * MKR ETH shield (W5500 and W6100 based)
 * Teensy WIZ820io W5200
 * Teensy 4.1 with [Ethernet Kit](https://www.pjrc.com/store/ethernet_kit.html)
+* ESP32 with W5500 
 
 ## Notes
 
@@ -88,6 +90,7 @@ Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies
 
 ## Arduino IDE (arduino.cc)
 * 1.8.16
+* 2.3.7
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
