@@ -233,10 +233,10 @@ parserReturn decodeMidiSysEx(RtpBuffer_t &buffer, size_t &consumed)
         consumed++;
         auto octet = buffer[i++];
 
-        Serial.print("0x");
-        Serial.print(octet < 16 ? "0" : "");
-        Serial.print(octet, HEX);
-        Serial.print(" ");
+        AM_DBG("0x");
+        AM_DBG(octet < 16 ? "0" : "");
+        AM_DBG(octet, HEX);
+        AM_DBG(" ");
 
         if (octet == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd) // Complete message
         {
