@@ -5,6 +5,7 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+// Read pending control UDP packets into the control buffer.
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {
@@ -24,6 +25,7 @@ size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
     return controlBuffer.size();
 }
 
+// Parse buffered control packets and handle errors.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
 {
@@ -52,6 +54,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
     }
 }
 
+// Read pending data UDP packets into the data buffer.
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
 {
@@ -71,6 +74,7 @@ size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
     return dataBuffer.size();
 }
 
+// Parse buffered data packets using RTP-MIDI and AppleMIDI parsers.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
 {
@@ -104,6 +108,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
     }
 }
 
+// Route an invitation based on the incoming port type.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMIDI_Invitation_t &invitation, const amPortType &portType)
 {
@@ -113,6 +118,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitation(AppleMID
         ReceivedDataInvitation(invitation);
 }
 
+// Handle an incoming control invitation from a remote participant.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(AppleMIDI_Invitation_t &invitation)
 {
@@ -188,6 +194,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     writeInvitation(controlPort, participant.remoteIP, participant.remotePort, invitation, amInvitationAccepted);
 }
 
+// Handle an incoming data invitation for an existing participant.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(AppleMIDI_Invitation &invitation)
 {
@@ -233,12 +240,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     }
 }
 
+// Placeholder for bitrate receive limit messages (not used).
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedBitrateReceiveLimit(AppleMIDI_BitrateReceiveLimit &)
 {
 }
 
 #ifdef APPLEMIDI_INITIATOR
+// Route accepted invitations based on the incoming port type.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted, const amPortType &portType)
 {
@@ -248,6 +257,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationAccepted(
         ReceivedDataInvitationAccepted(invitationAccepted);
 }
 
+// Update participant state after control invitation acceptance.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
@@ -271,6 +281,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitationAc
 #endif
 }
 
+// Update participant state after data invitation acceptance.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccepted(AppleMIDI_InvitationAccepted_t &invitationAccepted)
 {
@@ -287,6 +298,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccep
     pParticipant->invitationStatus = DataInvitationAccepted;
 }
 
+// Remove participant on invitation rejection.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected_t & invitationRejected)
 {
@@ -305,6 +317,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(
 }
 #endif
 
+// Handle an incoming synchronization exchange packet.
 /*! \brief .
 
 From: http://en.wikipedia.org/wiki/RTP_MIDI
@@ -416,6 +429,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
 // encapsulate only those changes to the MIDI stream state occurring after
 // the specified packet number.
 //
+// Process receiver feedback about last received sequence numbers.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(AppleMIDI_ReceiverFeedback_t &receiverFeedback)
 {
@@ -443,6 +457,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
     }
 }
 
+// Handle end-session requests and notify callbacks.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMIDI_EndSession_t &endSession)
 {
@@ -471,6 +486,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
 }
 
 #ifdef USE_DIRECTORY
+// Check whether a remote IP is in the allowed directory list.
 template <class UdpClass, class Settings, class Platform>
 bool AppleMIDISession<UdpClass, Settings, Platform>::IsComputerInDirectory(IPAddress remoteIP) const
 {
@@ -482,6 +498,7 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::IsComputerInDirectory(IPAdd
 #endif
 
 #ifndef ONE_PARTICIPANT
+// Find a participant by SSRC.
 template <class UdpClass, class Settings, class Platform>
 Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantBySSRC(const ssrc_t& ssrc)
 {
@@ -491,6 +508,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
     return nullptr;
 }
 
+// Find a participant by initiator token.
 template <class UdpClass, class Settings, class Platform>
 Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getParticipantByInitiatorToken(const uint32_t& initiatorToken)
 {
@@ -501,6 +519,7 @@ Participant<Settings>* AppleMIDISession<UdpClass, Settings, Platform>::getPartic
 }
 #endif
 
+// Serialize and send an invitation packet on the given port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &port, const IPAddress& remoteIP, const uint16_t& remotePort, AppleMIDI_Invitation_t & invitation, const byte *command)
 {
@@ -526,6 +545,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
     port.flush();
 }
 
+// Send receiver feedback on the control port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
 {
@@ -551,6 +571,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const
     controlPort.flush();
 }
 
+// Send a synchronization packet on the data port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_Synchronization_t &synchronization)
 {
@@ -577,6 +598,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeSynchronization(const 
     dataPort.flush();
 }
 
+// Send an end-session packet on the control port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_EndSession_t &endSession)
 {
@@ -602,6 +624,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeEndSession(const IPAdd
     controlPort.flush();
 }
 
+// Flush the outgoing MIDI buffer to all participants.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipants()
 {
@@ -618,6 +641,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
     outMidiBuffer.clear();
 }
 
+// Build and send an RTP-MIDI packet for a participant.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Participant<Settings>* participant)
 { 
@@ -741,9 +765,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
 #endif
 }
 
-//
-//
-//
+// Manage synchronization state for all active participants.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
 {
@@ -807,13 +829,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
 
 #ifdef APPLEMIDI_INITIATOR
 
-//
-// The initiator of the session polls if remote station is still alive.
-// (Initiators only)
+// Initiator heartbeat: schedule periodic synchronization exchanges.
 //
 // The initiator must initiate a new sync exchange at least once every 60 seconds;
 // otherwise the responder may assume that the initiator has died and terminate the session.
-//
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorHeartBeat(Participant<Settings>* pParticipant)
 {
@@ -850,7 +869,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
     sendSynchronization(pParticipant);
 }
 
-// checks for
+// Retry sync invitations while establishing synchronization.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorInvites(size_t i)
 {
@@ -880,6 +899,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
 
 #endif
 
+// Send a CK0 synchronization message to a participant.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::sendSynchronization(Participant<Settings>* participant)
 {
@@ -895,7 +915,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendSynchronization(Partici
     participant->lastInviteSentTime = now;
 }
 
-// (Initiators only)
+// Manage invitation retries for session establishment (initiators only).
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 {
@@ -991,6 +1011,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
     }
 }
 
+// Periodically emit receiver feedback for active participants.
 // The recovery journal mechanism requires that the receiver
 // periodically inform the sender of the sequence number of the most
 // recently received packet. This allows the sender to reduce the size
@@ -1035,6 +1056,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
 
 #ifdef APPLEMIDI_INITIATOR
 
+// Queue a new outgoing invitation for a remote endpoint.
 template <class UdpClass, class Settings, class Platform>
 bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, uint16_t port)
 {
@@ -1067,6 +1089,7 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
 
 #endif
 
+// Send end-session to all participants and clear them.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
 {
@@ -1087,6 +1110,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
 #endif
 }
 
+// Send end-session to a single participant and notify callbacks.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession(Participant<Settings>* participant)
 {
@@ -1099,6 +1123,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession(Participant<
         _disconnectedCallback(participant->ssrc);
 }
 
+// Handle an incoming RTP header and track latency/sequence.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rtp)
 {
@@ -1139,6 +1164,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
     }
 }
 
+// Notify that a MIDI byte stream has started.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
@@ -1148,6 +1174,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 #endif
 }
 
+// Handle a received MIDI byte and buffer it.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
@@ -1159,6 +1186,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
     inMidiBuffer.push_back(value);
 }
 
+// Notify that a MIDI byte stream has ended.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
