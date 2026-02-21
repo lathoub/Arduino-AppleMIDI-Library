@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AppleMIDI_Namespace.h"
+#include <string.h>
 
 BEGIN_APPLEMIDI_NAMESPACE
 
@@ -17,8 +18,7 @@ size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
         auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (auto i = 0; i < bytesRead; i++)
-            controlBuffer.push_back(packetBuffer[i]);
+        controlBuffer.push_back(packetBuffer, bytesRead);
     }
 
     return controlBuffer.size();
@@ -65,8 +65,7 @@ size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
         auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
         packetSize -= bytesRead;
 
-        for (auto i = 0; i < bytesRead; i++)
-            dataBuffer.push_back(packetBuffer[i]);
+        dataBuffer.push_back(packetBuffer, bytesRead);
     }
 
     return dataBuffer.size();
@@ -149,6 +148,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.lastSyncExchangeTime = now;
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, Settings::MaxSessionNameLen);
+    participant.sessionName[Settings::MaxSessionNameLen] = '\0';
 #endif
 
 #ifdef KEEP_SESSION_NAME
@@ -692,10 +692,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         return;
     }
 
-    // write rtp header
-    dataPort.write((uint8_t *)&rtp, sizeof(rtp));
+    // Write RTP + rtpMIDI in a single packet to reduce overhead.
+    uint8_t packet[sizeof(Rtp) + 2 + Settings::MaxBufferSize];
+    size_t offset = 0;
+    memcpy(packet + offset, &rtp, sizeof(rtp));
+    offset += sizeof(rtp);
 
-    // Write rtpMIDI section
     RtpMIDI_t rtpMidi;
 
     //   0                   1                   2                   3
@@ -713,21 +715,21 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     { // Short header
         rtpMidi.flags |= (uint8_t)bufferLen;
         rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_B; // short header, clear B-FLAG
-        dataPort.write(rtpMidi.flags);
+        packet[offset++] = rtpMidi.flags;
     }
     else
     { // Long header
         rtpMidi.flags |= (uint8_t)(bufferLen >> 8);
         rtpMidi.flags |=  RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
-        dataPort.write(rtpMidi.flags);
-        dataPort.write((uint8_t)(bufferLen));
+        packet[offset++] = rtpMidi.flags;
+        packet[offset++] = (uint8_t)(bufferLen);
     }
 
     // write out the MIDI Section
-    for (size_t i = 0; i < bufferLen; i++)
-        dataPort.write(outMidiBuffer[i]);
+    offset += outMidiBuffer.copy_out(packet + offset, bufferLen);
 
     // *No* journal section (Not supported)
+    dataPort.write(packet, offset);
 
     dataPort.endPacket();
     dataPort.flush();
@@ -745,19 +747,28 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
 {
 #ifndef ONE_PARTICIPANT
-    for (size_t i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size();)
 #endif
     {
 #ifndef ONE_PARTICIPANT
         auto pParticipant = &participants[i];
-        if (pParticipant->ssrc == 0) continue;
+        if (pParticipant->ssrc == 0)
+        {
+            i++;
+            continue;
+        }
 #else
         auto pParticipant = &participant;
         if (pParticipant->ssrc == 0) return;
 #endif
 #ifdef APPLEMIDI_INITIATOR
         if (pParticipant->invitationStatus != Connected)
+        {
+#ifndef ONE_PARTICIPANT
+            i++;
+#endif
             continue;
+        }
         
         // Only for Initiators that are Connected
         if (pParticipant->kind == Listener)
@@ -774,6 +785,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
                 sendEndSession(pParticipant);
 #ifndef ONE_PARTICIPANT
                 participants.erase(i);
+                continue;
 #else
                 participant.ssrc = 0;
 #endif  
@@ -785,6 +797,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
             (pParticipant->synchronizing) ? manageSynchronizationInitiatorInvites(i)
                                           : manageSynchronizationInitiatorHeartBeat(pParticipant);
         }
+#endif
+#ifndef ONE_PARTICIPANT
+        i++;
 #endif
     }
 }
@@ -884,7 +899,7 @@ template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 {
 #ifndef ONE_PARTICIPANT
-    for (auto i = 0; i < participants.size(); i++)
+    for (auto i = 0; i < participants.size();)
 #endif
     {
 #ifndef ONE_PARTICIPANT
@@ -895,7 +910,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 
         if (pParticipant->kind == Listener)
 #ifndef ONE_PARTICIPANT
+        {
+            i++;
             continue;
+        }
 #else
             return;
 #endif
@@ -913,7 +931,10 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
 
         if (pParticipant->invitationStatus == Connected)
 #ifndef ONE_PARTICIPANT
+        {
+            i++;
             continue;
+        }
 #else
             return;
 #endif
@@ -932,12 +953,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
                 
 #ifndef ONE_PARTICIPANT
                 participants.erase(i);
-#else
-                participant.ssrc = 0;
-#endif
-#ifndef ONE_PARTICIPANT
                 continue;
 #else
+                participant.ssrc = 0;
                 return;
 #endif
             }
@@ -966,6 +984,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
                 pParticipant->invitationStatus = AwaitingDataInvitationAccepted;
             }
         }
+#ifndef ONE_PARTICIPANT
+        i++;
+#endif
     }
 }
 
@@ -1056,7 +1077,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendEndSession()
         participants.pop_front();
     }
 #else
-    if (participant.src != 0)
+    if (participant.ssrc != 0)
     {
         sendEndSession(&participant);
         participant.ssrc = 0;

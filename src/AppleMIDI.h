@@ -52,6 +52,7 @@ public:
         this->port = port;
 #ifdef KEEP_SESSION_NAME
         strncpy(this->localName, sessionName, Settings::MaxSessionNameLen);
+        this->localName[Settings::MaxSessionNameLen] = '\0';
 #endif
 
 #ifdef ONE_PARTICIPANT
@@ -117,6 +118,7 @@ public:
     AppleMIDISession &setName(const char *sessionName)
     {
         strncpy(this->localName, sessionName, Settings::MaxSessionNameLen);
+        this->localName[Settings::MaxSessionNameLen] = '\0';
         return *this;
     };
 #else
@@ -170,7 +172,7 @@ public:
         // this is our SSRC
         //
         // NOTE: Arduino random only goes to INT32_MAX (not UINT32_MAX)
-        this->ssrc = random(1, INT32_MAX) * 2;
+        this->ssrc = random(1, INT32_MAX / 2) * 2;
 
         controlPort.begin(port);
         dataPort.begin(port + 1);
