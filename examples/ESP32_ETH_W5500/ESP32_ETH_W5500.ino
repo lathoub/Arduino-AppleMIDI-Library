@@ -9,7 +9,7 @@ int8_t isAppleMIDIConnected = 0;
 APPLEMIDI_CREATE_INSTANCE(NetworkUDP, MIDI, "AppleMIDI-Arduino", DEFAULT_CONTROL_PORT);
 
 // -----------------------------------------------------------------------------
-//
+// E X P E R I M E N T A L,  P L E A S E   U S E   W I T H   C A R E
 // -----------------------------------------------------------------------------
 void setup() {
   AM_DBG_SETUP(115200);
