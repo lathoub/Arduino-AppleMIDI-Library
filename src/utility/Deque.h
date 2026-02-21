@@ -28,6 +28,7 @@ public:
     void push_front(const T &);
     void push_back(const T &);
     size_t push_back(const T *, size_t);
+    size_t copy_out(T *, size_t) const;
     void pop_front();
     void pop_back();
     
@@ -157,6 +158,32 @@ size_t Deque<T, Size>::push_back(const T *values, size_t count)
     }
 
     return toWrite;
+}
+
+template<typename T, size_t Size>
+size_t Deque<T, Size>::copy_out(T *dest, size_t count) const
+{
+    if (dest == nullptr || count == 0)
+        return 0;
+
+    const size_t available = size();
+    if (available == 0)
+        return 0;
+
+    const size_t toCopy = (count < available) ? count : available;
+    const size_t start = (size_t)_tail;
+
+    size_t first = toCopy;
+    if (start + first > Size)
+        first = Size - start;
+
+    memcpy(dest, &_data[start], first * sizeof(T));
+
+    const size_t remaining = toCopy - first;
+    if (remaining > 0)
+        memcpy(dest + first, &_data[0], remaining * sizeof(T));
+
+    return toCopy;
 }
 
 template<typename T, size_t Size>
