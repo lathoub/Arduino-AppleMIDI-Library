@@ -223,11 +223,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     
     // Inform that we have an established connection
     if (nullptr != _connectedCallback)
+    {
 #ifdef KEEP_SESSION_NAME
         _connectedCallback(ssrc_, pParticipant->sessionName);
 #else
         _connectedCallback(ssrc_, nullptr);
 #endif
+    }
 }
 
 template <class UdpClass, class Settings, class Platform>
