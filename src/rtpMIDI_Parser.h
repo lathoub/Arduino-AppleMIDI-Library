@@ -33,13 +33,13 @@ protected:
     void debugPrintBuffer(RtpBuffer_t &buffer)
     {
 #ifdef DEBUG
-        for (int i = 0; i < buffer.size(); i++) 
+        for (size_t i = 0; i < buffer.size(); i++) 
         {
             SerialMon.print("  ");
             SerialMon.print(i);
             SerialMon.print(i < 10 ? "  " : " ");
         }
-        for (int i = 0; i < buffer.size(); i++) 
+        for (size_t i = 0; i < buffer.size(); i++) 
         {
             SerialMon.print("0x");
             SerialMon.print(buffer[i] < 16 ? "0" : "");
@@ -169,8 +169,11 @@ public:
             cmdCount = 0;
             runningstatus = 0;
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front();
+                --i;
+            }
             
             _rtpHeadersComplete = true;
                         
@@ -202,7 +205,16 @@ public:
                 return parserReturn::NotEnoughData;
             case parserReturn::UnexpectedJournalData:
                 _rtpHeadersComplete = false;
+                _journalSectionComplete = false;
+                _channelJournalSectionComplete = false;
+                _journalTotalChannels = 0;
             default:
+                // Reset all journal state on any non-recoverable error to avoid
+                // leaking partial state into the next packet.
+                _rtpHeadersComplete = false;
+                _journalSectionComplete = false;
+                _channelJournalSectionComplete = false;
+                _journalTotalChannels = 0;
                 return retVal;
             }
         }

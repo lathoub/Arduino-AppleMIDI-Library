@@ -6,8 +6,10 @@ BEGIN_APPLEMIDI_NAMESPACE
 
 struct DefaultSettings
 {
-    static const size_t UdpTxPacketMaxSize = 24; 
+    // Small default to fit constrained MCUs; raise if you send larger SysEx.
+    static const size_t UdpTxPacketMaxSize = 24;
     
+    // MIDI buffer size in bytes; should be >= 3 * max message length.
     static const size_t MaxBufferSize = 64;
     
     static const size_t MaxSessionNameLen = 24;
@@ -26,11 +28,12 @@ struct DefaultSettings
     // two sequence numbers. The sender can then free the memory containing old journalling data if necessary.
     static const unsigned long ReceiversFeedbackThreshold = 1000;
     
-    // The initiator must initiate a new sync exchange at least once every 60 seconds
-    // as in https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
+    // The initiator must initiate a new sync exchange at least once every 60 seconds.
+    // This value includes a small 1s slack.
+    // https://developer.apple.com/library/archive/documentation/Audio/Conceptual/MIDINetworkDriverProtocol/MIDI/MIDI.html
     static const unsigned long CK_MaxTimeOut = 61000;
 
-    // when set to true, the lower 32-bits of the rtpClock ae send
+    // when set to true, the lower 32-bits of the rtpClock are sent
     // when set to false, 0 will be set for immediate playout.
     static const bool TimestampRtpPackets = true;
     

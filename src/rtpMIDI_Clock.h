@@ -14,10 +14,12 @@ typedef struct rtpMidi_Clock
 
 	uint64_t startTime_;
 	uint64_t initialTimeStamp_;
+	uint32_t low32_;
+	uint32_t high32_;
 
 	void Init(uint64_t initialTimeStamp, uint32_t clockRate)
 	{
-		initialTimeStamp_ = 0;
+		initialTimeStamp_ = initialTimeStamp;
 		clockRate_ = clockRate;
 
 		if (clockRate_ == 0)
@@ -25,11 +27,13 @@ typedef struct rtpMidi_Clock
 			clockRate_ = MIDI_SAMPLING_RATE_DEFAULT;
 		}
 
+		low32_ = millis();
+		high32_ = 0;
 		startTime_ = Ticks();
 	}
 
 	/// <summary>
-	/// Returns an timestamp value suitable for inclusion in a RTP packet header.
+	/// Returns a timestamp value suitable for inclusion in a RTP packet header.
 	/// </summary>
 	uint64_t Now()
 	{
@@ -39,14 +43,12 @@ typedef struct rtpMidi_Clock
 private:
 	uint64_t CalculateCurrentTimeStamp()
 	{
-        return  (CalculateTimeSpent() * clockRate_) / MSEC_PER_SEC;
+        return initialTimeStamp_ + (CalculateTimeSpent() * clockRate_) / MSEC_PER_SEC;
 	}
 
 	/// <summary>
 	///     Returns the time spent since the initial clock timestamp value.
-	///     The returned value is expressed in units of "clock pulsations",
-	///     that are equivalent to seconds, scaled by the clock rate.
-	///     i.e: 1 second difference will result in a delta value equals to the clock rate.
+	///     The returned value is expressed in milliseconds.
 	/// </summary>
 	uint64_t CalculateTimeSpent()
 	{
@@ -56,14 +58,14 @@ private:
     /// <summary>
     ///     millis() as a 64bit (not the default 32bit)
     ///     this prevents wrap around.
+	///     Note: rollover tracking is per instance; call Init() before use.
     /// </summary>
-	uint64_t Ticks() const
+	uint64_t Ticks()
 	{
-        static uint32_t low32, high32;
         uint32_t new_low32 = millis();
-        if (new_low32 < low32) high32++;
-        low32 = new_low32;
-        return (uint64_t) high32 << 32 | low32;
+        if (new_low32 < low32_) high32_++;
+        low32_ = new_low32;
+        return (uint64_t) high32_ << 32 | low32_;
 	}
 
 

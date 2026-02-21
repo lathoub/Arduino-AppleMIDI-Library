@@ -143,6 +143,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
 #endif
     participant.kind = Listener;
     participant.ssrc = invitation.ssrc;
+    participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
     participant.lastSyncExchangeTime = now;
@@ -1050,6 +1051,7 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
     Participant<Settings> participant;
 #endif
     participant.kind = Initiator;
+    participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP = ip;
     participant.remotePort = port;
     participant.lastInviteSentTime = now - 1000; // forces invite to be send immediately

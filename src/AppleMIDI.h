@@ -248,6 +248,7 @@ public:
                 if (nullptr != _exceptionCallback)
                     _exceptionCallback(ssrc, BufferFullException, 0);
 #endif
+                return;
             }
         }
 

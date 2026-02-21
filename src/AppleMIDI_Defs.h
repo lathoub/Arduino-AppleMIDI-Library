@@ -22,7 +22,7 @@ union conversionBuffer
     uint16_t value16;
     uint32_t value32;
     uint64_t value64;
-    byte buffer[8];
+    uint8_t buffer[8];
 };
 
 
@@ -147,19 +147,19 @@ using sentRtpMidiCallback           = void (*)(const RtpMIDI_t&);
 #endif
 
 /* Signature "Magic Value" for Apple network MIDI session establishment */
-const byte amSignature[] = {0xff, 0xff};
+static constexpr uint8_t amSignature[] = {0xff, 0xff};
 
 /* 2 (stored in network byte order (big-endian)) */
-const byte amProtocolVersion[] = {0x00, 0x00, 0x00, 0x02};
+static constexpr uint8_t amProtocolVersion[] = {0x00, 0x00, 0x00, 0x02};
 
 /* Apple network MIDI valid commands */
-const byte amInvitation[]          = {'I', 'N'};
-const byte amEndSession[]          = {'B', 'Y'};
-const byte amSynchronization[]     = {'C', 'K'};
-const byte amInvitationAccepted[]  = {'O', 'K'};
-const byte amInvitationRejected[]  = {'N', 'O'};
-const byte amReceiverFeedback[]    = {'R', 'S'};
-const byte amBitrateReceiveLimit[] = {'R', 'L'};
+static constexpr uint8_t amInvitation[]          = {'I', 'N'};
+static constexpr uint8_t amEndSession[]          = {'B', 'Y'};
+static constexpr uint8_t amSynchronization[]     = {'C', 'K'};
+static constexpr uint8_t amInvitationAccepted[]  = {'O', 'K'};
+static constexpr uint8_t amInvitationRejected[]  = {'N', 'O'};
+static constexpr uint8_t amReceiverFeedback[]    = {'R', 'S'};
+static constexpr uint8_t amBitrateReceiveLimit[] = {'R', 'L'};
 
 const uint8_t SYNC_CK0 = 0;
 const uint8_t SYNC_CK1 = 1;

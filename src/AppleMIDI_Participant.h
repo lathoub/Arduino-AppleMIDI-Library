@@ -9,23 +9,23 @@ BEGIN_APPLEMIDI_NAMESPACE
 template <class Settings>
 struct Participant
 {
-    ParticipantKind kind;
+    ParticipantKind kind = Listener;
     ssrc_t          ssrc = 0;
     IPAddress       remoteIP = INADDR_NONE;
     uint16_t        remotePort = 0;
 
-    unsigned long   receiverFeedbackStartTime;
+    unsigned long   receiverFeedbackStartTime = 0;
     bool            doReceiverFeedback = false;
 
-    uint16_t        sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
+    uint16_t        sendSequenceNr = 0; // seeded when session/participant is created
     uint16_t        receiveSequenceNr = 0;
 
-    unsigned long   lastSyncExchangeTime;
+    unsigned long   lastSyncExchangeTime = 0;
 
 #ifdef APPLEMIDI_INITIATOR
     uint8_t         connectionAttempts = 0;
     uint32_t        initiatorToken = 0;
-    unsigned long   lastInviteSentTime;
+    unsigned long   lastInviteSentTime = 0;
     InviteStatus    invitationStatus = Initiating;
     
     uint8_t         synchronizationHeartBeats = 0;
@@ -35,7 +35,7 @@ struct Participant
     
 #ifdef USE_EXT_CALLBACKS
     bool            firstMessageReceived = true;
-    uint32_t        offsetEstimate;
+    uint32_t        offsetEstimate = 0;
 #endif
     
 #ifdef KEEP_SESSION_NAME

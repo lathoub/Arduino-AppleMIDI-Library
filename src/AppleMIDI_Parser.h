@@ -21,8 +21,8 @@ public:
 	{
 		conversionBuffer cb;
 
-		byte signature[2]; // Signature "Magic Value" for Apple network MIDI session establishment
-		byte command[2];   // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
+		uint8_t signature[2]; // Signature "Magic Value" for Apple network MIDI session establishment
+		uint8_t command[2];   // 16-bit command identifier (two ASCII characters, first in high 8 bits, second in low 8 bits)
 
 		size_t minimumLen = (sizeof(signature) + sizeof(command)); // Signature + Command
 		if (buffer.size() < minimumLen)
@@ -42,7 +42,7 @@ public:
 
 		if (0 == memcmp(command, amInvitation, sizeof(amInvitation)))
 		{
-			byte protocolVersion[4];
+			uint8_t protocolVersion[4];
 
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
 			if (buffer.size() < minimumLen)
@@ -98,11 +98,14 @@ public:
             // flush the remainder of the packet.
             // First part if the session name is kept, processing continues
             if (i > minimumLen)
-                if (i == buffer.size() && buffer[i] != 0x00)
+                if (i == buffer.size() && buffer[buffer.size() - 1] != 0x00)
                     retVal = parserReturn::SessionNameVeryLong;
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
 			session->ReceivedInvitation(invitation, portType);
 
@@ -110,7 +113,7 @@ public:
 		}
 		else if (0 == memcmp(command, amEndSession, sizeof(amEndSession)))
 		{
-			byte protocolVersion[4];
+			uint8_t protocolVersion[4];
 
 			minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
 			if (buffer.size() < minimumLen)
@@ -142,8 +145,11 @@ public:
 			cb.buffer[3] = buffer[i++];
 			endSession.ssrc = __ntohl(cb.value32);
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
 			session->ReceivedEndSession(endSession);
 
@@ -199,8 +205,11 @@ public:
 			cb.buffer[7] = buffer[i++];
 			synchronization.timestamps[2] = __ntohll(cb.value64);
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
 			session->ReceivedSynchronization(synchronization);
 
@@ -237,7 +246,7 @@ public:
 #ifdef APPLEMIDI_INITIATOR
 		else if (0 == memcmp(command, amInvitationAccepted, sizeof(amInvitationAccepted)))
 		{
-            byte protocolVersion[4];
+            uint8_t protocolVersion[4];
 
             minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
             if (buffer.size() < minimumLen)
@@ -294,11 +303,14 @@ public:
             // flush the remainder of the packet.
             // First part if the session name is kept, processing continues
             if (i > minimumLen)
-                if (i == buffer.size() && buffer[i] != 0x00)
+                if (i == buffer.size() && buffer[buffer.size() - 1] != 0x00)
                     retVal = parserReturn::SessionNameVeryLong;
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
             session->ReceivedInvitationAccepted(invitationAccepted, portType);
 
@@ -306,7 +318,7 @@ public:
 		}
 		else if (0 == memcmp(command, amInvitationRejected, sizeof(amInvitationRejected)))
 		{
-            byte protocolVersion[4];
+            uint8_t protocolVersion[4];
 
             minimumLen += (sizeof(protocolVersion) + sizeof(initiatorToken_t) + sizeof(ssrc_t));
             if (buffer.size() < minimumLen)
@@ -359,8 +371,11 @@ public:
                 if (i == buffer.size() || buffer[i++] != 0x00)
                     return parserReturn::NotEnoughData;
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
             session->ReceivedInvitationRejected(invitationRejected);
 
@@ -386,8 +401,11 @@ public:
             cb.buffer[3] = buffer[i++];
             bitrateReceiveLimit.bitratelimit = __ntohl(cb.value32);
 
-            while (i--)
+            while (i > 0)
+            {
                 buffer.pop_front(); // consume all the bytes that made up this message
+                --i;
+            }
 
             session->ReceivedBitrateReceiveLimit(bitrateReceiveLimit);
 
