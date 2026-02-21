@@ -15,7 +15,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 // first octet
 #define RTP_P_FIELD 0x20
 #define RTP_X_FIELD 0x10
-#define RTP_CC_FIELD 0xF
+#define RTP_CC_FIELD 0x0F
 
 // second octet
 #define RTP_M_FIELD 0x80
@@ -25,7 +25,7 @@ BEGIN_APPLEMIDI_NAMESPACE
 #define PAYLOADTYPE_RTPMIDI 97
 
 /* Version is the first 2 bits of the first octet*/
-#define RTP_VERSION(octet) ((octet) >> 6)
+#define RTP_VERSION(octet) (((octet) >> 6) & 0x03)
 
 /* Padding is the third bit; No need to shift, because true is any value
 other than 0! */
