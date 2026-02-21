@@ -26,7 +26,7 @@ using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-static unsigned long now;
+extern unsigned long now;
 
 struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
 {

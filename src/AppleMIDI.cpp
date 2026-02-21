@@ -1,1 +1,7 @@
 #include "AppleMIDI.h"
+
+BEGIN_APPLEMIDI_NAMESPACE
+
+unsigned long now = 0;
+
+END_APPLEMIDI_NAMESPACE
