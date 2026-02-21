@@ -14,7 +14,7 @@ const char* mdnsName = "myesp32";
 
 bool isETHconnected = false;
 
-std::function<void(bool)> cbfunc;
+std::function<void(bool)> connectCallback;
 
 void onEvent(arduino_event_id_t event, arduino_event_info_t info) {
   switch (event) {
@@ -37,19 +37,22 @@ void onEvent(arduino_event_id_t event, arduino_event_info_t info) {
       isETHconnected = true;
       AM_DBG("isETHconnected", isETHconnected);
 
-      cbfunc(true);
+      connectCallback(isETHconnected);
       break;
     case ARDUINO_EVENT_ETH_LOST_IP:
       AM_DBG("ETH Lost IP");
       isETHconnected = false;
+      connectCallback(isETHconnected);
       break;
     case ARDUINO_EVENT_ETH_DISCONNECTED:
       AM_DBG("ETH Disconnected");
       isETHconnected = false;
+      connectCallback(isETHconnected);
       break;
     case ARDUINO_EVENT_ETH_STOP:
       AM_DBG("ETH Stopped");
       isETHconnected = false;
+      connectCallback(isETHconnected);
       break;
     default:
       break;
@@ -57,7 +60,7 @@ void onEvent(arduino_event_id_t event, arduino_event_info_t info) {
 }
 
 bool ETH_startup(std::function<void(bool)> callback) {
-  cbfunc = callback;
+  connectCallback = callback;
   Network.onEvent(onEvent);
 
   SPI.begin();

@@ -37,7 +37,8 @@ void setup() {
       MIDI.begin(MIDI_CHANNEL_OMNI);
     } else {
       isAppleMIDIConnected = 0;
-      //MIDI.???
+      AM_DBG(F("AppleMIDI Ending"));
+      AppleMIDI.end();
     }
   });
 }
