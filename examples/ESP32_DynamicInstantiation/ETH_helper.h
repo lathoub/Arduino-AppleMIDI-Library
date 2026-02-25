@@ -6,7 +6,7 @@
 #endif
 
 // to get the Mac address
-#include <WiFi.h>
+#include "esp_mac.h"
 
 #define RESET_PIN  D7
 #define CS_PIN     D5
