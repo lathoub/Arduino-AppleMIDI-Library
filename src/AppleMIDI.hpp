@@ -468,7 +468,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedEndSession(AppleMID
 #else
     {
 #endif
-        if (endSession.ssrc == participant.ssrc)
+        if (endSession.ssrc == participant.ssrc &&
+                endSession.initiatorToken == participant.initiatorToken)
         {
             auto ssrc = participant.ssrc;
 
