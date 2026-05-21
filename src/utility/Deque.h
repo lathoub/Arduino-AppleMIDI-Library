@@ -11,7 +11,7 @@ class Deque {
 
 private:
     // _tail can briefly go to -1 during wraparound in push_front
-    // _head same behavior in pop_back
+    // _head has same behavior in pop_back
     int _head, _tail;
     T _data[Size];
     
