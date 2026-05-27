@@ -137,9 +137,9 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             cb.buffer[3] = buffer[2];
             uint32_t chanflags = __ntohl(cb.value32);
 
-            bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
-            uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
-            bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
+            //bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
+            //uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
+            //bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
             uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
 
             if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {

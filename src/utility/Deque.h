@@ -4,11 +4,14 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+
 template<typename T, size_t Size>
 class Deque {
 //    class iterator;
 
 private:
+    // _tail can briefly go to -1 during wraparound in push_front
+    // _head has same behavior in pop_back
     int _head, _tail;
     T _data[Size];
     
@@ -123,7 +126,9 @@ void Deque<T, Size>::push_back(const T &value)
         _data[_head] = value;
         if (empty())
             _tail = _head;
-        if (++_head >= Size)
+
+        // cast is safe because _head cannot here be negative
+        if ((size_t)(++_head) >= Size)
             _head %= Size;
     }
 }
@@ -190,7 +195,8 @@ template<typename T, size_t Size>
 void Deque<T, Size>::pop_front() {
     if (empty()) // if empty, do nothing.
         return;
-    if (++_tail >= Size)
+    // cast is safe because _tail cannot here be negative
+    if ((size_t)(++_tail) >= Size)
         _tail %= Size;
     if (_tail == _head)
         clear();
