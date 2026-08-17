@@ -1243,6 +1243,15 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
         _receivedMidiByteCallback(ssrc, value);
 #endif
 
+    if (inMidiBuffer.full())
+    {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, BufferFullException, 1);
+#endif
+        return;
+    }
+
     inMidiBuffer.push_back(value);
 }
 

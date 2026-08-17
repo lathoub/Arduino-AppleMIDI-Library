@@ -190,8 +190,11 @@ public:
         dataPort.stop();
     }
 
-    bool beginTransmission(MIDI_NAMESPACE::MidiType)
+    bool beginTransmission(MIDI_NAMESPACE::MidiType type)
     {
+        _writingSysEx = (type == MIDI_NAMESPACE::MidiType::SystemExclusive
+                      || type == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
+
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         // (The actual sending happen in the available() method, called at the start of the
@@ -239,7 +242,7 @@ public:
         if ((outMidiBuffer.size()) + 2 > outMidiBuffer.max_size())
         {
             // buffer is almost full, only 1 more character
-            if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.front())
+            if (_writingSysEx)
             {
                 // Add Sysex at the end of this partial SysEx (in the last availble slot) ...
                 outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
@@ -338,6 +341,7 @@ private:
     ssrc_t ssrc = 0;
     uint16_t port = DEFAULT_CONTROL_PORT;
     bool _acceptIncomingMidi = false;
+    bool _writingSysEx = false;
 #ifdef ONE_PARTICIPANT
     Participant<Settings> participant;
 #else
