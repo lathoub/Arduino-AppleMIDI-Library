@@ -381,6 +381,7 @@ public:
 
             return parserReturn::Processed;
 		}
+#endif
         else if (0 == memcmp(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
         {
             AppleMIDI_BitrateReceiveLimit bitrateReceiveLimit;
@@ -411,7 +412,6 @@ public:
 
             return parserReturn::Processed;
         }
-#endif
         return parserReturn::UnexpectedData;
 	}
 };
