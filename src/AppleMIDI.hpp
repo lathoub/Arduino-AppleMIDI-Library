@@ -673,11 +673,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
     for (size_t i = 0; i < participants.size(); i++)
     {
         auto pParticipant = &participants[i];
-        
+        if (pParticipant->ssrc == 0)
+            continue;
         writeRtpMidiBuffer(pParticipant);
     }
 #else
-    writeRtpMidiBuffer(&participant);
+    if (participant.ssrc != 0)
+        writeRtpMidiBuffer(&participant);
 #endif
     outMidiBuffer.clear();
 }

@@ -192,6 +192,25 @@ public:
 
     bool beginTransmission(MIDI_NAMESPACE::MidiType type)
     {
+#ifndef ONE_PARTICIPANT
+        bool connected = false;
+        for (size_t i = 0; i < participants.size(); i++)
+        {
+            if (participants[i].ssrc != 0 &&
+                participants[i].remoteIP != (IPAddress)INADDR_NONE)
+            {
+                connected = true;
+                break;
+            }
+        }
+        if (!connected)
+            return false;
+#else
+        if (participant.ssrc == 0 ||
+            participant.remoteIP == (IPAddress)INADDR_NONE)
+            return false;
+#endif
+
         _writingSysEx = (type == MIDI_NAMESPACE::MidiType::SystemExclusive
                       || type == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
 
@@ -222,18 +241,7 @@ public:
         // of what we are to send (The RtpMidi protocol start with writing the
         // length of the buffer). So we'll copy to a buffer in the 'write' method,
         // and actually serialize for real in the endTransmission method
-#ifndef ONE_PARTICIPANT
-        for (size_t i = 0; i < participants.size(); i++)
-        {
-            if (participants[i].ssrc != 0 &&
-                participants[i].remoteIP != (IPAddress)INADDR_NONE)
-                return true;
-        }
-        return false;
-#else
-        return (participant.ssrc != 0 &&
-                participant.remoteIP != (IPAddress)INADDR_NONE);
-#endif
+        return true;
     };
 
     void write(byte byte)
