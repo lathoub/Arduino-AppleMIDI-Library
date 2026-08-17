@@ -254,6 +254,7 @@ public:
             // buffer is almost full, only 1 more character
             if (_writingSysEx)
             {
+                // RFC 6295 SysEx split: this packet ends with F0, the next starts with F7.
                 // Add Sysex at the end of this partial SysEx (in the last availble slot) ...
                 outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
 

@@ -75,6 +75,10 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 
 ## Notes
 
+### SysEx and extra F0/F7 bytes
+
+Outgoing SysEx that does not fit in [`MaxMidiOutSize`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/v3.5.0/src/AppleMIDI_Settings.h) (default 64) is split across RTP packets per [RFC 6295](https://www.rfc-editor.org/rfc/rfc6295.html#section-3): the current packet ends with `F0` and the next starts with `F7`. USB, serial, and BLE do not add those markers, so a capture can look malformed ([#169](https://github.com/lathoub/Arduino-AppleMIDI-Library/issues/169)). AppleMIDI/rtpMIDI receivers reassemble them. Raise `MaxMidiOutSize` (and usually `MaxBufferSize`) in a custom Settings struct if you need a larger SysEx in one command section.
+
 ### Session names
 
 Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be truncated to the [`MaxSessionNameLen`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/af4c7bd9a960a90e09e211f0ea00db2d9832d1f7/src/AppleMIDI_Settings.h#L13) 
