@@ -393,7 +393,7 @@ private:
     void manageSynchronization();
     void manageSynchronizationInitiator();
     void manageSynchronizationInitiatorHeartBeat(Participant<Settings> *);
-    void manageSynchronizationInitiatorInvites(size_t);
+    bool manageSynchronizationInitiatorInvites(Participant<Settings> *);
 
     void sendSynchronization(Participant<Settings> *);
 

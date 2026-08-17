@@ -331,18 +331,19 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccep
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected_t & invitationRejected)
 {
+#ifndef ONE_PARTICIPANT
     for (auto i = 0; i < participants.size(); i++)
     {
         if (invitationRejected.ssrc == participants[i].ssrc)
         {
-#ifndef ONE_PARTICIPANT
             participants.erase(i);
-#else
-            participant.ssrc = 0;
-#endif
             return;
         }
     }
+#else
+    if (invitationRejected.ssrc == participant.ssrc)
+        participant.ssrc = 0;
+#endif
 }
 #endif
 
@@ -846,8 +847,19 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
         }
         else
         {
-            (pParticipant->synchronizing) ? manageSynchronizationInitiatorInvites(i)
-                                          : manageSynchronizationInitiatorHeartBeat(pParticipant);
+            if (pParticipant->synchronizing)
+            {
+                if (manageSynchronizationInitiatorInvites(pParticipant))
+#ifndef ONE_PARTICIPANT
+                    continue;
+#else
+                    return;
+#endif
+            }
+            else
+            {
+                manageSynchronizationInitiatorHeartBeat(pParticipant);
+            }
         }
 #endif
 #ifndef ONE_PARTICIPANT
@@ -900,10 +912,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
 
 // Retry sync invitations while establishing synchronization.
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorInvites(size_t i)
+bool AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorInvites(Participant<Settings>* pParticipant)
 {
-    auto pParticipant = &participants[i];
-
     if (now - pParticipant->lastInviteSentTime >  10000)
     {
         if (pParticipant->synchronizationCount > Settings::MaxSynchronizationCK0Attempts)
@@ -912,18 +922,25 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, MaxAttemptsException, 0);
 #endif
-            // After too many attempts, stop.
             sendEndSession(pParticipant);
 
 #ifndef ONE_PARTICIPANT
-            participants.erase(i);
+            for (size_t j = 0; j < participants.size(); j++)
+            {
+                if (&participants[j] == pParticipant)
+                {
+                    participants.erase(j);
+                    break;
+                }
+            }
 #else
             participant.ssrc = 0;
 #endif
-            return;
+            return true;
         }
         sendSynchronization(pParticipant);
     }
+    return false;
 }
 
 #endif
