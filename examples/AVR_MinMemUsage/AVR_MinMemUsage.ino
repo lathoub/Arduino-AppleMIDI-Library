@@ -2,6 +2,7 @@
 
 #define ONE_PARTICIPANT
 #define NO_SESSION_NAME
+#define APPLEMIDI_SMALL
 #include <AppleMIDI.h>
 
 // Enter a MAC address for your controller below.

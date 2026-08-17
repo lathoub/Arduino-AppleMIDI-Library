@@ -61,7 +61,7 @@ public:
 #endif
     };
 
-    virtual ~AppleMIDISession(){};
+    ~AppleMIDISession(){};
 
     AppleMIDISession &setHandleConnected(void (*fptr)(const ssrc_t &, const char *))
     {
@@ -294,7 +294,9 @@ public:
         if (readControlPackets())  // from socket into controlBuffer
             parseControlPackets(); // from controlBuffer to AppleMIDI
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
         manageReceiverFeedback();
+#endif
         manageSynchronization();
 
         return inMidiBuffer.size();
@@ -333,8 +335,8 @@ private:
     exceptionCallback _exceptionCallback = nullptr;
 #endif
     // buffer for incoming and outgoing MIDI messages
-    MidiBuffer_t inMidiBuffer;
-    MidiBuffer_t outMidiBuffer;
+    MidiInBuffer_t inMidiBuffer;
+    MidiOutBuffer_t outMidiBuffer;
 
     rtpMidi_Clock rtpMidiClock;
 
@@ -382,7 +384,9 @@ private:
 
     // Helpers
     void writeInvitation(UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
+#endif
     void writeSynchronization(const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
     void writeEndSession(const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
 
@@ -391,7 +395,9 @@ private:
     void writeRtpMidiToAllParticipants();
     void writeRtpMidiBuffer(Participant<Settings> *);
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     void manageReceiverFeedback();
+#endif
 
     void manageSessionInvites();
     void manageSynchronization();

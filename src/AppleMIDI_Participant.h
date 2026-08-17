@@ -15,8 +15,10 @@ struct Participant
     uint16_t        remotePort = 0;
     uint16_t        remoteDataPort = 0;
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     uint64_t        receiverFeedbackStartTime = 0;
     bool            doReceiverFeedback = false;
+#endif
 
     uint16_t        sendSequenceNr = 0; // seeded when session/participant is created
     uint16_t        receiveSequenceNr = 0;

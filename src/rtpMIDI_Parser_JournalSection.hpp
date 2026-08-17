@@ -1,3 +1,7 @@
+// Compiled into rtpMIDIParser only when APPLEMIDI_SKIP_JOURNALS is not defined.
+// Keep this file; do not delete it. Enable parsing with APPLEMIDI_PARSE_JOURNALS
+// if you also defined APPLEMIDI_SMALL.
+//
 // The recovery journal is the default resiliency tool for unreliable
 // transport. In this section, we normatively define the roles that
 // senders and receivers play in the recovery journal system.

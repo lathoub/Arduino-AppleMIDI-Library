@@ -50,11 +50,28 @@ typedef const char* AppleMIDIConstStr;
 #endif
 
 #define RtpBuffer_t Deque<byte, Settings::MaxBufferSize>
-#define MidiBuffer_t Deque<byte, Settings::MaxBufferSize>
+#define MidiInBuffer_t Deque<byte, Settings::MaxMidiInSize>
+#define MidiOutBuffer_t Deque<byte, Settings::MaxMidiOutSize>
+#define MidiBuffer_t MidiInBuffer_t
 
 // #define USE_EXT_CALLBACKS
 // #define ONE_PARTICIPANT // memory optimization
 // #define USE_DIRECTORY
+//
+// Size gates (define in the sketch before #include <AppleMIDI.h>):
+// #define APPLEMIDI_SMALL                 // skip journals + outbound RS
+// #define APPLEMIDI_SKIP_JOURNALS         // drain journal bytes; parser file is kept
+// #define APPLEMIDI_NO_RECEIVER_FEEDBACK  // do not send RS; receive path is kept
+// #define APPLEMIDI_PARSE_JOURNALS        // keep journal parser when using APPLEMIDI_SMALL
+
+#ifdef APPLEMIDI_SMALL
+#ifndef APPLEMIDI_PARSE_JOURNALS
+#define APPLEMIDI_SKIP_JOURNALS
+#endif
+#ifndef APPLEMIDI_KEEP_RECEIVER_FEEDBACK
+#define APPLEMIDI_NO_RECEIVER_FEEDBACK
+#endif
+#endif
 
 // By defining NO_SESSION_NAME in the sketch, you can save 100 bytes
 #ifndef NO_SESSION_NAME

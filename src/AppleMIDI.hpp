@@ -580,6 +580,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
     port.flush();
 }
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
 // Send receiver feedback on the control port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
@@ -605,6 +606,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const
     controlPort.endPacket();
     controlPort.flush();
 }
+#endif
 
 // Send a synchronization packet on the data port.
 template <class UdpClass, class Settings, class Platform>
@@ -752,11 +754,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         return;
     }
 
-    // Write RTP + rtpMIDI in a single packet to reduce overhead.
-    uint8_t packet[sizeof(Rtp) + 2 + Settings::MaxBufferSize];
-    size_t offset = 0;
-    memcpy(packet + offset, &rtp, sizeof(rtp));
-    offset += sizeof(rtp);
+    // Write RTP + rtpMIDI without a MaxBufferSize stack copy.
+    dataPort.write(reinterpret_cast<uint8_t *>(&rtp), sizeof(rtp));
 
     RtpMIDI_t rtpMidi;
 
@@ -775,21 +774,28 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     { // Short header
         rtpMidi.flags |= (uint8_t)bufferLen;
         rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_B; // short header, clear B-FLAG
-        packet[offset++] = rtpMidi.flags;
+        dataPort.write(&rtpMidi.flags, 1);
     }
     else
     { // Long header
         rtpMidi.flags |= (uint8_t)(bufferLen >> 8);
         rtpMidi.flags |=  RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
-        packet[offset++] = rtpMidi.flags;
-        packet[offset++] = (uint8_t)(bufferLen);
+        uint8_t hdr[2] = { rtpMidi.flags, (uint8_t)bufferLen };
+        dataPort.write(hdr, 2);
     }
 
-    // write out the MIDI Section
-    offset += outMidiBuffer.copy_out(packet + offset, bufferLen);
-
-    // *No* journal section (Not supported)
-    dataPort.write(packet, offset);
+    size_t remaining = bufferLen;
+    size_t idx = 0;
+    while (remaining > 0)
+    {
+        size_t n = remaining;
+        if (n > sizeof(packetBuffer))
+            n = sizeof(packetBuffer);
+        for (size_t j = 0; j < n; j++)
+            packetBuffer[j] = outMidiBuffer[idx++];
+        dataPort.write(packetBuffer, n);
+        remaining -= n;
+    }
 
     dataPort.endPacket();
     dataPort.flush();
@@ -1062,6 +1068,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
     }
 }
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
 // Periodically emit receiver feedback for active participants.
 // The recovery journal mechanism requires that the receiver
 // periodically inform the sender of the sequence number of the most
@@ -1104,6 +1111,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
         }
     }
 }
+#endif
 
 #ifdef APPLEMIDI_INITIATOR
 
@@ -1195,9 +1203,11 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         return;
     }
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     if (pParticipant->doReceiverFeedback == false)
         pParticipant->receiverFeedbackStartTime = now;
     pParticipant->doReceiverFeedback = true;
+#endif
 
 #ifdef USE_EXT_CALLBACKS
     auto offset = (rtp.timestamp - pParticipant->offsetEstimate);

@@ -11,6 +11,10 @@ struct DefaultSettings
     
     // MIDI buffer size in bytes; should be >= 3 * max message length.
     static const size_t MaxBufferSize = 64;
+
+    // Override independently if inbound and outbound MIDI need different RAM.
+    static const size_t MaxMidiInSize = MaxBufferSize;
+    static const size_t MaxMidiOutSize = MaxBufferSize;
     
     static const size_t MaxSessionNameLen = 24;
 
