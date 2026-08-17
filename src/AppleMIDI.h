@@ -26,7 +26,8 @@ using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-extern unsigned long now;
+extern uint64_t now;
+void refreshNow();
 
 struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
 {
@@ -262,7 +263,7 @@ public:
     // MIDI-read() must be called at the start of loop()
     unsigned available()
     {
-        now = millis();
+        refreshNow();
 
 #ifdef APPLEMIDI_INITIATOR
         manageSessionInvites();

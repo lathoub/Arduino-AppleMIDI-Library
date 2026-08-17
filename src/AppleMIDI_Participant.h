@@ -14,18 +14,18 @@ struct Participant
     IPAddress       remoteIP = INADDR_NONE;
     uint16_t        remotePort = 0;
 
-    unsigned long   receiverFeedbackStartTime = 0;
+    uint64_t        receiverFeedbackStartTime = 0;
     bool            doReceiverFeedback = false;
 
     uint16_t        sendSequenceNr = 0; // seeded when session/participant is created
     uint16_t        receiveSequenceNr = 0;
 
-    unsigned long   lastSyncExchangeTime = 0;
+    uint64_t        lastSyncExchangeTime = 0;
 
 #ifdef APPLEMIDI_INITIATOR
     uint8_t         connectionAttempts = 0;
     uint32_t        initiatorToken = 0;
-    unsigned long   lastInviteSentTime = 0;
+    uint64_t        lastInviteSentTime = 0;
     InviteStatus    invitationStatus = Initiating;
     
     uint8_t         synchronizationHeartBeats = 0;
