@@ -181,6 +181,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
+    participant.remoteDataPort = (uint16_t)(controlPort.remotePort() + 1);
     participant.lastSyncExchangeTime = now;
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, Settings::MaxSessionNameLen);
@@ -254,7 +255,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     // of the ssrc here.
     auto ssrc_ = invitation.ssrc;
     
-    writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remotePort + 1, invitation, amInvitationAccepted);
+    pParticipant->remoteDataPort = dataPort.remotePort();
+
+    writeInvitation(dataPort, dataPort.remoteIP(), pParticipant->remoteDataPort, invitation, amInvitationAccepted);
 
     pParticipant->kind = Listener;
     
@@ -325,6 +328,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccep
     }
     
     pParticipant->invitationStatus = DataInvitationAccepted;
+    pParticipant->remoteDataPort = dataPort.remotePort();
 }
 
 // Remove participant on invitation rejection.
@@ -429,13 +433,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
         synchronization.timestamps[SYNC_CK1] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK1;
-        writeSynchronization(pParticipant->remoteIP, pParticipant->remotePort + 1, synchronization);
+        writeSynchronization(pParticipant->remoteIP, pParticipant->remoteDataPort, synchronization);
         break;
     case SYNC_CK1: /* From session LISTENER */
 #ifdef APPLEMIDI_INITIATOR
         synchronization.timestamps[SYNC_CK2] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK2;
-        writeSynchronization(pParticipant->remoteIP, pParticipant->remotePort + 1, synchronization);
+        writeSynchronization(pParticipant->remoteIP, pParticipant->remoteDataPort, synchronization);
         pParticipant->synchronizing = false;
 #endif
         break;
@@ -478,11 +482,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
         return;
     }
 
-    if (pParticipant->sendSequenceNr < receiverFeedback.sequenceNr)
+    int16_t ahead = (int16_t)(receiverFeedback.sequenceNr - pParticipant->sendSequenceNr);
+    if (ahead > 0)
     {
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
-            _exceptionCallback(pParticipant->ssrc, SendPacketsDropped, pParticipant->sendSequenceNr - receiverFeedback.sequenceNr);
+            _exceptionCallback(pParticipant->ssrc, SendPacketsDropped, (int32_t)ahead);
 #endif
     }
 }
@@ -738,7 +743,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     rtp.ssrc       = __htonl(rtp.ssrc);
     rtp.sequenceNr = __htons(rtp.sequenceNr);
 
-    if (!dataPort.beginPacket(participant->remoteIP, participant->remotePort + 1))
+    if (!dataPort.beginPacket(participant->remoteIP, participant->remoteDataPort))
     {
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
@@ -955,7 +960,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendSynchronization(Partici
     synchronization.timestamps[SYNC_CK2] = 0;
     synchronization.count = 0;
 
-    writeSynchronization(participant->remoteIP, participant->remotePort + 1, synchronization);
+    writeSynchronization(participant->remoteIP, participant->remoteDataPort, synchronization);
     participant->synchronizing = true;
     participant->synchronizationCount++;
     participant->lastInviteSentTime = now;
@@ -1047,7 +1052,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
             if (pParticipant->invitationStatus == ControlInvitationAccepted
             ||  pParticipant->invitationStatus == AwaitingDataInvitationAccepted)
             {
-                writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remotePort + 1, invitation, amInvitation);
+                writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remoteDataPort, invitation, amInvitation);
                 pParticipant->invitationStatus = AwaitingDataInvitationAccepted;
             }
         }
@@ -1122,6 +1127,7 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
     participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP = ip;
     participant.remotePort = port;
+    participant.remoteDataPort = (uint16_t)(port + 1);
     participant.lastInviteSentTime = now - 1000; // forces invite to be send immediately
     participant.lastSyncExchangeTime = now;
     participant.initiatorToken = random(1, INT32_MAX) * 2;

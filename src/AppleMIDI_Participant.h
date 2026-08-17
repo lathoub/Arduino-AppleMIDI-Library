@@ -13,6 +13,7 @@ struct Participant
     ssrc_t          ssrc = 0;
     IPAddress       remoteIP = INADDR_NONE;
     uint16_t        remotePort = 0;
+    uint16_t        remoteDataPort = 0;
 
     uint64_t        receiverFeedbackStartTime = 0;
     bool            doReceiverFeedback = false;

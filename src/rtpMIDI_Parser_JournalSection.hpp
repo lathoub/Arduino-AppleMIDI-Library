@@ -95,6 +95,8 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             cb.buffer[1] = buffer[i++];
             uint16_t systemflags = __ntohs(cb.value16);
             uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
+            if (sysjourlen < 2)
+                return parserReturn::UnexpectedJournalData;
 
             uint16_t remainingBytes = sysjourlen - 2;
 
