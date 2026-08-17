@@ -220,9 +220,16 @@ public:
         // length of the buffer). So we'll copy to a buffer in the 'write' method,
         // and actually serialize for real in the endTransmission method
 #ifndef ONE_PARTICIPANT
-        return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participants.size() > 0);
+        for (size_t i = 0; i < participants.size(); i++)
+        {
+            if (participants[i].ssrc != 0 &&
+                participants[i].remoteIP != (IPAddress)INADDR_NONE)
+                return true;
+        }
+        return false;
 #else
-        return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participant.ssrc != 0);
+        return (participant.ssrc != 0 &&
+                participant.remoteIP != (IPAddress)INADDR_NONE);
 #endif
     };
 
