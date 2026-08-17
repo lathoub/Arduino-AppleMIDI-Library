@@ -332,21 +332,25 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccep
 }
 
 // Remove participant on invitation rejection.
+// Match by initiator token, same as OK: the peer SSRC is unknown until control OK.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected_t & invitationRejected)
 {
 #ifndef ONE_PARTICIPANT
-    for (auto i = 0; i < participants.size(); i++)
+    for (size_t i = 0; i < participants.size(); i++)
     {
-        if (invitationRejected.ssrc == participants[i].ssrc)
+        if (invitationRejected.initiatorToken == participants[i].initiatorToken)
         {
             participants.erase(i);
             return;
         }
     }
 #else
-    if (invitationRejected.ssrc == participant.ssrc)
-        participant.ssrc = 0;
+    if (invitationRejected.initiatorToken != participant.initiatorToken)
+        return;
+    participant.ssrc = 0;
+    participant.kind = Listener;
+    participant.initiatorToken = 0;
 #endif
 }
 #endif
