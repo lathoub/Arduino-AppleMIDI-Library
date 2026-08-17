@@ -1,19 +1,21 @@
 #pragma once
 
-#if !defined(_BYTE_ORDER) 
+#if !defined(_BYTE_ORDER)
 
     #define _BIG_ENDIAN 4321
     #define _LITTLE_ENDIAN 1234
 
-    #define TEST_LITTLE_ENDIAN (((union { unsigned x; unsigned char c; }){1}).c)
-
-    #ifdef TEST_LITTLE_ENDIAN
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     #define _BYTE_ORDER _LITTLE_ENDIAN
-    #else
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
     #define _BYTE_ORDER _BIG_ENDIAN
-    #endif
-
-    #undef TEST_LITTLE_ENDIAN
+#elif defined(__LITTLE_ENDIAN__) || defined(__ARMEL__) || defined(__AVR__) || defined(ESP32) || defined(ESP8266) || defined(_WIN32)
+    #define _BYTE_ORDER _LITTLE_ENDIAN
+#elif defined(__BIG_ENDIAN__)
+    #define _BYTE_ORDER _BIG_ENDIAN
+#else
+    #define _BYTE_ORDER _LITTLE_ENDIAN
+#endif
 
     #include <stdint.h>
 
