@@ -51,6 +51,8 @@ protected:
 
 public:
 	AppleMIDISession<UdpClass, Settings, Platform> * session;
+
+	bool isMidMessage() const { return _rtpHeadersComplete; }
     
 	//  Parse the incoming string
 	// return:

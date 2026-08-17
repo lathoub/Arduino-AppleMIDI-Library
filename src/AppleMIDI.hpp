@@ -5,24 +5,44 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+// Read one UDP datagram into buffer without concatenating the next packet.
+template <class UdpClass, class Settings, class Platform>
+size_t AppleMIDISession<UdpClass, Settings, Platform>::readUdpDatagram(UdpClass &port, RtpBuffer_t &buffer)
+{
+    size_t remaining = port.available(); // unread tail of the current datagram
+
+    if (remaining == 0)
+    {
+        // Current datagram is fully pulled from the socket.
+        // Do not start the next one while leftover bytes are still being parsed.
+        if (!buffer.empty())
+            return buffer.size();
+
+        remaining = port.parsePacket();
+    }
+
+    while (remaining > 0 && !buffer.full())
+    {
+        auto bytesToRead = min(min(remaining, buffer.free()), sizeof(packetBuffer));
+        auto bytesRead = port.read(packetBuffer, bytesToRead);
+        remaining -= bytesRead;
+        buffer.push_back(packetBuffer, bytesRead);
+    }
+
+    return buffer.size();
+}
+
+template <class UdpClass, class Settings, class Platform>
+void AppleMIDISession<UdpClass, Settings, Platform>::drainUdpRemainder(UdpClass &port)
+{
+    while (port.available() > 0 && port.read() >= 0) {}
+}
+
 // Read pending control UDP packets into the control buffer.
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {
-    size_t packetSize = controlPort.available();
-    if (packetSize == 0)
-       packetSize = controlPort.parsePacket();
-
-    while (packetSize > 0 && !controlBuffer.full())
-    {
-        auto bytesToRead = min( min(packetSize, controlBuffer.free()), sizeof(packetBuffer));
-        auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
-        packetSize -= bytesRead;
-
-        controlBuffer.push_back(packetBuffer, bytesRead);
-    }
-
-    return controlBuffer.size();
+    return readUdpDatagram(controlPort, controlBuffer);
 }
 
 // Parse buffered control packets and handle errors.
@@ -32,10 +52,17 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
     while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        if (retVal == parserReturn::Processed 
-        ||  retVal == parserReturn::NotEnoughData
-        ||  retVal == parserReturn::NotSureGiveMeMoreData)
+        if (retVal == parserReturn::Processed)
         {
+            if (controlBuffer.empty())
+                drainUdpRemainder(controlPort);
+            break;
+        }
+        if (retVal == parserReturn::NotEnoughData
+         || retVal == parserReturn::NotSureGiveMeMoreData)
+        {
+            if (controlPort.available() == 0)
+                controlBuffer.clear(); // truncated/incomplete datagram
             break;
         }
         else if (retVal == parserReturn::UnexpectedData)
@@ -48,8 +75,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         }
         else if (retVal == parserReturn::SessionNameVeryLong)
         {
-            // purge the rest of the data in controlPort
-            while (controlPort.read() >= 0) {}
+            drainUdpRemainder(controlPort);
         }
     }
 }
@@ -58,20 +84,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
 {
-    size_t packetSize = dataPort.available();
-    if (packetSize == 0)
-       packetSize = dataPort.parsePacket();
-    
-    while (packetSize > 0 && !dataBuffer.full())
-    {
-        auto bytesToRead = min( min(packetSize, dataBuffer.free()), sizeof(packetBuffer));
-        auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
-        packetSize -= bytesRead;
-
-        dataBuffer.push_back(packetBuffer, bytesRead);
-    }
-
-    return dataBuffer.size();
+    return readUdpDatagram(dataPort, dataBuffer);
 }
 
 // Parse buffered data packets using RTP-MIDI and AppleMIDI parsers.
@@ -81,25 +94,41 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
     while (dataBuffer.size() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
-        if (retVal1 == parserReturn::Processed
-        ||  retVal1 == parserReturn::NotEnoughData)
+        if (retVal1 == parserReturn::Processed)
+        {
+            if (dataBuffer.empty())
+                drainUdpRemainder(dataPort);
             break;
-        
+        }
+        if (retVal1 == parserReturn::NotEnoughData)
+        {
+            if (dataPort.available() == 0 && !_rtpMIDIParser.isMidMessage())
+                dataBuffer.clear();
+            break;
+        }
+
         auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
-        if (retVal2 == parserReturn::Processed
-        ||  retVal2 == parserReturn::NotEnoughData)
+        if (retVal2 == parserReturn::Processed)
+        {
+            if (dataBuffer.empty())
+                drainUdpRemainder(dataPort);
             break;
-
-        //  // both don't have data to determine protocol
-        if (retVal1 == parserReturn::NotSureGiveMeMoreData
-        &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
+        }
+        if (retVal2 == parserReturn::NotEnoughData)
+        {
+            if (dataPort.available() == 0)
+                dataBuffer.clear();
             break;
+        }
 
-        // one or the other don't have enough data to determine the protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
-        ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
-            break; // one or the other buffer does not have enough data
-        
+         || retVal2 == parserReturn::NotSureGiveMeMoreData)
+        {
+            if (dataPort.available() == 0 && !_rtpMIDIParser.isMidMessage())
+                dataBuffer.clear();
+            break;
+        }
+
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, UnexpectedParseException, 0);

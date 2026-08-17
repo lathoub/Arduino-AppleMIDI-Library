@@ -351,6 +351,8 @@ private:
 private:
     size_t readControlPackets();
     size_t readDataPackets();
+    size_t readUdpDatagram(UdpClass &, RtpBuffer_t &);
+    void drainUdpRemainder(UdpClass &);
 
     void parseControlPackets();
     void parseDataPackets();
