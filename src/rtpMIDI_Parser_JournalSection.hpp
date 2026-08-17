@@ -140,7 +140,10 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             //bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
             //uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
             //bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
-            uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
+            // LENGTH is 10 bits and includes the 3-octet header (RFC 4695)
+            uint16_t chanjourlen = (uint16_t)((chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8);
+            if (chanjourlen < 3)
+                return parserReturn::UnexpectedJournalData;
 
             if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
             }
@@ -170,9 +173,10 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         }
 
         if (_bytesToFlush > 0) {
-            return parserReturn::NotEnoughData;
+            return parserReturn::NotEnoughData; // resume this channel on the next read
         }
 
+        _channelJournalSectionComplete = false; // next TOTCHAN journal, if any
         _journalTotalChannels--;
     }
 
