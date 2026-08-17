@@ -1,4 +1,4 @@
-# AppleMIDI (aka rtpMIDI) for Arduino [![License: Beerware](https://img.shields.io/badge/License-Beerware-yellow.svg)](LICENSE.md)
+# AppleMIDI (aka rtpMIDI) for Arduino [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/)
 
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to participate in an AppleMIDI session.
 
