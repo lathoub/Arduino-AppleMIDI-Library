@@ -368,22 +368,36 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            bool sawNul = false;
+            while (i < buffer.size())
             {
+                uint8_t ch = buffer[i++];
+                if (ch == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
                 if (bi < Settings::MaxSessionNameLen)
-                    invitationRejected.sessionName[bi++] = buffer[i];
-                i++;
+                    invitationRejected.sessionName[bi++] = (char)ch;
             }
-            invitationRejected.sessionName[bi++] = '\0';
+            invitationRejected.sessionName[bi] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
-                i++;
+            bool sawNul = false;
+            while (i < buffer.size())
+            {
+                if (buffer[i++] == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
+            }
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
-            if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+
+            auto retVal = parserReturn::Processed;
+
+            // Name continues past this buffer chunk (common for very long Mac session names).
+            if (!sawNul)
+                retVal = parserReturn::SessionNameVeryLong;
 
             while (i > 0)
             {
@@ -393,7 +407,7 @@ public:
 
             session->ReceivedInvitationRejected(invitationRejected);
 
-            return parserReturn::Processed;
+            return retVal;
 		}
 #endif
         else if (0 == memcmp(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
