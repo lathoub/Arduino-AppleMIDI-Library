@@ -1,4 +1,4 @@
-# AppleMIDI (aka rtpMIDI) for Arduino [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/)
+# AppleMIDI (aka rtpMIDI) for Arduino [![License: Beerware](https://img.shields.io/badge/License-Beerware-yellow.svg)](LICENSE.md)
 
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to participate in an AppleMIDI session.
 
@@ -9,14 +9,14 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Tested with AppleMIDI on Mac OS (Big Sur) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
-* Automatic instantiation of AppleMIDI object (see at the end of 'AppleMidi.h')
+* Automatic instantiation of AppleMIDI object (see at the end of 'AppleMIDI.h')
 * Compiles on Arduino, MacOS (XCode) and Windows (MSVS)
 
-### New in 3.2.0
-* Event chaining
-
-### New in 3.3.0
-* Better parsing of large incoming MIDI messages with a small internal Arduino buffer
+### New in 3.5.0
+* Safer session and RTP parsing (known-SSRC MIDI only, UDP datagram isolation, wrap-safe sequence numbers)
+* RTP is sent only after the data-port handshake; invitation reject matches by initiator token
+* Size gates: `APPLEMIDI_SMALL`, `ONE_PARTICIPANT`, `NO_SESSION_NAME` (see [Memory footprint](#memory-footprint))
+* Large SysEx is split per RFC 6295 (`F0`/`F7`); see [SysEx and extra F0/F7 bytes](#sysex-and-extra-f0f7-bytes)
 
 ## Installation
 From the Arduino IDE Library Manager, search for AppleMIDI
@@ -81,10 +81,17 @@ Outgoing SysEx that does not fit in [`MaxMidiOutSize`](https://github.com/lathou
 
 ### Session names
 
-Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be truncated to the [`MaxSessionNameLen`](https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/af4c7bd9a960a90e09e211f0ea00db2d9832d1f7/src/AppleMIDI_Settings.h#L13) 
+Session names can get really long on Macs (eg 'Macbook Pro of Johann Gambolputty .. von Hautkopft of Ulm') and will be truncated to [`MaxSessionNameLen`](src/AppleMIDI_Settings.h).
 
 ### Memory footprint
-The memory footprint of the library can be lowered significantly, read the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Memory-footprint) 
+Define these in the sketch **before** `#include <AppleMIDI.h>`:
+
+* `ONE_PARTICIPANT` — one remote peer (saves a participant slot)
+* `NO_SESSION_NAME` — do not store session names (~100 bytes)
+* `APPLEMIDI_SMALL` — skip unused journal parsing and outbound RS  
+  (`APPLEMIDI_PARSE_JOURNALS` / `APPLEMIDI_KEEP_RECEIVER_FEEDBACK` keep those while still using `APPLEMIDI_SMALL`)
+
+`APPLEMIDI_SMALL` is used in `examples/AVR_MinMemUsage`. More on the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Memory-footprint). 
 
 ### Ethernet buffer size
 It's highly recommended to modify the [Ethernet library](https://github.com/arduino-libraries/Ethernet) or use the [Ethernet3 library](https://github.com/sstaub/Ethernet3) to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
