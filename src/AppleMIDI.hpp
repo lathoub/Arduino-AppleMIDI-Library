@@ -1155,9 +1155,14 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
         // avoids first message to generate sequence exception
         // as we do not know the last sequenceNr received.
         pParticipant->firstMessageReceived = false;
-    else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
-        if (nullptr != _exceptionCallback)
-            _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
+    else
+    {
+        // RFC 3550 serial arithmetic: uint16 wrap 65535 -> 0 is delta 1, not loss.
+        int16_t delta = (int16_t)(rtp.sequenceNr - pParticipant->receiveSequenceNr);
+        if (delta > 1) {
+            if (nullptr != _exceptionCallback)
+                _exceptionCallback(ssrc, ReceivedPacketsDropped, (int32_t)(delta - 1));
+        }
     }
 
     if (nullptr != _receivedRtpCallback)
