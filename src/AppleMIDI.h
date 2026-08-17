@@ -329,6 +329,7 @@ private:
 
     ssrc_t ssrc = 0;
     uint16_t port = DEFAULT_CONTROL_PORT;
+    bool _acceptIncomingMidi = false;
 #ifdef ONE_PARTICIPANT
     Participant<Settings> participant;
 #else

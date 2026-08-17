@@ -1133,41 +1133,47 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
     auto pParticipant = (participant.ssrc == rtp.ssrc) ? &participant : nullptr;
 #endif
     
-    if (nullptr != pParticipant)
+    _acceptIncomingMidi = (pParticipant != nullptr);
+    if (!_acceptIncomingMidi)
     {
-        if (pParticipant->doReceiverFeedback == false)
-            pParticipant->receiverFeedbackStartTime = now;
-        pParticipant->doReceiverFeedback = true;
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException, rtp.ssrc);
+#endif
+        return;
+    }
+
+    if (pParticipant->doReceiverFeedback == false)
+        pParticipant->receiverFeedbackStartTime = now;
+    pParticipant->doReceiverFeedback = true;
 
 #ifdef USE_EXT_CALLBACKS
-        auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
-        auto latency = (int32_t)(rtpMidiClock.Now() - offset);
+    auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
+    auto latency = (int32_t)(rtpMidiClock.Now() - offset);
 
-        if (pParticipant->firstMessageReceived == true)
-            // avoids first message to generate sequence exception
-            // as we do not know the last sequenceNr received.
-            pParticipant->firstMessageReceived = false;
-        else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
-            if (nullptr != _exceptionCallback)
-                _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
-        }
+    if (pParticipant->firstMessageReceived == true)
+        // avoids first message to generate sequence exception
+        // as we do not know the last sequenceNr received.
+        pParticipant->firstMessageReceived = false;
+    else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
+    }
 
-        if (nullptr != _receivedRtpCallback)
-            _receivedRtpCallback(pParticipant->ssrc, rtp, latency);
+    if (nullptr != _receivedRtpCallback)
+        _receivedRtpCallback(pParticipant->ssrc, rtp, latency);
 #endif
 
-        pParticipant->receiveSequenceNr = rtp.sequenceNr;
-    }
-    else
-    {
-        // TODO??? re-connect?
-    }
+    pParticipant->receiveSequenceNr = rtp.sequenceNr;
 }
 
 // Notify that a MIDI byte stream has started.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
    if (nullptr != _startReceivedMidiByteCallback)
         _startReceivedMidiByteCallback(ssrc);
@@ -1178,6 +1184,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _receivedMidiByteCallback)
         _receivedMidiByteCallback(ssrc, value);
@@ -1190,6 +1199,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _endReceivedMidiByteCallback)
         _endReceivedMidiByteCallback(ssrc);

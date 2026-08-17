@@ -187,7 +187,19 @@ public:
 		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMIDICommandSection(buffer);
-            if (retVal != parserReturn::Processed) return retVal;
+            if (retVal != parserReturn::Processed)
+            {
+                if (retVal != parserReturn::NotEnoughData)
+                {
+                    _rtpHeadersComplete = false;
+                    _journalSectionComplete = false;
+                    _channelJournalSectionComplete = false;
+                    _journalTotalChannels = 0;
+                    midiCommandLength = 0;
+                    runningstatus = 0;
+                }
+                return retVal;
+            }
         }
   
         // The payload MAY also contain a journal section. The journal section

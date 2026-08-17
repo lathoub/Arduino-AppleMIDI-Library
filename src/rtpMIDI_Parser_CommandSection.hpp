@@ -49,8 +49,10 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
             size_t consumed = 0;
             auto retVal = decodeTime(buffer, consumed);
             if (retVal != parserReturn::Processed) return retVal;
+            if (consumed == 0 || consumed > midiCommandLength)
+                return parserReturn::UnexpectedMidiData;
 
-            midiCommandLength -= consumed;
+            midiCommandLength = (uint16_t)(midiCommandLength - consumed);
             while (consumed--)
                 buffer.pop_front();
         }
@@ -65,8 +67,12 @@ parserReturn decodeMIDICommandSection(RtpBuffer_t &buffer)
                 cmdCount = 0; // avoid first command again
                 return retVal;
             }
+            if (retVal != parserReturn::Processed)
+                return retVal;
+            if (consumed == 0 || consumed > midiCommandLength)
+                return parserReturn::UnexpectedMidiData;
 
-            midiCommandLength -= consumed;
+            midiCommandLength = (uint16_t)(midiCommandLength - consumed);
             while (consumed--)
                 buffer.pop_front();
         }
@@ -124,9 +130,9 @@ parserReturn decodeMidi(RtpBuffer_t &buffer, uint8_t &runningstatus, size_t &con
     if ((octet & RTP_MIDI_COMMAND_STATUS_FLAG) == 0)
     {
         /* if we have no running status yet -> error */
-        if (((runningstatus)&RTP_MIDI_COMMAND_STATUS_FLAG) == 0)
+        if ((runningstatus & RTP_MIDI_COMMAND_STATUS_FLAG) == 0)
         {
-            return parserReturn::Processed;
+            return parserReturn::UnexpectedMidiData;
         }
         /* our first octet is "virtual" coming from a preceding MIDI-command,
          * so actually we have not really consumed anything yet */
