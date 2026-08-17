@@ -181,7 +181,6 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedControlInvitation(A
     participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP   = controlPort.remoteIP();
     participant.remotePort = controlPort.remotePort();
-    participant.remoteDataPort = (uint16_t)(controlPort.remotePort() + 1);
     participant.lastSyncExchangeTime = now;
 #ifdef KEEP_SESSION_NAME
     strncpy(participant.sessionName, invitation.sessionName, Settings::MaxSessionNameLen);
@@ -673,12 +672,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
     for (size_t i = 0; i < participants.size(); i++)
     {
         auto pParticipant = &participants[i];
-        if (pParticipant->ssrc == 0)
+        if (pParticipant->ssrc == 0 || pParticipant->remoteDataPort == 0)
             continue;
         writeRtpMidiBuffer(pParticipant);
     }
 #else
-    if (participant.ssrc != 0)
+    if (participant.ssrc != 0 && participant.remoteDataPort != 0)
         writeRtpMidiBuffer(&participant);
 #endif
     outMidiBuffer.clear();
@@ -1064,7 +1063,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
             if (pParticipant->invitationStatus == ControlInvitationAccepted
             ||  pParticipant->invitationStatus == AwaitingDataInvitationAccepted)
             {
-                writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remoteDataPort, invitation, amInvitation);
+                // Data invite goes to control+1; remoteDataPort is set from the OK.
+                writeInvitation(dataPort, pParticipant->remoteIP, (uint16_t)(pParticipant->remotePort + 1), invitation, amInvitation);
                 pParticipant->invitationStatus = AwaitingDataInvitationAccepted;
             }
         }
@@ -1141,7 +1141,6 @@ bool AppleMIDISession<UdpClass, Settings, Platform>::sendInvite(IPAddress ip, ui
     participant.sendSequenceNr = random(1, UINT16_MAX); // http://www.rfc-editor.org/rfc/rfc6295.txt , 2.1.  RTP Header
     participant.remoteIP = ip;
     participant.remotePort = port;
-    participant.remoteDataPort = (uint16_t)(port + 1);
     participant.lastInviteSentTime = now - 1000; // forces invite to be send immediately
     participant.lastSyncExchangeTime = now;
     participant.initiatorToken = random(1, INT32_MAX) * 2;

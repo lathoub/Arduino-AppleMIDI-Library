@@ -197,6 +197,7 @@ public:
         for (size_t i = 0; i < participants.size(); i++)
         {
             if (participants[i].ssrc != 0 &&
+                participants[i].remoteDataPort != 0 &&
                 participants[i].remoteIP != (IPAddress)INADDR_NONE)
             {
                 connected = true;
@@ -207,6 +208,7 @@ public:
             return false;
 #else
         if (participant.ssrc == 0 ||
+            participant.remoteDataPort == 0 ||
             participant.remoteIP == (IPAddress)INADDR_NONE)
             return false;
 #endif

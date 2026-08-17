@@ -13,6 +13,7 @@ struct Participant
     ssrc_t          ssrc = 0;
     IPAddress       remoteIP = INADDR_NONE;
     uint16_t        remotePort = 0;
+    // 0 until the data-port handshake (data IN or data OK) reports the real port.
     uint16_t        remoteDataPort = 0;
 
 #ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
