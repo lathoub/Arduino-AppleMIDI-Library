@@ -1,6 +1,6 @@
 #include <WiFi.h>
 
-#include "ETH_Helper.h"       
+#include "ETH_helper.h"       
 
 #define SerialMon Serial
 #include "midiHelpers.h"
