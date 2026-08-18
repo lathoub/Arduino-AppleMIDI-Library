@@ -31,22 +31,24 @@ arduino-cli lib install "MIDI library"
 arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
 arduino-cli lib install EthernetBonjour
 
-# Compile all *.ino files for the Arduino Uno
-for f in **/AVR_*.ino ; do
-    arduino-cli compile -b arduino:avr:uno $f
-done
+# Uno has 2 KiB SRAM; skip the full AVR_* set (e.g. AVR_MultipleSessions).
+echo "Compiling examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino for arduino:avr:uno"
+arduino-cli compile -b arduino:avr:uno examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino
 
 # Compile all *.ino files for the Arduino Zero
 for f in **/SAMD_*.ino ; do
+    echo "Compiling $f for arduino:samd:mkrzero"
     arduino-cli compile -b arduino:samd:mkrzero $f
 done
 
 # Compile all *.ino files for the ESP8266
 for f in **/ESP8266_*.ino ; do
+    echo "Compiling $f for esp8266:esp8266:generic"
     arduino-cli compile -b esp8266:esp8266:generic $f
 done
 
 # Compile all *.ino files for the ESP32
 for f in **/ESP32_*.ino ; do
+    echo "Compiling $f for esp32:esp32:esp32"
     arduino-cli compile -b esp32:esp32:esp32 $f
 done
