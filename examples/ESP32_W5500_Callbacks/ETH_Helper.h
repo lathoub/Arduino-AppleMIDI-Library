@@ -1,9 +1,6 @@
-#ifdef ETHERNET3
-#include <Ethernet3.h>
-#else
 #include <Ethernet.h>
 #include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
-#endif
+#include <string>
 
 // to get the Mac address
 #include "esp_mac.h"
@@ -16,6 +13,8 @@
 byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
+
+const char* mdnsAppleMIDI = "._apple-midi";
 
 /*
    Wiz W5500 reset function.  Change this for the specific reset
@@ -34,18 +33,11 @@ void hardreset() {
 
 bool ETH_startup()
 {
-#ifdef ETHERNET3
-  Ethernet.setRstPin(RESET_PIN);
-  Ethernet.setCsPin(CS_PIN);
-  Ethernet.init(4); // maxSockNum = 4 Socket 0...3 -> RX/TX Buffer 4k
-  Serial.println("Resetting Wiz W5500 Ethernet Board...  ");
-  Ethernet.hardreset();
-#else
   Ethernet.init(CS_PIN);
-  Serial.println("Resetting Wiz Ethernet Board...  ");
+  AM_DBG("Resetting Wiz Ethernet Board...  ");
   hardreset();
-#endif
 
+  // Borrow MAC from the ESP32 wifi 
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
 
   /*
@@ -56,27 +48,18 @@ bool ETH_startup()
                        comments to the contrary elsewhere). You
                        -must- supply a MAC address here.
   */
-#ifdef ETHERNET3
-  Serial.println("Starting Ethernet3 connection...");
-#else
-  Serial.println("Starting Ethernet connection...");
-#endif
+  AM_DBG("Starting Ethernet connection...");
 
   Ethernet.begin(mac);
-  Serial.print("Ethernet IP is: ");
-  Serial.println(Ethernet.localIP());
+  AM_DBG("Ethernet IP is:", Ethernet.localIP());
 
   /*
      Sanity checks for W5500 and cable connection.
   */
-  Serial.println("Checking connection.");
+  AM_DBG("Checking connection.");
   bool rdy_flag = false;
   for (uint8_t i = 0; i <= 20; i++) {
-#ifdef ETHERNET3
-    if ((Ethernet.link() == 0)) {
-#else
     if ((Ethernet.linkStatus() == Unknown)) {
-#endif
       Serial.print(".");
       rdy_flag = false;
       delay(80);
@@ -86,25 +69,13 @@ bool ETH_startup()
     }
   }
   if (rdy_flag == false) {
-    Serial.println("\n\r\tHardware fault, or cable problem... cannot continue.");
+    AM_DBG("\n\r\tHardware fault, or cable problem... cannot continue.");
     while (true) {
       delay(10);          // Halt.
     }
   } else {
-    Serial.println("OK");
+    AM_DBG("OK");
   }
-
-#ifndef ETHERNET3
-  // Initialize the Bonjour/MDNS library. You can now reach or ping this
-  // Arduino via the host name "arduino.local", provided that your operating
-  // system is Bonjour-enabled (such as MacOS X).
-  // Always call this before any other method!
-  EthernetBonjour.begin("arduino");
-
-  EthernetBonjour.addServiceRecord("Arduino._apple-midi",
-                                   5004,
-                                   MDNSServiceUDP);
-#endif
 
   return true;
 }
