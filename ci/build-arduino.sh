@@ -46,8 +46,12 @@ for f in **/ESP8266_*.ino ; do
     arduino-cli compile -b esp8266:esp8266:generic $f
 done
 
-# Compile all *.ino files for the ESP32
+# Compile ESP32 examples. Skip DynamicInstantiation: it needs a W5500 helper
+# (D5/D7 pins) and is not a generic esp32:esp32:esp32 target.
 for f in **/ESP32_*.ino ; do
+    case "$f" in
+      *ESP32_DynamicInstantiation*) continue ;;
+    esac
     echo "Compiling $f for esp32:esp32:esp32"
     arduino-cli compile -b esp32:esp32:esp32 $f
 done
