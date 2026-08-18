@@ -54,11 +54,10 @@ typedef const char* AppleMIDIConstStr;
 #define MidiOutBuffer_t Deque<byte, Settings::MaxMidiOutSize>
 #define MidiBuffer_t MidiInBuffer_t
 
+// Size gates (define in the sketch before #include <AppleMIDI.h>):
 // #define USE_EXT_CALLBACKS
 // #define ONE_PARTICIPANT // memory optimization
 // #define USE_DIRECTORY
-//
-// Size gates (define in the sketch before #include <AppleMIDI.h>):
 // #define APPLEMIDI_SMALL                 // skip journals + outbound RS
 // #define APPLEMIDI_SKIP_JOURNALS         // drain journal bytes; parser file is kept
 // #define APPLEMIDI_NO_RECEIVER_FEEDBACK  // do not send RS; receive path is kept
