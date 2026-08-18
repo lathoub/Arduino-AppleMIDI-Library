@@ -1,9 +1,5 @@
-#ifdef ETHERNET3
-#include <Ethernet3.h>
-#else
 #include <Ethernet.h>
 #include <EthernetBonjour.h> // https://github.com/TrippyLighting/EthernetBonjour
-#endif
 
 // to get the Mac address
 #include "esp_mac.h"
@@ -34,17 +30,9 @@ void hardreset() {
 
 bool ETH_startup()
 {
-#ifdef ETHERNET3
-  Ethernet.setRstPin(RESET_PIN);
-  Ethernet.setCsPin(CS_PIN);
-  Ethernet.init(4); // maxSockNum = 4 Socket 0...3 -> RX/TX Buffer 4k
-  Serial.println("Resetting Wiz W5500 Ethernet Board...  ");
-  Ethernet.hardreset();
-#else
   Ethernet.init(CS_PIN);
   Serial.println("Resetting Wiz Ethernet Board...  ");
   hardreset();
-#endif
 
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
 
@@ -56,12 +44,9 @@ bool ETH_startup()
                        comments to the contrary elsewhere). You
                        -must- supply a MAC address here.
   */
-#ifdef ETHERNET3
-  Serial.println("Starting Ethernet3 connection...");
-#else
   Serial.println("Starting Ethernet connection...");
   //if (Ethernet.hardwareStatus() == EthernetNoHardware) Serial.println("No EthernetHW");  
-#endif
+
   Ethernet.begin(mac);
   Serial.print("Ethernet IP is: ");
   Serial.println(Ethernet.localIP());
@@ -72,11 +57,7 @@ bool ETH_startup()
   Serial.println("Checking connection.");
   bool rdy_flag = false;
   for (uint8_t i = 0; i <= 20; i++) {
-#ifdef ETHERNET3
-    if ((Ethernet.link() == 0)) {
-#else
     if ((Ethernet.linkStatus() == Unknown)) {
-#endif
       Serial.print(".");
       rdy_flag = false;
       delay(80);
@@ -94,7 +75,6 @@ bool ETH_startup()
     Serial.println("OK");
   }
 
-#ifndef ETHERNET3
   // Initialize the Bonjour/MDNS library. You can now reach or ping this
   // Arduino via the host name "arduino.local", provided that your operating
   // system is Bonjour-enabled (such as MacOS X).
@@ -104,7 +84,6 @@ bool ETH_startup()
   EthernetBonjour.addServiceRecord("apple-midi",        //Arduino._apple-midi doesnt work
                                    5004,
                                    MDNSServiceUDP);
-#endif
 
   return true;
 }

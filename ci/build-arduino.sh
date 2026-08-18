@@ -28,7 +28,6 @@ ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
 arduino-cli lib install Ethernet
 arduino-cli lib install "MIDI library"
-arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
 arduino-cli lib install EthernetBonjour
 
 # Uno has 2 KiB SRAM; skip the full AVR_* set (e.g. AVR_MultipleSessions).
