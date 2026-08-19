@@ -6,7 +6,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 
 ## Features
 * Build on top of the popular [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
-* Tested with AppleMIDI on Mac OS (Big Sur) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10
+* Tested with AppleMIDI on Mac OS (Tahoe) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10 & 11.
 * Send and receive all MIDI messages
 * Uses callbacks to receive MIDI commands (no need for polling)
 * Automatic instantiation of AppleMIDI object (see at the end of 'AppleMIDI.h')
@@ -19,7 +19,7 @@ Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ..
 * Large SysEx is split per RFC 6295 (`F0`/`F7`); see [SysEx and extra F0/F7 bytes](#sysex-and-extra-f0f7-bytes)
 
 ## Installation
-From the Arduino IDE Library Manager, search for AppleMIDI
+Clone locally or download from the Arduino IDE Library Manager, search for AppleMIDI
 
 <img width="786" alt="Installation" src="https://github.com/lathoub/Arduino-AppleMIDI-Library/blob/master/res/Install3-1.PNG">
 
@@ -62,6 +62,7 @@ More usages in the [examples](https://github.com/lathoub/Arduino-AppleMIDI-Libra
 * ESP32 (Adafruit HUZZAH32 – ESP32 Feather Board) Wi-Fi
 * ESP32 with W5500 [Setup](https://github.com/lathoub/Arduino-AppleMIDI-Library/discussions/135)
 * ESP32 ETH W5500 (Native ESP32 W5500 support)
+* Seeed Studio XIAO ESP32 C3
 * Teensy 3.2 & 4.1
 * Adafruit Feather M0 WiFi - ATSAMD21 + ATWINC1500 
 
@@ -94,14 +95,14 @@ Define these in the sketch **before** `#include <AppleMIDI.h>`:
 `APPLEMIDI_SMALL` is used in `examples/AVR_MinMemUsage`. More on the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Memory-footprint). 
 
 ### Ethernet buffer size
-It's highly recommended to modify the [Ethernet library](https://github.com/arduino-libraries/Ethernet) or use the [Ethernet3 library](https://github.com/sstaub/Ethernet3) to avoid buffer overruns - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
+It's highly recommended to modify the [Ethernet library](https://github.com/arduino-libraries/Ethernet) - [learn more](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Enlarge-Ethernet-buffer-size-to-avoid-dropping-UDP-packages)
 
 ### Latency
 Use wired Ethernet to reduce latency, Wi-Fi increases latency and latency varies. More of the [wiki](https://github.com/lathoub/Arduino-AppleMIDI-Library/wiki/Keeping-Latency-under-control)  
 
 ## Arduino IDE (arduino.cc)
 * 1.8.16
-* 2.3.7
+* 2.3.10
 
 ## Contributing
 I would love to include your enhancements or bug fixes! In lieu of a formal styleguide, please take care to maintain the existing coding style. Please test your code before sending a pull request. It would be very helpful if you include a detailed explanation of your changes in the pull request.
