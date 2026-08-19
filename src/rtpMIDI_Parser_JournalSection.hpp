@@ -1,3 +1,7 @@
+// Compiled into rtpMIDIParser only when APPLEMIDI_SKIP_JOURNALS is not defined.
+// Keep this file; do not delete it. Enable parsing with APPLEMIDI_PARSE_JOURNALS
+// if you also defined APPLEMIDI_SMALL.
+//
 // The recovery journal is the default resiliency tool for unreliable
 // transport. In this section, we normatively define the roles that
 // senders and receivers play in the recovery journal system.
@@ -95,6 +99,8 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             cb.buffer[1] = buffer[i++];
             uint16_t systemflags = __ntohs(cb.value16);
             uint16_t sysjourlen = systemflags & RTP_MIDI_SJ_MASK_LENGTH;
+            if (sysjourlen < 2)
+                return parserReturn::UnexpectedJournalData;
 
             uint16_t remainingBytes = sysjourlen - 2;
 
@@ -140,7 +146,10 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
             //bool S_flag         = (chanflags & RTP_MIDI_CJ_FLAG_S) == 1;
             //uint8_t channelNr   = (chanflags & RTP_MIDI_CJ_MASK_CHANNEL) >> RTP_MIDI_CJ_CHANNEL_SHIFT; 
             //bool H_flag         = (chanflags & RTP_MIDI_CJ_FLAG_H) == 1;
-            uint8_t chanjourlen = (chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8;
+            // LENGTH is 10 bits and includes the 3-octet header (RFC 4695)
+            uint16_t chanjourlen = (uint16_t)((chanflags & RTP_MIDI_CJ_MASK_LENGTH) >> 8);
+            if (chanjourlen < 3)
+                return parserReturn::UnexpectedJournalData;
 
             if ((chanflags & RTP_MIDI_CJ_FLAG_P)) {
             }
@@ -170,9 +179,10 @@ parserReturn decodeJournalSection(RtpBuffer_t &buffer)
         }
 
         if (_bytesToFlush > 0) {
-            return parserReturn::NotEnoughData;
+            return parserReturn::NotEnoughData; // resume this channel on the next read
         }
 
+        _channelJournalSectionComplete = false; // next TOTCHAN journal, if any
         _journalTotalChannels--;
     }
 

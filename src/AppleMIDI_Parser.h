@@ -78,28 +78,35 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
+            bool sawNul = false;
             while (i < buffer.size())
             {
+                uint8_t ch = buffer[i++];
+                if (ch == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
                 if (bi < Settings::MaxSessionNameLen)
-                    invitation.sessionName[bi++] = buffer[i++];
-                else
-                    i++;
+                    invitation.sessionName[bi++] = (char)ch;
             }
-            invitation.sessionName[bi++] = '\0';
+            invitation.sessionName[bi] = '\0';
 #else
+            bool sawNul = false;
             while (i < buffer.size())
-                i++;
+            {
+                if (buffer[i++] == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
+            }
 #endif
             auto retVal = parserReturn::Processed;
 
-            // when given a Session Name and the buffer has been fully processed and the 
-            // last character is not 'endl', then we got a very long sessionName. It will
-            // continue in the next memory chunk of the packet. We don't care, so indicated
-            // flush the remainder of the packet.
-            // First part if the session name is kept, processing continues
-            if (i > minimumLen)
-                if (i == buffer.size() && buffer[buffer.size() - 1] != 0x00)
-                    retVal = parserReturn::SessionNameVeryLong;
+            // Name continues past this buffer chunk (common for very long Mac session names).
+            if (!sawNul)
+                retVal = parserReturn::SessionNameVeryLong;
 
             while (i > 0)
             {
@@ -282,29 +289,36 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
+            bool sawNul = false;
             while (i < buffer.size())
             {
+                uint8_t ch = buffer[i++];
+                if (ch == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
                 if (bi < Settings::MaxSessionNameLen)
-                    invitationAccepted.sessionName[bi++] = buffer[i++];
-                else
-                    i++;
+                    invitationAccepted.sessionName[bi++] = (char)ch;
             }
-            invitationAccepted.sessionName[bi++] = '\0';
+            invitationAccepted.sessionName[bi] = '\0';
 #else
+            bool sawNul = false;
             while (i < buffer.size())
-                i++;
+            {
+                if (buffer[i++] == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
+            }
 #endif
 
             auto retVal = parserReturn::Processed;
 
-            // when given a Session Name and the buffer has been fully processed and the 
-            // last character is not 'endl', then we got a very long sessionName. It will
-            // continue in the next memory chunk of the packet. We don't care, so indicated
-            // flush the remainder of the packet.
-            // First part if the session name is kept, processing continues
-            if (i > minimumLen)
-                if (i == buffer.size() && buffer[buffer.size() - 1] != 0x00)
-                    retVal = parserReturn::SessionNameVeryLong;
+            // Name continues past this buffer chunk (common for very long Mac session names).
+            if (!sawNul)
+                retVal = parserReturn::SessionNameVeryLong;
 
             while (i > 0)
             {
@@ -354,22 +368,36 @@ public:
 
 #ifdef KEEP_SESSION_NAME
             uint16_t bi = 0;
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
+            bool sawNul = false;
+            while (i < buffer.size())
             {
+                uint8_t ch = buffer[i++];
+                if (ch == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
                 if (bi < Settings::MaxSessionNameLen)
-                    invitationRejected.sessionName[bi++] = buffer[i];
-                i++;
+                    invitationRejected.sessionName[bi++] = (char)ch;
             }
-            invitationRejected.sessionName[bi++] = '\0';
+            invitationRejected.sessionName[bi] = '\0';
 #else
-            while ((i < buffer.size()) && (buffer[i] != 0x00))
-                i++;
+            bool sawNul = false;
+            while (i < buffer.size())
+            {
+                if (buffer[i++] == 0x00)
+                {
+                    sawNul = true;
+                    break;
+                }
+            }
 #endif
-            // session name is optional.
-            // If i > minimum size (16), then a sessionName was provided and must include 0x00
-            if (i > minimumLen)
-                if (i == buffer.size() || buffer[i++] != 0x00)
-                    return parserReturn::NotEnoughData;
+
+            auto retVal = parserReturn::Processed;
+
+            // Name continues past this buffer chunk (common for very long Mac session names).
+            if (!sawNul)
+                retVal = parserReturn::SessionNameVeryLong;
 
             while (i > 0)
             {
@@ -379,8 +407,9 @@ public:
 
             session->ReceivedInvitationRejected(invitationRejected);
 
-            return parserReturn::Processed;
+            return retVal;
 		}
+#endif
         else if (0 == memcmp(command, amBitrateReceiveLimit, sizeof(amBitrateReceiveLimit)))
         {
             AppleMIDI_BitrateReceiveLimit bitrateReceiveLimit;
@@ -411,7 +440,6 @@ public:
 
             return parserReturn::Processed;
         }
-#endif
         return parserReturn::UnexpectedData;
 	}
 };

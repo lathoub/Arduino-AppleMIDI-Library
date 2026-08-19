@@ -1,3 +1,3 @@
-The hardware is released under Creative Commons Share-alike 4.0.
+This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International.
 
-All other code is open source so please feel free to do anything you want with it; you buy me a beer if you use this and we meet someday (Beerware license).
+https://creativecommons.org/licenses/by-sa/4.0/

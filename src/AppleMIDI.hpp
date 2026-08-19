@@ -5,24 +5,44 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+// Read one UDP datagram into buffer without concatenating the next packet.
+template <class UdpClass, class Settings, class Platform>
+size_t AppleMIDISession<UdpClass, Settings, Platform>::readUdpDatagram(UdpClass &port, RtpBuffer_t &buffer)
+{
+    size_t remaining = port.available(); // unread tail of the current datagram
+
+    if (remaining == 0)
+    {
+        // Current datagram is fully pulled from the socket.
+        // Do not start the next one while leftover bytes are still being parsed.
+        if (!buffer.empty())
+            return buffer.size();
+
+        remaining = port.parsePacket();
+    }
+
+    while (remaining > 0 && !buffer.full())
+    {
+        auto bytesToRead = min(min(remaining, buffer.free()), sizeof(packetBuffer));
+        auto bytesRead = port.read(packetBuffer, bytesToRead);
+        remaining -= bytesRead;
+        buffer.push_back(packetBuffer, bytesRead);
+    }
+
+    return buffer.size();
+}
+
+template <class UdpClass, class Settings, class Platform>
+void AppleMIDISession<UdpClass, Settings, Platform>::drainUdpRemainder(UdpClass &port)
+{
+    while (port.available() > 0 && port.read() >= 0) {}
+}
+
 // Read pending control UDP packets into the control buffer.
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readControlPackets()
 {
-    size_t packetSize = controlPort.available();
-    if (packetSize == 0)
-       packetSize = controlPort.parsePacket();
-
-    while (packetSize > 0 && !controlBuffer.full())
-    {
-        auto bytesToRead = min( min(packetSize, controlBuffer.free()), sizeof(packetBuffer));
-        auto bytesRead = controlPort.read(packetBuffer, bytesToRead);
-        packetSize -= bytesRead;
-
-        controlBuffer.push_back(packetBuffer, bytesRead);
-    }
-
-    return controlBuffer.size();
+    return readUdpDatagram(controlPort, controlBuffer);
 }
 
 // Parse buffered control packets and handle errors.
@@ -32,10 +52,17 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
     while (controlBuffer.size() > 0)
     {
         auto retVal = _appleMIDIParser.parse(controlBuffer, amPortType::Control);
-        if (retVal == parserReturn::Processed 
-        ||  retVal == parserReturn::NotEnoughData
-        ||  retVal == parserReturn::NotSureGiveMeMoreData)
+        if (retVal == parserReturn::Processed)
         {
+            if (controlBuffer.empty())
+                drainUdpRemainder(controlPort);
+            break;
+        }
+        if (retVal == parserReturn::NotEnoughData
+         || retVal == parserReturn::NotSureGiveMeMoreData)
+        {
+            if (controlPort.available() == 0)
+                controlBuffer.clear(); // truncated/incomplete datagram
             break;
         }
         else if (retVal == parserReturn::UnexpectedData)
@@ -48,8 +75,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
         }
         else if (retVal == parserReturn::SessionNameVeryLong)
         {
-            // purge the rest of the data in controlPort
-            while (controlPort.read() >= 0) {}
+            drainUdpRemainder(controlPort);
         }
     }
 }
@@ -58,20 +84,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseControlPackets()
 template <class UdpClass, class Settings, class Platform>
 size_t AppleMIDISession<UdpClass, Settings, Platform>::readDataPackets()
 {
-    size_t packetSize = dataPort.available();
-    if (packetSize == 0)
-       packetSize = dataPort.parsePacket();
-    
-    while (packetSize > 0 && !dataBuffer.full())
-    {
-        auto bytesToRead = min( min(packetSize, dataBuffer.free()), sizeof(packetBuffer));
-        auto bytesRead = dataPort.read(packetBuffer, bytesToRead);
-        packetSize -= bytesRead;
-
-        dataBuffer.push_back(packetBuffer, bytesRead);
-    }
-
-    return dataBuffer.size();
+    return readUdpDatagram(dataPort, dataBuffer);
 }
 
 // Parse buffered data packets using RTP-MIDI and AppleMIDI parsers.
@@ -81,25 +94,41 @@ void AppleMIDISession<UdpClass, Settings, Platform>::parseDataPackets()
     while (dataBuffer.size() > 0)
     {
         auto retVal1 = _rtpMIDIParser.parse(dataBuffer);
-        if (retVal1 == parserReturn::Processed
-        ||  retVal1 == parserReturn::NotEnoughData)
+        if (retVal1 == parserReturn::Processed)
+        {
+            if (dataBuffer.empty())
+                drainUdpRemainder(dataPort);
             break;
-        
+        }
+        if (retVal1 == parserReturn::NotEnoughData)
+        {
+            if (dataPort.available() == 0 && !_rtpMIDIParser.isMidMessage())
+                dataBuffer.clear();
+            break;
+        }
+
         auto retVal2 = _appleMIDIParser.parse(dataBuffer, amPortType::Data);
-        if (retVal2 == parserReturn::Processed
-        ||  retVal2 == parserReturn::NotEnoughData)
+        if (retVal2 == parserReturn::Processed)
+        {
+            if (dataBuffer.empty())
+                drainUdpRemainder(dataPort);
             break;
-
-        //  // both don't have data to determine protocol
-        if (retVal1 == parserReturn::NotSureGiveMeMoreData
-        &&  retVal2 == parserReturn::NotSureGiveMeMoreData)
+        }
+        if (retVal2 == parserReturn::NotEnoughData)
+        {
+            if (dataPort.available() == 0)
+                dataBuffer.clear();
             break;
+        }
 
-        // one or the other don't have enough data to determine the protocol
         if (retVal1 == parserReturn::NotSureGiveMeMoreData
-        ||  retVal2 == parserReturn::NotSureGiveMeMoreData)
-            break; // one or the other buffer does not have enough data
-        
+         || retVal2 == parserReturn::NotSureGiveMeMoreData)
+        {
+            if (dataPort.available() == 0 && !_rtpMIDIParser.isMidMessage())
+                dataBuffer.clear();
+            break;
+        }
+
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
             _exceptionCallback(ssrc, UnexpectedParseException, 0);
@@ -225,7 +254,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitation(Appl
     // of the ssrc here.
     auto ssrc_ = invitation.ssrc;
     
-    writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remotePort + 1, invitation, amInvitationAccepted);
+    pParticipant->remoteDataPort = dataPort.remotePort();
+
+    writeInvitation(dataPort, dataPort.remoteIP(), pParticipant->remoteDataPort, invitation, amInvitationAccepted);
 
     pParticipant->kind = Listener;
     
@@ -296,24 +327,30 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedDataInvitationAccep
     }
     
     pParticipant->invitationStatus = DataInvitationAccepted;
+    pParticipant->remoteDataPort = dataPort.remotePort();
 }
 
 // Remove participant on invitation rejection.
+// Match by initiator token, same as OK: the peer SSRC is unknown until control OK.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedInvitationRejected(AppleMIDI_InvitationRejected_t & invitationRejected)
 {
-    for (auto i = 0; i < participants.size(); i++)
-    {
-        if (invitationRejected.ssrc == participants[i].ssrc)
-        {
 #ifndef ONE_PARTICIPANT
+    for (size_t i = 0; i < participants.size(); i++)
+    {
+        if (invitationRejected.initiatorToken == participants[i].initiatorToken)
+        {
             participants.erase(i);
-#else
-            participant.ssrc = 0;
-#endif
             return;
         }
     }
+#else
+    if (invitationRejected.initiatorToken != participant.initiatorToken)
+        return;
+    participant.ssrc = 0;
+    participant.kind = Listener;
+    participant.initiatorToken = 0;
+#endif
 }
 #endif
 
@@ -399,13 +436,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedSynchronization(App
     case SYNC_CK0: /* From session APPLEMIDI_INITIATOR */
         synchronization.timestamps[SYNC_CK1] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK1;
-        writeSynchronization(pParticipant->remoteIP, pParticipant->remotePort + 1, synchronization);
+        writeSynchronization(pParticipant->remoteIP, pParticipant->remoteDataPort, synchronization);
         break;
     case SYNC_CK1: /* From session LISTENER */
 #ifdef APPLEMIDI_INITIATOR
         synchronization.timestamps[SYNC_CK2] = rtpMidiClock.Now();
         synchronization.count = SYNC_CK2;
-        writeSynchronization(pParticipant->remoteIP, pParticipant->remotePort + 1, synchronization);
+        writeSynchronization(pParticipant->remoteIP, pParticipant->remoteDataPort, synchronization);
         pParticipant->synchronizing = false;
 #endif
         break;
@@ -448,11 +485,12 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedReceiverFeedback(Ap
         return;
     }
 
-    if (pParticipant->sendSequenceNr < receiverFeedback.sequenceNr)
+    int16_t ahead = (int16_t)(receiverFeedback.sequenceNr - pParticipant->sendSequenceNr);
+    if (ahead > 0)
     {
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
-            _exceptionCallback(pParticipant->ssrc, SendPacketsDropped, pParticipant->sendSequenceNr - receiverFeedback.sequenceNr);
+            _exceptionCallback(pParticipant->ssrc, SendPacketsDropped, (int32_t)ahead);
 #endif
     }
 }
@@ -545,6 +583,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeInvitation(UdpClass &p
     port.flush();
 }
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
 // Send receiver feedback on the control port.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const IPAddress& remoteIP, const uint16_t & remotePort, AppleMIDI_ReceiverFeedback_t & receiverFeedback)
@@ -570,6 +609,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeReceiverFeedback(const
     controlPort.endPacket();
     controlPort.flush();
 }
+#endif
 
 // Send a synchronization packet on the data port.
 template <class UdpClass, class Settings, class Platform>
@@ -632,11 +672,13 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiToAllParticipan
     for (size_t i = 0; i < participants.size(); i++)
     {
         auto pParticipant = &participants[i];
-        
+        if (pParticipant->ssrc == 0 || pParticipant->remoteDataPort == 0)
+            continue;
         writeRtpMidiBuffer(pParticipant);
     }
 #else
-    writeRtpMidiBuffer(&participant);
+    if (participant.ssrc != 0 && participant.remoteDataPort != 0)
+        writeRtpMidiBuffer(&participant);
 #endif
     outMidiBuffer.clear();
 }
@@ -708,7 +750,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     rtp.ssrc       = __htonl(rtp.ssrc);
     rtp.sequenceNr = __htons(rtp.sequenceNr);
 
-    if (!dataPort.beginPacket(participant->remoteIP, participant->remotePort + 1))
+    if (!dataPort.beginPacket(participant->remoteIP, participant->remoteDataPort))
     {
 #ifdef USE_EXT_CALLBACKS
         if (nullptr != _exceptionCallback)
@@ -717,11 +759,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
         return;
     }
 
-    // Write RTP + rtpMIDI in a single packet to reduce overhead.
-    uint8_t packet[sizeof(Rtp) + 2 + Settings::MaxBufferSize];
-    size_t offset = 0;
-    memcpy(packet + offset, &rtp, sizeof(rtp));
-    offset += sizeof(rtp);
+    // Write RTP + rtpMIDI without a MaxBufferSize stack copy.
+    dataPort.write(reinterpret_cast<uint8_t *>(&rtp), sizeof(rtp));
 
     RtpMIDI_t rtpMidi;
 
@@ -740,21 +779,28 @@ void AppleMIDISession<UdpClass, Settings, Platform>::writeRtpMidiBuffer(Particip
     { // Short header
         rtpMidi.flags |= (uint8_t)bufferLen;
         rtpMidi.flags &= ~RTP_MIDI_CS_FLAG_B; // short header, clear B-FLAG
-        packet[offset++] = rtpMidi.flags;
+        dataPort.write(&rtpMidi.flags, 1);
     }
     else
     { // Long header
         rtpMidi.flags |= (uint8_t)(bufferLen >> 8);
         rtpMidi.flags |=  RTP_MIDI_CS_FLAG_B; // set B-FLAG for long header
-        packet[offset++] = rtpMidi.flags;
-        packet[offset++] = (uint8_t)(bufferLen);
+        uint8_t hdr[2] = { rtpMidi.flags, (uint8_t)bufferLen };
+        dataPort.write(hdr, 2);
     }
 
-    // write out the MIDI Section
-    offset += outMidiBuffer.copy_out(packet + offset, bufferLen);
-
-    // *No* journal section (Not supported)
-    dataPort.write(packet, offset);
+    size_t remaining = bufferLen;
+    size_t idx = 0;
+    while (remaining > 0)
+    {
+        size_t n = remaining;
+        if (n > sizeof(packetBuffer))
+            n = sizeof(packetBuffer);
+        for (size_t j = 0; j < n; j++)
+            packetBuffer[j] = outMidiBuffer[idx++];
+        dataPort.write(packetBuffer, n);
+        remaining -= n;
+    }
 
     dataPort.endPacket();
     dataPort.flush();
@@ -817,8 +863,19 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronization()
         }
         else
         {
-            (pParticipant->synchronizing) ? manageSynchronizationInitiatorInvites(i)
-                                          : manageSynchronizationInitiatorHeartBeat(pParticipant);
+            if (pParticipant->synchronizing)
+            {
+                if (manageSynchronizationInitiatorInvites(pParticipant))
+#ifndef ONE_PARTICIPANT
+                    continue;
+#else
+                    return;
+#endif
+            }
+            else
+            {
+                manageSynchronizationInitiatorHeartBeat(pParticipant);
+            }
         }
 #endif
 #ifndef ONE_PARTICIPANT
@@ -871,10 +928,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
 
 // Retry sync invitations while establishing synchronization.
 template <class UdpClass, class Settings, class Platform>
-void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorInvites(size_t i)
+bool AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitiatorInvites(Participant<Settings>* pParticipant)
 {
-    auto pParticipant = &participants[i];
-
     if (now - pParticipant->lastInviteSentTime >  10000)
     {
         if (pParticipant->synchronizationCount > Settings::MaxSynchronizationCK0Attempts)
@@ -883,18 +938,25 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSynchronizationInitia
             if (nullptr != _exceptionCallback)
                 _exceptionCallback(ssrc, MaxAttemptsException, 0);
 #endif
-            // After too many attempts, stop.
             sendEndSession(pParticipant);
 
 #ifndef ONE_PARTICIPANT
-            participants.erase(i);
+            for (size_t j = 0; j < participants.size(); j++)
+            {
+                if (&participants[j] == pParticipant)
+                {
+                    participants.erase(j);
+                    break;
+                }
+            }
 #else
             participant.ssrc = 0;
 #endif
-            return;
+            return true;
         }
         sendSynchronization(pParticipant);
     }
+    return false;
 }
 
 #endif
@@ -909,7 +971,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::sendSynchronization(Partici
     synchronization.timestamps[SYNC_CK2] = 0;
     synchronization.count = 0;
 
-    writeSynchronization(participant->remoteIP, participant->remotePort + 1, synchronization);
+    writeSynchronization(participant->remoteIP, participant->remoteDataPort, synchronization);
     participant->synchronizing = true;
     participant->synchronizationCount++;
     participant->lastInviteSentTime = now;
@@ -1001,7 +1063,8 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
             if (pParticipant->invitationStatus == ControlInvitationAccepted
             ||  pParticipant->invitationStatus == AwaitingDataInvitationAccepted)
             {
-                writeInvitation(dataPort, pParticipant->remoteIP, pParticipant->remotePort + 1, invitation, amInvitation);
+                // Data invite goes to control+1; remoteDataPort is set from the OK.
+                writeInvitation(dataPort, pParticipant->remoteIP, (uint16_t)(pParticipant->remotePort + 1), invitation, amInvitation);
                 pParticipant->invitationStatus = AwaitingDataInvitationAccepted;
             }
         }
@@ -1011,6 +1074,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageSessionInvites()
     }
 }
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
 // Periodically emit receiver feedback for active participants.
 // The recovery journal mechanism requires that the receiver
 // periodically inform the sender of the sequence number of the most
@@ -1053,6 +1117,7 @@ void AppleMIDISession<UdpClass, Settings, Platform>::manageReceiverFeedback()
         }
     }
 }
+#endif
 
 #ifdef APPLEMIDI_INITIATOR
 
@@ -1133,41 +1198,54 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedRtp(const Rtp_t& rt
     auto pParticipant = (participant.ssrc == rtp.ssrc) ? &participant : nullptr;
 #endif
     
-    if (nullptr != pParticipant)
+    _acceptIncomingMidi = (pParticipant != nullptr);
+    if (!_acceptIncomingMidi)
     {
-        if (pParticipant->doReceiverFeedback == false)
-            pParticipant->receiverFeedbackStartTime = now;
-        pParticipant->doReceiverFeedback = true;
-
 #ifdef USE_EXT_CALLBACKS
-        auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
-        auto latency = (int32_t)(rtpMidiClock.Now() - offset);
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, ParticipantNotFoundException, rtp.ssrc);
+#endif
+        return;
+    }
 
-        if (pParticipant->firstMessageReceived == true)
-            // avoids first message to generate sequence exception
-            // as we do not know the last sequenceNr received.
-            pParticipant->firstMessageReceived = false;
-        else if (rtp.sequenceNr - pParticipant->receiveSequenceNr - 1 != 0) {
-            if (nullptr != _exceptionCallback)
-                _exceptionCallback(ssrc, ReceivedPacketsDropped, rtp.sequenceNr - pParticipant->receiveSequenceNr - 1);
-        }
-
-        if (nullptr != _receivedRtpCallback)
-            _receivedRtpCallback(pParticipant->ssrc, rtp, latency);
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
+    if (pParticipant->doReceiverFeedback == false)
+        pParticipant->receiverFeedbackStartTime = now;
+    pParticipant->doReceiverFeedback = true;
 #endif
 
-        pParticipant->receiveSequenceNr = rtp.sequenceNr;
-    }
+#ifdef USE_EXT_CALLBACKS
+    auto offset = (rtp.timestamp - pParticipant->offsetEstimate);
+    auto latency = (int32_t)(rtpMidiClock.Now() - offset);
+
+    if (pParticipant->firstMessageReceived == true)
+        // avoids first message to generate sequence exception
+        // as we do not know the last sequenceNr received.
+        pParticipant->firstMessageReceived = false;
     else
     {
-        // TODO??? re-connect?
+        // RFC 3550 serial arithmetic: uint16 wrap 65535 -> 0 is delta 1, not loss.
+        int16_t delta = (int16_t)(rtp.sequenceNr - pParticipant->receiveSequenceNr);
+        if (delta > 1) {
+            if (nullptr != _exceptionCallback)
+                _exceptionCallback(ssrc, ReceivedPacketsDropped, (int32_t)(delta - 1));
+        }
     }
+
+    if (nullptr != _receivedRtpCallback)
+        _receivedRtpCallback(pParticipant->ssrc, rtp, latency);
+#endif
+
+    pParticipant->receiveSequenceNr = rtp.sequenceNr;
 }
 
 // Notify that a MIDI byte stream has started.
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
    if (nullptr != _startReceivedMidiByteCallback)
         _startReceivedMidiByteCallback(ssrc);
@@ -1178,10 +1256,22 @@ void AppleMIDISession<UdpClass, Settings, Platform>::StartReceivedMidi()
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _receivedMidiByteCallback)
         _receivedMidiByteCallback(ssrc, value);
 #endif
+
+    if (inMidiBuffer.full())
+    {
+#ifdef USE_EXT_CALLBACKS
+        if (nullptr != _exceptionCallback)
+            _exceptionCallback(ssrc, BufferFullException, 1);
+#endif
+        return;
+    }
 
     inMidiBuffer.push_back(value);
 }
@@ -1190,6 +1280,9 @@ void AppleMIDISession<UdpClass, Settings, Platform>::ReceivedMidi(byte value)
 template <class UdpClass, class Settings, class Platform>
 void AppleMIDISession<UdpClass, Settings, Platform>::EndReceivedMidi()
 {
+    if (!_acceptIncomingMidi)
+        return;
+
 #ifdef USE_EXT_CALLBACKS
     if (nullptr != _endReceivedMidiByteCallback)
         _endReceivedMidiByteCallback(ssrc);

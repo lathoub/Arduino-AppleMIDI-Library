@@ -1,12 +1,13 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiUdp.h>
+#include <ESPmDNS.h>
 
 #define SerialMon Serial
 #include <AppleMIDI.h>
 
-char ssid[] = "ssid"; //  your network SSID (name)
-char pass[] = "password";    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "Het internet ga weer nie"; //  your network SSID (name)
+char pass[] = "MEEN_con2door@nusm";    // your network password (use for WPA, or use as key for WEP)
 
 unsigned long t0 = millis();
 int8_t isConnected = 0;
@@ -52,6 +53,22 @@ void setup()
   MIDI.setHandleNoteOff([](byte channel, byte note, byte velocity) {
     AM_DBG(F("NoteOff"), note);
   });
+
+  // Set up mDNS responder:
+  // - first argument is the domain name, in this example
+  //   the fully-qualified domain name is "esp32.local"
+  // - second argument is the IP address to advertise
+  //   we send our IP address on the WiFi network
+  if (!MDNS.begin("esp32")) {
+    AM_DBG("Error setting up MDNS responder!");
+    while (1) {
+      delay(1000);
+    }
+  }
+  AM_DBG("mDNS responder started");
+
+  // Add service to MDNS-SD
+  MDNS.addService("apple-midi", "udp", 5004);
 
   AM_DBG(F("Sending NoteOn/Off of note 45, every second"));
 }

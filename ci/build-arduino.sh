@@ -13,40 +13,45 @@ export PATH=$PATH:$GITHUB_WORKSPACE/bin
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
 arduino-cli config init
 arduino-cli config set library.enable_unsafe_install true
-arduino-cli core update-index --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
-arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 arduino-cli core update-index
 
-# Install Arduino AVR core
+# Install cores
 arduino-cli core install arduino:avr
 arduino-cli core install arduino:samd
-# arduino-cli core install arduino:esp8266
-# arduino-cli core install esp32:esp32:esp32doit-devkit-v1
+arduino-cli core install esp8266:esp8266
+arduino-cli core install esp32:esp32
 
 # Link Arduino library
 ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/CI_Test_Library
 
 arduino-cli lib install Ethernet
 arduino-cli lib install "MIDI library"
-arduino-cli lib install --git-url https://github.com/sstaub/Ethernet3.git
 arduino-cli lib install EthernetBonjour
 
-# Compile all *.ino files for the Arduino Uno
-for f in **/AVR_*.ino ; do
-    arduino-cli compile -b arduino:avr:uno $f
-done
+# Uno has 2 KiB SRAM; skip the full AVR_* set (e.g. AVR_MultipleSessions).
+echo "Compiling examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino for arduino:avr:uno"
+arduino-cli compile -b arduino:avr:uno examples/AVR_NoteOnOffEverySec/AVR_NoteOnOffEverySec.ino
 
 # Compile all *.ino files for the Arduino Zero
 for f in **/SAMD_*.ino ; do
+    echo "Compiling $f for arduino:samd:mkrzero"
     arduino-cli compile -b arduino:samd:mkrzero $f
 done
 
 # Compile all *.ino files for the ESP8266
-# for f in **/ESP8266_*.ino ; do
-#     arduino-cli compile -b arduino:esp8266:??? $f
-# done
+for f in **/ESP8266_*.ino ; do
+    echo "Compiling $f for esp8266:esp8266:generic"
+    arduino-cli compile -b esp8266:esp8266:generic $f
+done
 
-# Compile all *.ino files for the ESP32
-# for f in **/ESP32_*.ino ; do
-#     arduino-cli compile -b arduino:esp32:??? $f
-# done
+# Compile ESP32 examples. Skip DynamicInstantiation: it needs a W5500 helper
+# (D5/D7 pins) and is not a generic esp32:esp32:esp32 target.
+for f in **/ESP32_*.ino ; do
+    case "$f" in
+      *ESP32_DynamicInstantiation*) continue ;;
+    esac
+    echo "Compiling $f for esp32:esp32:esp32"
+    arduino-cli compile -b esp32:esp32:esp32 $f
+done

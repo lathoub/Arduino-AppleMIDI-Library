@@ -20,10 +20,12 @@ class rtpMIDIParser
 {
 private:
     bool _rtpHeadersComplete = false;
+#ifndef APPLEMIDI_SKIP_JOURNALS
     bool _journalSectionComplete = false;
     bool _channelJournalSectionComplete = false;
-    uint16_t midiCommandLength;
     uint8_t _journalTotalChannels;
+#endif
+    uint16_t midiCommandLength;
     uint8_t rtpMidi_Flags = 0;
     int cmdCount = 0;
     uint8_t runningstatus = 0;
@@ -51,6 +53,8 @@ protected:
 
 public:
 	AppleMIDISession<UdpClass, Settings, Platform> * session;
+
+	bool isMidMessage() const { return _rtpHeadersComplete; }
     
 	//  Parse the incoming string
 	// return:
@@ -176,18 +180,33 @@ public:
             }
             
             _rtpHeadersComplete = true;
-                        
+#ifndef APPLEMIDI_SKIP_JOURNALS
             // initialize the Journal Section
             _journalSectionComplete = false;
             _channelJournalSectionComplete = false;
             _journalTotalChannels = 0;
+#endif
         }
   
 		// Always a MIDI section
 		if (midiCommandLength > 0)
         {
 			auto retVal = decodeMIDICommandSection(buffer);
-            if (retVal != parserReturn::Processed) return retVal;
+            if (retVal != parserReturn::Processed)
+            {
+                if (retVal != parserReturn::NotEnoughData)
+                {
+                    _rtpHeadersComplete = false;
+#ifndef APPLEMIDI_SKIP_JOURNALS
+                    _journalSectionComplete = false;
+                    _channelJournalSectionComplete = false;
+                    _journalTotalChannels = 0;
+#endif
+                    midiCommandLength = 0;
+                    runningstatus = 0;
+                }
+                return retVal;
+            }
         }
   
         // The payload MAY also contain a journal section. The journal section
@@ -197,6 +216,11 @@ public:
 
         if (rtpMidi_Flags & RTP_MIDI_CS_FLAG_J)
         {
+#ifdef APPLEMIDI_SKIP_JOURNALS
+            // Journals are never applied. Drop leftover payload; available()
+            // drains the unread tail of this UDP datagram when the buffer is empty.
+            buffer.clear();
+#else
             auto retVal = decodeJournalSection(buffer);
             switch (retVal) {
             case parserReturn::Processed:
@@ -217,6 +241,7 @@ public:
                 _journalTotalChannels = 0;
                 return retVal;
             }
+#endif
         }
 
         _rtpHeadersComplete = false;
@@ -224,8 +249,9 @@ public:
         return parserReturn::Processed;
 	}
 
+#ifndef APPLEMIDI_SKIP_JOURNALS
     #include "rtpMIDI_Parser_JournalSection.hpp"
-    
+#endif
     #include "rtpMIDI_Parser_CommandSection.hpp"
 };
 

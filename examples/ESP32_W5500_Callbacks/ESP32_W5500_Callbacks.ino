@@ -1,9 +1,10 @@
-#include "ETH_Helper.h"
-
 #define SerialMon Serial
 #define ONE_PARTICIPANT
 #define USE_EXT_CALLBACKS
+#define APPLEMIDI_SMALL   
 #include <AppleMIDI.h>
+
+#include "ETH_Helper.h"
 
 unsigned long t1 = millis();
 int8_t isConnected = 0;
@@ -15,8 +16,7 @@ void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t&, const APPLEMIDI_NA
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void setup()
-{
+void setup() {
   AM_DBG_SETUP(115200);
   AM_DBG(F("Das Booting"));
 
@@ -29,35 +29,47 @@ void setup()
 
   MIDI.begin(MIDI_CHANNEL_OMNI);
 
+  // Initialize the Bonjour/MDNS library. You can now reach or ping this
+  // Arduino via the host name "arduino.local", provided that your operating
+  // system is Bonjour-enabled (such as MacOS X).
+  // Always call this before any other method!
+  auto statusCode = EthernetBonjour.begin();
+
+  auto bonjourSessionName = std::string(AppleMIDI.getName()) + mdnsAppleMIDI;
+
+  statusCode = EthernetBonjour.addServiceRecord(bonjourSessionName.c_str(),
+                                   5004,
+                                   MDNSServiceUDP);
+
   // Normal callbacks - always available
   // Stay informed on connection status
-  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const char* name) {
+  AppleMIDI.setHandleConnected([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const char* name) {
     isConnected++;
     AM_DBG(F("Connected to session"), ssrc, name);
   });
-  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc) {
+  AppleMIDI.setHandleDisconnected([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
     isConnected--;
     AM_DBG(F("Disconnected"), ssrc);
   });
 
   // Extended callback, only available when defining USE_EXT_CALLBACKS
-  AppleMIDI.setHandleSentRtp([](const APPLEMIDI_NAMESPACE::Rtp_t & rtp) {
-    //  AM_DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
+  AppleMIDI.setHandleSentRtp([](const APPLEMIDI_NAMESPACE::Rtp_t& rtp) {
+    AM_DBG(F("an rtpMessage has been sent with sequenceNr"), rtp.sequenceNr);
   });
   AppleMIDI.setHandleSentRtpMidi([](const APPLEMIDI_NAMESPACE::RtpMIDI_t& rtpMidi) {
     AM_DBG(F("an rtpMidiMessage has been sent"), rtpMidi.flags);
   });
-  AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::ssrc_t & ssrc, const APPLEMIDI_NAMESPACE::Rtp_t & rtp, const int32_t& latency) {
-    //  AM_DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr , "with", latency, "ms latency");
+  AppleMIDI.setHandleReceivedRtp([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMIDI_NAMESPACE::Rtp_t& rtp, const int32_t& latency) {
+    AM_DBG(F("setHandleReceivedRtp"), ssrc, rtp.sequenceNr, "with", latency, "ms latency");
   });
   AppleMIDI.setHandleStartReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
-    //  AM_DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
+    AM_DBG(F("setHandleStartReceivedMidi from SSRC"), ssrc);
   });
   AppleMIDI.setHandleReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, byte value) {
-    //    AM_DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
+    AM_DBG(F("setHandleReceivedMidi from SSRC"), ssrc, ", value:", value);
   });
   AppleMIDI.setHandleEndReceivedMidi([](const APPLEMIDI_NAMESPACE::ssrc_t& ssrc) {
-    //  AM_DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
+    AM_DBG(F("setHandleEndReceivedMidi from SSRC"), ssrc);
   });
   AppleMIDI.setHandleException(OnAppleMidiException);
 
@@ -83,15 +95,13 @@ void setup()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void loop()
-{
+void loop() {
   // Listen to incoming notes
   MIDI.read();
 
   // send a note every second
   // (dont cáll delay(1000) as it will stall the pipeline)
-  if ((isConnected > 0) && (millis() - t1) > 100)
-  {
+  if ((isConnected > 0) && (millis() - t1) > 5) {
     t1 = millis();
 
     byte note = random(1, 127);
@@ -100,20 +110,17 @@ void loop()
 
     //   AM_DBG(F("\nsendNoteOn"), note, velocity, channel);
     MIDI.sendNoteOn(note, velocity, channel);
-    //MIDI.sendNoteOff(note, velocity, channel);
+    MIDI.sendNoteOff(note, velocity, channel);
   }
 
-#ifndef ETHERNET3
   EthernetBonjour.run();
-#endif
 }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
-void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMIDI_NAMESPACE::Exception& e, const int32_t value ) {
-  switch (e)
-  {
+void OnAppleMidiException(const APPLEMIDI_NAMESPACE::ssrc_t& ssrc, const APPLEMIDI_NAMESPACE::Exception& e, const int32_t value) {
+  switch (e) {
     case APPLEMIDI_NAMESPACE::Exception::BufferFullException:
       AM_DBG(F("*** BufferFullException"));
       break;

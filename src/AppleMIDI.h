@@ -26,7 +26,8 @@ using namespace MIDI_NAMESPACE;
 
 BEGIN_APPLEMIDI_NAMESPACE
 
-extern unsigned long now;
+extern uint64_t now;
+void refreshNow();
 
 struct AppleMIDISettings : public MIDI_NAMESPACE::DefaultSettings
 {
@@ -60,7 +61,7 @@ public:
 #endif
     };
 
-    virtual ~AppleMIDISession(){};
+    ~AppleMIDISession(){};
 
     AppleMIDISession &setHandleConnected(void (*fptr)(const ssrc_t &, const char *))
     {
@@ -189,8 +190,32 @@ public:
         dataPort.stop();
     }
 
-    bool beginTransmission(MIDI_NAMESPACE::MidiType)
+    bool beginTransmission(MIDI_NAMESPACE::MidiType type)
     {
+#ifndef ONE_PARTICIPANT
+        bool connected = false;
+        for (size_t i = 0; i < participants.size(); i++)
+        {
+            if (participants[i].ssrc != 0 &&
+                participants[i].remoteDataPort != 0 &&
+                participants[i].remoteIP != (IPAddress)INADDR_NONE)
+            {
+                connected = true;
+                break;
+            }
+        }
+        if (!connected)
+            return false;
+#else
+        if (participant.ssrc == 0 ||
+            participant.remoteDataPort == 0 ||
+            participant.remoteIP == (IPAddress)INADDR_NONE)
+            return false;
+#endif
+
+        _writingSysEx = (type == MIDI_NAMESPACE::MidiType::SystemExclusive
+                      || type == MIDI_NAMESPACE::MidiType::SystemExclusiveEnd);
+
         // All MIDI commands queued up in the same cycle (during 1 loop execution)
         // are send in a single MIDI packet
         // (The actual sending happen in the available() method, called at the start of the
@@ -218,11 +243,7 @@ public:
         // of what we are to send (The RtpMidi protocol start with writing the
         // length of the buffer). So we'll copy to a buffer in the 'write' method,
         // and actually serialize for real in the endTransmission method
-#ifndef ONE_PARTICIPANT
-        return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participants.size() > 0);
-#else
-        return (dataPort.remoteIP() != (IPAddress)INADDR_NONE && participant.ssrc != 0);
-#endif
+        return true;
     };
 
     void write(byte byte)
@@ -231,8 +252,9 @@ public:
         if ((outMidiBuffer.size()) + 2 > outMidiBuffer.max_size())
         {
             // buffer is almost full, only 1 more character
-            if (MIDI_NAMESPACE::MidiType::SystemExclusive == outMidiBuffer.front())
+            if (_writingSysEx)
             {
+                // RFC 6295 SysEx split: this packet ends with F0, the next starts with F7.
                 // Add Sysex at the end of this partial SysEx (in the last availble slot) ...
                 outMidiBuffer.push_back(MIDI_NAMESPACE::MidiType::SystemExclusiveStart);
 
@@ -262,7 +284,7 @@ public:
     // MIDI-read() must be called at the start of loop()
     unsigned available()
     {
-        now = millis();
+        refreshNow();
 
 #ifdef APPLEMIDI_INITIATOR
         manageSessionInvites();
@@ -283,7 +305,9 @@ public:
         if (readControlPackets())  // from socket into controlBuffer
             parseControlPackets(); // from controlBuffer to AppleMIDI
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
         manageReceiverFeedback();
+#endif
         manageSynchronization();
 
         return inMidiBuffer.size();
@@ -322,13 +346,15 @@ private:
     exceptionCallback _exceptionCallback = nullptr;
 #endif
     // buffer for incoming and outgoing MIDI messages
-    MidiBuffer_t inMidiBuffer;
-    MidiBuffer_t outMidiBuffer;
+    MidiInBuffer_t inMidiBuffer;
+    MidiOutBuffer_t outMidiBuffer;
 
     rtpMidi_Clock rtpMidiClock;
 
     ssrc_t ssrc = 0;
     uint16_t port = DEFAULT_CONTROL_PORT;
+    bool _acceptIncomingMidi = false;
+    bool _writingSysEx = false;
 #ifdef ONE_PARTICIPANT
     Participant<Settings> participant;
 #else
@@ -342,6 +368,8 @@ private:
 private:
     size_t readControlPackets();
     size_t readDataPackets();
+    size_t readUdpDatagram(UdpClass &, RtpBuffer_t &);
+    void drainUdpRemainder(UdpClass &);
 
     void parseControlPackets();
     void parseDataPackets();
@@ -367,7 +395,9 @@ private:
 
     // Helpers
     void writeInvitation(UdpClass &, const IPAddress &, const uint16_t &, AppleMIDI_Invitation_t &, const byte *command);
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     void writeReceiverFeedback(const IPAddress &, const uint16_t &, AppleMIDI_ReceiverFeedback_t &);
+#endif
     void writeSynchronization(const IPAddress &, const uint16_t &, AppleMIDI_Synchronization_t &);
     void writeEndSession(const IPAddress &, const uint16_t &, AppleMIDI_EndSession_t &);
 
@@ -376,13 +406,15 @@ private:
     void writeRtpMidiToAllParticipants();
     void writeRtpMidiBuffer(Participant<Settings> *);
 
+#ifndef APPLEMIDI_NO_RECEIVER_FEEDBACK
     void manageReceiverFeedback();
+#endif
 
     void manageSessionInvites();
     void manageSynchronization();
     void manageSynchronizationInitiator();
     void manageSynchronizationInitiatorHeartBeat(Participant<Settings> *);
-    void manageSynchronizationInitiatorInvites(size_t);
+    bool manageSynchronizationInitiatorInvites(Participant<Settings> *);
 
     void sendSynchronization(Participant<Settings> *);
 
