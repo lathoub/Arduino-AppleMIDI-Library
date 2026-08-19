@@ -6,8 +6,6 @@
 
 Enables an Arduino with IP/UDP capabilities (Ethernet shield, ESP8266, ESP32, ...) to participate in an AppleMIDI session.
 
-**Important:** Please read the [note below](https://github.com/lathoub/Arduino-AppleMIDI-Library#ethernet-buffer-size) on enlarging the standard Ethernet library buffersize to avoid dropping MIDI messages!
-
 ## Features
 * Build on top of the popular [FortySevenEffects MIDI library](https://github.com/FortySevenEffects/arduino_midi_library)
 * Tested with AppleMIDI on Mac OS (Tahoe) and using [rtpMIDI](https://www.tobias-erichsen.de/software/rtpmidi.html) from Tobias Erichsen on Windows 10 & 11.
