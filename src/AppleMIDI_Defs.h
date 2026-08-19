@@ -5,6 +5,15 @@
 
 BEGIN_APPLEMIDI_NAMESPACE
 
+// Size gates (define in the sketch before #include <AppleMIDI.h>):
+// #define USE_EXT_CALLBACKS
+// #define ONE_PARTICIPANT                 // memory optimization
+// #define USE_DIRECTORY
+// #define APPLEMIDI_SMALL                 // skip journals + outbound RS
+// #define APPLEMIDI_SKIP_JOURNALS         // drain journal bytes; parser file is kept
+// #define APPLEMIDI_NO_RECEIVER_FEEDBACK  // do not send RS; receive path is kept
+// #define APPLEMIDI_PARSE_JOURNALS        // keep journal parser when using APPLEMIDI_SMALL
+
 #define APPLEMIDI_LIBRARY_VERSION 0x030500
 #define APPLEMIDI_LIBRARY_VERSION_MAJOR 3
 #define APPLEMIDI_LIBRARY_VERSION_MINOR 5
@@ -53,15 +62,6 @@ typedef const char* AppleMIDIConstStr;
 #define MidiInBuffer_t Deque<byte, Settings::MaxMidiInSize>
 #define MidiOutBuffer_t Deque<byte, Settings::MaxMidiOutSize>
 #define MidiBuffer_t MidiInBuffer_t
-
-// Size gates (define in the sketch before #include <AppleMIDI.h>):
-// #define USE_EXT_CALLBACKS
-// #define ONE_PARTICIPANT // memory optimization
-// #define USE_DIRECTORY
-// #define APPLEMIDI_SMALL                 // skip journals + outbound RS
-// #define APPLEMIDI_SKIP_JOURNALS         // drain journal bytes; parser file is kept
-// #define APPLEMIDI_NO_RECEIVER_FEEDBACK  // do not send RS; receive path is kept
-// #define APPLEMIDI_PARSE_JOURNALS        // keep journal parser when using APPLEMIDI_SMALL
 
 #ifdef APPLEMIDI_SMALL
 #ifndef APPLEMIDI_PARSE_JOURNALS
