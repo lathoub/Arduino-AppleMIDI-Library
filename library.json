@@ -3,19 +3,19 @@
   "version": "3.5.0",
   "description": "Send and receive MIDI messages over Ethernet (rtpMIDI or AppleMIDI).",
   "keywords": "midi, applemidi, rtpmidi, ethernet, esp32",
-  "license": "MIT",
+  "license": "CC BY-SA 4.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lathoub/Arduino-AppleMIDI-Library",
-    "branch": "master"
+    "url": "https://github.com/lathoub/Arduino-AppleMIDI-Library.git"
   },
-  "export": {
-    "include": ["src", "examples"]
+  "dependencies": {
+    "FortySevenEffects/arduino_midi_library": "~5.0.2"
   },
   "authors": [
     {
       "name": "lathoub",
-      "email": "lathoub@gmail.com"
+      "email": "lathoub@gmail.com",
+      "maintainer": true
     }
   ],
   "frameworks": "arduino",
